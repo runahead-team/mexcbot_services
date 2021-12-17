@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project Sdk="Microsoft.NET.Sdk">
+    <PropertyGroup>
+        <TargetFramework>netcoreapp3.1</TargetFramework>
+        <Protobuf_ToolsOs>macosx</Protobuf_ToolsOs>
+        <Protobuf_ToolsCpu>x64</Protobuf_ToolsCpu>
+    </PropertyGroup>
+    <ItemGroup>
+        <ProjectReference Include="..\sp.Core\sp.Core.csproj" />
+    </ItemGroup>
+</Project>
