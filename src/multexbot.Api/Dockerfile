@@ -5,7 +5,7 @@ WORKDIR /app
 
 FROM mcr.microsoft.com/dotnet/core/sdk:3.1-buster AS build
 WORKDIR /src
-COPY multexBot.Api/multexBot.Api.csproj multexBot.Api/
+COPY ["multexBot.Api.csproj", "multexBot.Api/"]
 COPY sp.Core/sp.Core.csproj sp.Core/
 COPY sp.Core.Mailer/sp.Core.Mailer.csproj sp.Core.Mailer/
 COPY sp.Core.Token/sp.Core.Token.csproj sp.Core.Token/
