@@ -354,7 +354,6 @@ namespace multexBot.Api.Services
                     Now = AppUtils.NowMilis() - TimeSpan.FromMinutes(5).TotalMilliseconds,
                     IsExpired = true
                 });
-            
         }
 
         #endregion
