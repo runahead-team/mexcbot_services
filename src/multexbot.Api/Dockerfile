@@ -9,7 +9,7 @@ COPY multexbot.Api/multexbot.Api.csproj multexbot.Api/
 COPY sp.Core/sp.Core.csproj sp.Core/
 COPY sp.Core.Mailer/sp.Core.Mailer.csproj sp.Core.Mailer/
 COPY sp.Core.Token/sp.Core.Token.csproj sp.Core.Token/
-RUN dotnet restore "multexBot.Api/multexBot.Api.csproj"
+RUN dotnet restore "src/multexbot.Api/multexbot.Api.csproj"
 COPY . .
 WORKDIR "/src/multexBot.Api"
 RUN dotnet build "multexBot.Api.csproj" -c Release -o /app/build
