@@ -28,7 +28,7 @@ pipeline {
         stage('multexbot') {
           steps {
             script {
-              sh "docker stack deploy -c /root/spexchange/app/spexchange.yml spexchange --with-registry-auth"
+              sh "docker stack deploy -c /root/multexbot/app/multexbot.yml multexbot --with-registry-auth"
             }
           }
         }
