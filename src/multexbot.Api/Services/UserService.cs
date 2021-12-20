@@ -37,6 +37,7 @@ namespace multexBot.Api.Services
 
         public async Task<PagingResult<UserResponse>> GetAll(TableRequest request)
         {
+            
             var builder = new SqlBuilder();
 
             #region Filters
