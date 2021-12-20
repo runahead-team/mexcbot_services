@@ -1,10 +1,10 @@
 using System;
 using System.Collections.Generic;
-using multexBot.Api.Infrastructure;
+using multexbot.Api.Infrastructure;
 using sp.Core.Constants;
 using sp.Core.Utils;
 
-namespace multexBot.Api.Constants
+namespace multexbot.Api.Constants
 {
     public static class MultexBotConstants
     {

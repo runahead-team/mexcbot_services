@@ -6,7 +6,7 @@ using sp.Core.Constants;
 using sp.Core.Exceptions;
 using sp.Core.Models;
 
-namespace multexBot.Api.Infrastructure.Filters
+namespace multexbot.Api.Infrastructure.Filters
 {
     public class ExceptionFilter : IExceptionFilter
     {

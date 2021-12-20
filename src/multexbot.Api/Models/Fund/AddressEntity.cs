@@ -1,4 +1,4 @@
-namespace multexBot.Api.Models.Fund
+namespace multexbot.Api.Models.Fund
 {
     public class AddressEntity
     {

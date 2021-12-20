@@ -1,13 +1,13 @@
 using Microsoft.Extensions.DependencyInjection;
-using multexBot.Api.Infrastructure;
-using multexBot.Api.Infrastructure.Authentication;
-using multexBot.Api.Jobs;
-using multexBot.Api.Services;
-using multexBot.Api.Services.Interface;
-using multexBot.Api.Services.SubService;
+using multexbot.Api.Infrastructure;
+using multexbot.Api.Infrastructure.Authentication;
+using multexbot.Api.Jobs;
+using multexbot.Api.Services;
+using multexbot.Api.Services.Interface;
+using multexbot.Api.Services.SubService;
 using sp.Core.Exchange;
 
-namespace multexBot.Api
+namespace multexbot.Api
 {
     public partial class Startup
     {

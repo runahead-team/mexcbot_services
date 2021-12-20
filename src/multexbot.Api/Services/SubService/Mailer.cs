@@ -8,15 +8,15 @@ using sp.Core.Constants;
 using sp.Core.Mailer;
 using sp.Core.Mailer.Models;
 using sp.Core.Utils;
-using multexBot.Api.Infrastructure;
+using multexbot.Api.Infrastructure;
 using System.IO;
 using System.Collections.Generic;
 using System.Linq;
-using multexBot.Api.Models.Fund;
+using multexbot.Api.Models.Fund;
 using Newtonsoft.Json;
 using sp.Core.Extensions;
 
-namespace multexBot.Api.Services.SubService
+namespace multexbot.Api.Services.SubService
 {
     public class Mailer : BaseMailer
     {

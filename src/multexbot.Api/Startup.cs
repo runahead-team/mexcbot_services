@@ -2,12 +2,12 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using multexBot.Api.Infrastructure;
+using multexbot.Api.Infrastructure;
 using MySqlConnector.Logging;
 using Serilog;
 using sp.Core.Utils;
 
-namespace multexBot.Api
+namespace multexbot.Api
 {
     public partial class Startup
     {

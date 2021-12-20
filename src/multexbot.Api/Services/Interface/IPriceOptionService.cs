@@ -1,10 +1,10 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using multexBot.Api.Models.PriceOption;
-using multexBot.Api.RequestModels.PriceOption;
-using multexBot.Api.ResponseModels.PriceOption;
+using multexbot.Api.Models.PriceOption;
+using multexbot.Api.RequestModels.PriceOption;
+using multexbot.Api.ResponseModels.PriceOption;
 
-namespace multexBot.Api.Services.Interface
+namespace multexbot.Api.Services.Interface
 {
     public interface IPriceOptionService
     {

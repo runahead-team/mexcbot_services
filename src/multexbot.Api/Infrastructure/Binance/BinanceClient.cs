@@ -5,7 +5,7 @@ using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
 using Serilog;
 
-namespace multexBot.Api.Infrastructure.Binance
+namespace multexbot.Api.Infrastructure.Binance
 {
     public class BinanceClient
     {

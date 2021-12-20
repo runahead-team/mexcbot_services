@@ -2,7 +2,7 @@ using System;
 using System.ComponentModel.DataAnnotations;
 using sp.Core.Extensions;
 
-namespace multexBot.Api.RequestModels.PriceOption
+namespace multexbot.Api.RequestModels.PriceOption
 {
     public class PriceOptionCreateRequest
     {

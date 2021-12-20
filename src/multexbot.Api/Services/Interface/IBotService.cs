@@ -1,11 +1,11 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using multexBot.Api.Constants;
-using multexBot.Api.Models.ApiKey;
-using multexBot.Api.Models.Bot;
+using multexbot.Api.Constants;
+using multexbot.Api.Models.ApiKey;
+using multexbot.Api.Models.Bot;
 using sp.Core.Models;
 
-namespace multexBot.Api.Services.Interface
+namespace multexbot.Api.Services.Interface
 {
     public interface IBotService
     {

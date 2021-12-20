@@ -7,11 +7,11 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Hosting;
 using Serilog;
 using sp.Core.Utils;
-using multexBot.Api.Infrastructure;
+using multexbot.Api.Infrastructure;
 using MySqlConnector.Logging;
 using sp.Core.Constants;
 
-namespace multexBot.Api
+namespace multexbot.Api
 {
     public class Program
     {
@@ -34,7 +34,7 @@ namespace multexBot.Api
             Configurations.Enums = AppDomain.CurrentDomain
                 .GetAssemblies()
                 .SelectMany(assembly => assembly.GetTypes())
-                .Where(x => !string.IsNullOrEmpty(x.Namespace) && x.Namespace.StartsWith("multexBot.Api") && x.IsEnum)
+                .Where(x => !string.IsNullOrEmpty(x.Namespace) && x.Namespace.StartsWith("multexbot.Api") && x.IsEnum)
                 .ToDictionary(x => x.Name, x => Enum.GetValues(x).Cast<object>().ToList());
 
             Configurations.Enums.Add(nameof(AppError), Enum.GetValues(typeof(AppError)).Cast<object>().ToList());

@@ -1,7 +1,7 @@
 using sp.Core.Constants;
 using sp.Core.Exceptions;
 
-namespace multexBot.Api.Models.Admin
+namespace multexbot.Api.Models.Admin
 {
     public class AdminRoleEntity
     {

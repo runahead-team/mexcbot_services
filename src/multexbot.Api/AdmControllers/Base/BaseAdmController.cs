@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using sp.Core.Exceptions;
 using sp.Core.Models;
 
-namespace multexBot.Api.AdmControllers.Base
+namespace multexbot.Api.AdmControllers.Base
 {
     [Authorize(AuthenticationSchemes = "ADMIN")]
     public class BaseAdmController : Controller

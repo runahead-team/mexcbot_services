@@ -1,13 +1,13 @@
 using System.ComponentModel.DataAnnotations;
-using multexBot.Api.Constants;
-using multexBot.Api.Models.ApiKey;
+using multexbot.Api.Constants;
+using multexbot.Api.Models.ApiKey;
 using Newtonsoft.Json;
 using sp.Core.Constants;
 using sp.Core.Exceptions;
 using sp.Core.Models;
 using sp.Core.Utils;
 
-namespace multexBot.Api.Models.Bot
+namespace multexbot.Api.Models.Bot
 {
     public class BotDto
     {

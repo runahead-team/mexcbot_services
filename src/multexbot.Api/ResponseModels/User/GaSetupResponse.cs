@@ -1,4 +1,4 @@
-namespace multexBot.Api.ResponseModels.User
+namespace multexbot.Api.ResponseModels.User
 {
     public class GaSetupResponse
     {

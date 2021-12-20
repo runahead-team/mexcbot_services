@@ -3,7 +3,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
 
-namespace multexBot.Api.Infrastructure.Telegram
+namespace multexbot.Api.Infrastructure.Telegram
 {
     public static class Telegram
     {

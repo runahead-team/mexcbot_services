@@ -1,8 +1,8 @@
 using DefaultNamespace;
-using multexBot.Api.RequestModels.Log;
+using multexbot.Api.RequestModels.Log;
 using sp.Core.Utils;
 
-namespace multexBot.Api.Models.ApiKey
+namespace multexbot.Api.Models.ApiKey
 {
     public class LogEntity
     {

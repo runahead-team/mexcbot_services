@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace multexBot.Api.Models.Fund
+namespace multexbot.Api.Models.Fund
 {
     public class CoinEntity
     {

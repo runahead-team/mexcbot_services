@@ -2,10 +2,10 @@ using System;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Hosting;
-using multexBot.Api.Services.Interface;
+using multexbot.Api.Services.Interface;
 using Serilog;
 
-namespace multexBot.Api.Jobs
+namespace multexbot.Api.Jobs
 {
     public class BotJob : BackgroundService
     {

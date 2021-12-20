@@ -1,4 +1,4 @@
-namespace multexBot.Api.Models.Admin
+namespace multexbot.Api.Models.Admin
 {
     public class AdminEntity
     {

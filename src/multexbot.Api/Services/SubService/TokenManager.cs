@@ -2,9 +2,9 @@ using System.Threading.Tasks;
 using Dapper;
 using MySqlConnector;
 using sp.Core.Token;
-using multexBot.Api.Infrastructure;
+using multexbot.Api.Infrastructure;
 
-namespace multexBot.Api.Services.SubService
+namespace multexbot.Api.Services.SubService
 {
   public class TokenManager : BaseTokenManager
   {

@@ -1,6 +1,6 @@
-using multexBot.Api.Constants;
+using multexbot.Api.Constants;
 
-namespace multexBot.Api.Models.Transaction
+namespace multexbot.Api.Models.Transaction
 {
     public class TransactionEntity
     {

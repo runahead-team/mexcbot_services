@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace multexBot.Api.Infrastructure
+namespace multexbot.Api.Infrastructure
 {
     public class Configurations
     {

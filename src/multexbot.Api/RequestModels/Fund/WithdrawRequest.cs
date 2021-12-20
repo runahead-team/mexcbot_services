@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
-using multexBot.Api.Constants;
+using multexbot.Api.Constants;
 
-namespace multexBot.Api.RequestModels.Fund
+namespace multexbot.Api.RequestModels.Fund
 {
     public class WithdrawRequest
     {

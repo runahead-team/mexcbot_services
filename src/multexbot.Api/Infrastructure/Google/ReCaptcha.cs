@@ -8,7 +8,7 @@ using sp.Core.Constants;
 using sp.Core.Exceptions;
 using sp.Core.Utils;
 
-namespace multexBot.Api.Infrastructure.Google
+namespace multexbot.Api.Infrastructure.Google
 {
     public static class ReCaptcha
     {

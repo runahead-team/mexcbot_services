@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using sp.Core.Exceptions;
 using sp.Core.Models;
 
-namespace multexBot.Api.Controllers.Base
+namespace multexbot.Api.Controllers.Base
 {
     [Authorize(AuthenticationSchemes = "USER")]
     public class BaseController : Controller

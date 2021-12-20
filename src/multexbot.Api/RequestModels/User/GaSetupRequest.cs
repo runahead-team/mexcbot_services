@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace multexBot.Api.RequestModels.User
+namespace multexbot.Api.RequestModels.User
 {
     public class GaSetupRequest
     {

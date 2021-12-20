@@ -1,10 +1,10 @@
 using System.Threading.Tasks;
-using multexBot.Api.Models.User;
-using multexBot.Api.RequestModels.User;
-using multexBot.Api.ResponseModels.User;
+using multexbot.Api.Models.User;
+using multexbot.Api.RequestModels.User;
+using multexbot.Api.ResponseModels.User;
 using sp.Core.Models;
 
-namespace multexBot.Api.Services.Interface
+namespace multexbot.Api.Services.Interface
 {
     public interface IUserService
     {

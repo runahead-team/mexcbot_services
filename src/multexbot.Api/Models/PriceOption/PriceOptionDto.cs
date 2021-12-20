@@ -1,4 +1,4 @@
-namespace multexBot.Api.Models.PriceOption
+namespace multexbot.Api.Models.PriceOption
 {
     public class PriceOptionDto
     {

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace multexBot.Api.RequestModels.PriceOption
+namespace multexbot.Api.RequestModels.PriceOption
 {
     public class PriceOptionUpdateRequest
     {

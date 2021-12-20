@@ -5,10 +5,10 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
-using multexBot.Api.Constants;
-using multexBot.Api.Models.Admin;
+using multexbot.Api.Constants;
+using multexbot.Api.Models.Admin;
 
-namespace multexBot.Api.Infrastructure.Authentication
+namespace multexbot.Api.Infrastructure.Authentication
 {
     public class AdmRsaJwtTokenProvider
     {

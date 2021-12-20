@@ -1,9 +1,9 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using DefaultNamespace;
-using multexBot.Api.Constants;
+using multexbot.Api.Constants;
 
-namespace multexBot.Api.Infrastructure.ExchangeClient
+namespace multexbot.Api.Infrastructure.ExchangeClient
 {
     public abstract class BaseExchangeClient
     {

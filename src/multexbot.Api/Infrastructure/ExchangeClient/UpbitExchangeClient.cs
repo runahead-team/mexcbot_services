@@ -11,11 +11,11 @@ using Newtonsoft.Json;
 using System.Security.Cryptography;
 using DefaultNamespace;
 using Microsoft.IdentityModel.Tokens;
-using multexBot.Api.Constants;
+using multexbot.Api.Constants;
 using Serilog;
 using sp.Core.Utils;
 
-namespace multexBot.Api.Infrastructure.ExchangeClient
+namespace multexbot.Api.Infrastructure.ExchangeClient
 {
     public class UpbitExchangeClient : BaseExchangeClient
     {

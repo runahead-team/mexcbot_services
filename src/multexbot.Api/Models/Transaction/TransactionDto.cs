@@ -1,4 +1,4 @@
-namespace multexBot.Api.Models.Transaction
+namespace multexbot.Api.Models.Transaction
 {
     public class TransactionDto : TransactionEntity
     {

@@ -1,4 +1,4 @@
-namespace multexBot.Api.RequestModels.Log
+namespace multexbot.Api.RequestModels.Log
 {
     public class LogCreateRequest
     {

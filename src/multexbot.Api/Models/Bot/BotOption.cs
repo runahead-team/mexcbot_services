@@ -1,4 +1,4 @@
-namespace multexBot.Api.Models.Bot
+namespace multexbot.Api.Models.Bot
 {
     public class BotOption
     {

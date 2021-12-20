@@ -1,7 +1,7 @@
 using System.Collections.Generic;
-using multexBot.Api.Constants;
+using multexbot.Api.Constants;
 
-namespace multexBot.Api.Models.Bot
+namespace multexbot.Api.Models.Bot
 {
     public class BotUpsertRequest : BotDto
     {

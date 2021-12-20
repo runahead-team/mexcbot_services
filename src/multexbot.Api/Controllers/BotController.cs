@@ -1,14 +1,14 @@
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using multexBot.Api.Constants;
-using multexBot.Api.Controllers.Base;
-using multexBot.Api.Models.Bot;
-using multexBot.Api.Services.Interface;
+using multexbot.Api.Constants;
+using multexbot.Api.Controllers.Base;
+using multexbot.Api.Models.Bot;
+using multexbot.Api.Services.Interface;
 using sp.Core.Constants;
 using sp.Core.Exceptions;
 using sp.Core.Models;
 
-namespace multexBot.Api.Controllers
+namespace multexbot.Api.Controllers
 {
     [Route("bot")]
     public class BotController : BaseController

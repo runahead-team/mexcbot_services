@@ -1,7 +1,7 @@
-using multexBot.Api.Constants;
-using multexBot.Api.Models.Base;
+using multexbot.Api.Constants;
+using multexbot.Api.Models.Base;
 
-namespace multexBot.Api.ResponseModels.User
+namespace multexbot.Api.ResponseModels.User
 {
     public class GetMemberResponse : BaseDto
     {

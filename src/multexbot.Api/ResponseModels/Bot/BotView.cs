@@ -1,10 +1,10 @@
 using System.Collections.Generic;
-using multexBot.Api.Constants;
-using multexBot.Api.Models.Bot;
-using multexBot.Api.ResponseModels.PriceOption;
+using multexbot.Api.Constants;
+using multexbot.Api.Models.Bot;
+using multexbot.Api.ResponseModels.PriceOption;
 using Newtonsoft.Json;
 
-namespace multexBot.Api.Models.Bot
+namespace multexbot.Api.Models.Bot
 {
     public class BotView
     {

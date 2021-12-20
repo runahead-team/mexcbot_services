@@ -1,10 +1,10 @@
 
-using multexBot.Api.Constants;
-using multexBot.Api.Models.Base;
-using multexBot.Api.RequestModels.User;
+using multexbot.Api.Constants;
+using multexbot.Api.Models.Base;
+using multexbot.Api.RequestModels.User;
 using sp.Core.Utils;
 
-namespace multexBot.Api.Models.User
+namespace multexbot.Api.Models.User
 {
     public class UserEntity : BaseEntity
     {

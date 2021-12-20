@@ -1,4 +1,4 @@
-namespace multexBot.Api.Constants
+namespace multexbot.Api.Constants
 {
     #region User
 

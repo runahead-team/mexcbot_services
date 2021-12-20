@@ -8,10 +8,10 @@ using System.Threading.Tasks;
 using Newtonsoft.Json;
 using System.Security.Cryptography;
 using DefaultNamespace;
-using multexBot.Api.Constants;
+using multexbot.Api.Constants;
 using Serilog;
 
-namespace multexBot.Api.Infrastructure.ExchangeClient
+namespace multexbot.Api.Infrastructure.ExchangeClient
 {
     public class SpExchangeClient : BaseExchangeClient
     {

@@ -1,6 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace multexBot.Api.RequestModels.Common
+namespace multexbot.Api.RequestModels.Common
 {
     public class IdsRequest
     {

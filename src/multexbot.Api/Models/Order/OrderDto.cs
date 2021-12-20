@@ -1,4 +1,4 @@
-using multexBot.Api.Constants;
+using multexbot.Api.Constants;
 
 namespace DefaultNamespace
 {

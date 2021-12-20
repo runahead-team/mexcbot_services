@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
-using multexBot.Api.Infrastructure;
+using multexbot.Api.Infrastructure;
 using sp.Core.Constants;
 using sp.Core.Utils;
 
-namespace multexBot.Api
+namespace multexbot.Api
 {
     public partial class Startup
     {

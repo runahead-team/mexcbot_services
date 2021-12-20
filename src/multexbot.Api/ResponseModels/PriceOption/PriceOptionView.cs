@@ -1,6 +1,6 @@
-using multexBot.Api.Models.PriceOption;
+using multexbot.Api.Models.PriceOption;
 
-namespace multexBot.Api.ResponseModels.PriceOption
+namespace multexbot.Api.ResponseModels.PriceOption
 {
     public class PriceOptionView
     {

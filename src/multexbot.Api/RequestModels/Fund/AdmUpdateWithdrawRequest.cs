@@ -1,7 +1,7 @@
-using multexBot.Api.Constants;
-using multexBot.Api.RequestModels.Common;
+using multexbot.Api.Constants;
+using multexbot.Api.RequestModels.Common;
 
-namespace multexBot.Api.RequestModels.Fund
+namespace multexbot.Api.RequestModels.Fund
 {
     public class AdmUpdateWithdrawRequest : IdsRequest
     {

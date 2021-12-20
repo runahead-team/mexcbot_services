@@ -2,14 +2,14 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using multexBot.Api.Controllers.Base;
-using multexBot.Api.Infrastructure.Authentication;
-using multexBot.Api.RequestModels.User;
-using multexBot.Api.Services.Interface;
+using multexbot.Api.Controllers.Base;
+using multexbot.Api.Infrastructure.Authentication;
+using multexbot.Api.RequestModels.User;
+using multexbot.Api.Services.Interface;
 using sp.Core.Exceptions;
 using sp.Core.Models;
 
-namespace multexBot.Api.Controllers
+namespace multexbot.Api.Controllers
 {
     [Route("user")]
     public class UserController : BaseController

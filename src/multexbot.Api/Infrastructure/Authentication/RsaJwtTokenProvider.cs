@@ -3,11 +3,11 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using Microsoft.IdentityModel.Tokens;
-using multexBot.Api.Constants;
+using multexbot.Api.Constants;
 using sp.Core.Models;
 using System.Linq;
 
-namespace multexBot.Api.Infrastructure.Authentication
+namespace multexbot.Api.Infrastructure.Authentication
 {
     public class RsaJwtTokenProvider
     {

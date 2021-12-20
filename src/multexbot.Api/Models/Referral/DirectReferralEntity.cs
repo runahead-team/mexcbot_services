@@ -1,4 +1,4 @@
-namespace multexBot.Api.Models.Referral
+namespace multexbot.Api.Models.Referral
 {
     public class DirectReferralEntity
     {

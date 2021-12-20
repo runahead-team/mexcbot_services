@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using sp.Core.Constants;
 
-namespace multexBot.Api.Models.Admin
+namespace multexbot.Api.Models.Admin
 {
     public class AdminRoleDto
     {

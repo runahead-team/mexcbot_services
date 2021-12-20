@@ -1,6 +1,6 @@
-using multexBot.Api.ResponseModels.User;
+using multexbot.Api.ResponseModels.User;
 
-namespace multexBot.Api.ResponseModels.Dashboard
+namespace multexbot.Api.ResponseModels.Dashboard
 {
     public class DashboardResponse
     {

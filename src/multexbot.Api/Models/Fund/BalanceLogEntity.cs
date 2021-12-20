@@ -1,6 +1,6 @@
-using multexBot.Api.Constants;
+using multexbot.Api.Constants;
 
-namespace multexBot.Api.Models.Fund
+namespace multexbot.Api.Models.Fund
 {
     public class BalanceLogEntity
     {

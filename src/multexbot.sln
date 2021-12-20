@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "multexBot.Api", "multexBot.Api\multexBot.Api.csproj", "{123F7CD8-E5DB-412B-8336-59E0A3F71ACD}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "multexbot.Api", "multexbot.Api\multexbot.Api.csproj", "{123F7CD8-E5DB-412B-8336-59E0A3F71ACD}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "sp.Core", "sp.Core\sp.Core.csproj", "{F0208074-B077-4581-B9AF-0A2564A423A8}"
 EndProject

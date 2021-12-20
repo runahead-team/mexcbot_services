@@ -6,9 +6,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
-using multexBot.Api.Infrastructure;
+using multexbot.Api.Infrastructure;
 
-namespace multexBot.Api
+namespace multexbot.Api
 {
     public partial class Startup
     {

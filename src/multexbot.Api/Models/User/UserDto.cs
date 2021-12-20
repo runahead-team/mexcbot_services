@@ -1,7 +1,7 @@
-using multexBot.Api.Constants;
-using multexBot.Api.Models.Base;
+using multexbot.Api.Constants;
+using multexbot.Api.Models.Base;
 
-namespace multexBot.Api.Models.User
+namespace multexbot.Api.Models.User
 {
     public class UserDto : BaseDto
     {

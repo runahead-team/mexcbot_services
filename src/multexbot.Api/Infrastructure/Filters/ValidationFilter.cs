@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc.ModelBinding;
 using sp.Core.Constants;
 using sp.Core.Exceptions;
 
-namespace multexBot.Api.Infrastructure.Filters
+namespace multexbot.Api.Infrastructure.Filters
 {
     public class ValidationFilter : IActionFilter
     {

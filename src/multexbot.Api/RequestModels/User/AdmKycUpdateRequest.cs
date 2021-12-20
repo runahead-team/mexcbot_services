@@ -1,6 +1,6 @@
-using multexBot.Api.Constants;
+using multexbot.Api.Constants;
 
-namespace multexBot.Api.RequestModels.User
+namespace multexbot.Api.RequestModels.User
 {
     public class AdmKycUpdateRequest
     {

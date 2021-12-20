@@ -2,7 +2,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Converters;
 using Newtonsoft.Json.Serialization;
 
-namespace multexBot.Api
+namespace multexbot.Api
 {
     public partial class Startup
     {

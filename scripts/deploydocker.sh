@@ -6,7 +6,7 @@ echo "build $service:$tag"
 
 if [ $service == "nftc" ];
 then
-docker build -t nftc:$tag -f ../src/multexBot.Api/Dockerfile ../src
+docker build -t nftc:$tag -f ../src/multexbot.Api/Dockerfile ../src
 docker tag nftc:$tag sp20/nftc:$tag
 docker push sp20/nftc:$tag
 else

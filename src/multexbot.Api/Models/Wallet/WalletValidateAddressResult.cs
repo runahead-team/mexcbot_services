@@ -1,5 +1,5 @@
 
-namespace multexBot.Api.Models.Wallet
+namespace multexbot.Api.Models.Wallet
 {
     public class WalletValidateAddressResult
     {

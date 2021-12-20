@@ -4,14 +4,14 @@ using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using GoogleAuthenticatorService.Core;
-using multexBot.Api.Constants;
-using multexBot.Api.Infrastructure;
-using multexBot.Api.Infrastructure.ExchangeClient;
-using multexBot.Api.Models.User;
-using multexBot.Api.RequestModels.User;
-using multexBot.Api.ResponseModels.User;
-using multexBot.Api.Services.Interface;
-using multexBot.Api.Services.SubService;
+using multexbot.Api.Constants;
+using multexbot.Api.Infrastructure;
+using multexbot.Api.Infrastructure.ExchangeClient;
+using multexbot.Api.Models.User;
+using multexbot.Api.RequestModels.User;
+using multexbot.Api.ResponseModels.User;
+using multexbot.Api.Services.Interface;
+using multexbot.Api.Services.SubService;
 using MySqlConnector;
 using Serilog;
 using sp.Core.Constants;
@@ -20,7 +20,7 @@ using sp.Core.Extensions;
 using sp.Core.Models;
 using sp.Core.Utils;
 
-namespace multexBot.Api.Services
+namespace multexbot.Api.Services
 {
     public class UserService : IUserService
     {

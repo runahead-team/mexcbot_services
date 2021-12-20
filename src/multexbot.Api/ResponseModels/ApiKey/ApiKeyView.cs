@@ -1,6 +1,6 @@
-using multexBot.Api.Constants;
+using multexbot.Api.Constants;
 
-namespace multexBot.Api.Models.ApiKey
+namespace multexbot.Api.Models.ApiKey
 {
     public class ApiKeyView
     {

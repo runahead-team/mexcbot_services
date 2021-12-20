@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using sp.Core.Constants;
 
-namespace multexBot.Api.RequestModels.User
+namespace multexbot.Api.RequestModels.User
 {
     public class SendRegisterOtpRequest
     {

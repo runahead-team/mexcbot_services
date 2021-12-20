@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace multexBot.Api.ResponseModels.Fund
+namespace multexbot.Api.ResponseModels.Fund
 {
     public class BalanceResponse
     {

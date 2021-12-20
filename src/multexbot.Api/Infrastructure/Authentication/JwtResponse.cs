@@ -1,4 +1,4 @@
-namespace multexBot.Api.Infrastructure.Authentication
+namespace multexbot.Api.Infrastructure.Authentication
 {
     public class JwtResponse
     {

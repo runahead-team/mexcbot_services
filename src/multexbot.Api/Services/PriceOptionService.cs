@@ -2,16 +2,16 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
-using multexBot.Api.Infrastructure;
-using multexBot.Api.Models.PriceOption;
-using multexBot.Api.RequestModels.PriceOption;
-using multexBot.Api.ResponseModels.PriceOption;
-using multexBot.Api.Services.Interface;
+using multexbot.Api.Infrastructure;
+using multexbot.Api.Models.PriceOption;
+using multexbot.Api.RequestModels.PriceOption;
+using multexbot.Api.ResponseModels.PriceOption;
+using multexbot.Api.Services.Interface;
 using MySqlConnector;
 using sp.Core.Constants;
 using sp.Core.Exceptions;
 
-namespace multexBot.Api.Services
+namespace multexbot.Api.Services
 {
     public class PriceOptionService : IPriceOptionService
     {

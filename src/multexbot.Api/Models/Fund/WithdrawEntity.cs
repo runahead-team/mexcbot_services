@@ -1,9 +1,9 @@
-using multexBot.Api.Constants;
-using multexBot.Api.RequestModels.Fund;
+using multexbot.Api.Constants;
+using multexbot.Api.RequestModels.Fund;
 using sp.Core.Models;
 using sp.Core.Utils;
 
-namespace multexBot.Api.Models.Fund
+namespace multexbot.Api.Models.Fund
 {
     public class WithdrawEntity
     {

@@ -5,11 +5,11 @@ using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
 using DefaultNamespace;
-using multexBot.Api.Constants;
-using multexBot.Api.Infrastructure;
-using multexBot.Api.Infrastructure.ExchangeClient;
-using multexBot.Api.Models.Bot;
-using multexBot.Api.Services.Interface;
+using multexbot.Api.Constants;
+using multexbot.Api.Infrastructure;
+using multexbot.Api.Infrastructure.ExchangeClient;
+using multexbot.Api.Models.Bot;
+using multexbot.Api.Services.Interface;
 using MySqlConnector;
 using Newtonsoft.Json;
 using Serilog;
@@ -20,7 +20,7 @@ using sp.Core.Extensions;
 using sp.Core.Models;
 using sp.Core.Utils;
 
-namespace multexBot.Api.Services
+namespace multexbot.Api.Services
 {
     public class BotService : IBotService
     {

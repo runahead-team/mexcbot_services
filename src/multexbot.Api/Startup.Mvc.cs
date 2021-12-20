@@ -2,9 +2,9 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.DependencyInjection;
 using Newtonsoft.Json.Converters;
-using multexBot.Api.Infrastructure.Filters;
+using multexbot.Api.Infrastructure.Filters;
 
-namespace multexBot.Api
+namespace multexbot.Api
 {
     public partial class Startup
     {

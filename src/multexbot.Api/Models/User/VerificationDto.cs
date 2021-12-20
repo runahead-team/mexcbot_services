@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace multexBot.Api.Models.User
+namespace multexbot.Api.Models.User
 {
     public class VerificationDto : VerificationEntity
     {

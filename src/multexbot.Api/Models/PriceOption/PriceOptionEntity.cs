@@ -1,7 +1,7 @@
-using multexBot.Api.RequestModels.PriceOption;
+using multexbot.Api.RequestModels.PriceOption;
 using sp.Core.Utils;
 
-namespace multexBot.Api.Models.PriceOption
+namespace multexbot.Api.Models.PriceOption
 {
     public class PriceOptionEntity
     {

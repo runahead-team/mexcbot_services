@@ -1,13 +1,13 @@
 #nullable enable
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using multexBot.Api.Constants;
-using multexBot.Api.Controllers.Base;
-using multexBot.Api.Infrastructure;
+using multexbot.Api.Constants;
+using multexbot.Api.Controllers.Base;
+using multexbot.Api.Infrastructure;
 using sp.Core.Constants;
 using sp.Core.Models;
 
-namespace multexBot.Api.Controllers
+namespace multexbot.Api.Controllers
 {
     [AllowAnonymous]
     [Route("api/config")]

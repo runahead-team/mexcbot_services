@@ -2,12 +2,12 @@ using System.ComponentModel.DataAnnotations;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using multexBot.Api.AdmControllers.Base;
-using multexBot.Api.Constants;
-using multexBot.Api.Services.Interface;
+using multexbot.Api.AdmControllers.Base;
+using multexbot.Api.Constants;
+using multexbot.Api.Services.Interface;
 using sp.Core.Models;
 
-namespace multexBot.Api.AdmControllers
+namespace multexbot.Api.AdmControllers
 {
     [Authorize(Roles = MultexBotAdminRoles.USER_READ)]
     [Route("adm-api/user")]

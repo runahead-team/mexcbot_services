@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
-namespace multexBot.Api.Models.Admin
+namespace multexbot.Api.Models.Admin
 {
     public class AdminDto
     {
