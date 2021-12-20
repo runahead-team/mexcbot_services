@@ -6,7 +6,6 @@ using Dapper;
 using GoogleAuthenticatorService.Core;
 using multexbot.Api.Constants;
 using multexbot.Api.Infrastructure;
-using multexbot.Api.Infrastructure.ExchangeClient;
 using multexbot.Api.Models.User;
 using multexbot.Api.RequestModels.User;
 using multexbot.Api.ResponseModels.User;

@@ -55,7 +55,7 @@ namespace multexbot.Api.Jobs
                 catch (Exception e)
                 {
                     if (!(e is TaskCanceledException))
-                        Log.Warning(e, "VolumeBotJob:DoWork");
+                        Log.Warning(e, "BotJob:DoWork");
                 }
             }
         }
