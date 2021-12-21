@@ -156,3 +156,23 @@ CREATE TABLE BotOrders
   )
 ENGINE = MyISAM;
 ALTER TABLE BotOrders AUTO_INCREMENT = 123;
+
+-- Markets
+CREATE TABLE Markets
+  (
+    `Coin` VARCHAR(32) NOT NULL UNIQUE,
+    `UsdPrice` DECIMAL(20,8) UNSIGNED NOT NULL,
+    IsActive TINYINT NOT NULL,
+    PriceUpdatedTime BIGINT NOT NULL,
+    PRIMARY KEY (`Coin`)
+  )
+ENGINE = MyISAM;
+INSERT INTO Markets
+  (`Coin`,`UsdPrice`,`IsActive`,`PriceUpdatedTime`)
+VALUES
+  ('BTC',0,1,UNIX_TIMESTAMP() * 1000);
+
+INSERT INTO Markets
+  (`Coin`,`UsdPrice`,`IsActive`,`PriceUpdatedTime`)
+VALUES
+  ('KRW',0,1,UNIX_TIMESTAMP() * 1000);

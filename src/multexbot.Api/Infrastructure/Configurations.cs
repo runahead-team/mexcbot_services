@@ -38,6 +38,8 @@ namespace multexbot.Api.Infrastructure
         public static string FlataUrl { get; set; }
         
         public static string SpExchangeUrl { get; set; }
+        
+        public static OpenExchangeRatesConfig OpenExchangeRates { get; set; }
     }
 
     public class SendGridConfig
@@ -47,5 +49,10 @@ namespace multexbot.Api.Infrastructure
         public string SenderEmail { get; set; }
 
         public string DisplayName { get; set; }
+    }
+    
+    public class OpenExchangeRatesConfig
+    {
+        public string AppId { get; set; }
     }
 }

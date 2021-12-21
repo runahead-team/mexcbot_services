@@ -24,7 +24,9 @@ namespace sp.Core.Constants
         WITHDRAW_BELOW_MINIMUM,
         INVALID_ADDRESS,
         WRONG_CREDENTIALS,
-        PERMISSION_DENIED
+        PERMISSION_DENIED,
+        MARKET_IS_EXIST,
+        MARKET_IS_NOT_EXIST
     }
 
     public enum MailType

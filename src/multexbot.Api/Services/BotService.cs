@@ -27,14 +27,17 @@ namespace multexbot.Api.Services
         private readonly BinanceExchange _binanceExchange;
         private readonly HoubiExchange _houbiExchange;
         private readonly CoinbaseExchange _coinbaseExchange;
+        private readonly IMarketService _marketService;
 
         public BotService(BinanceExchange binanceExchange,
             HoubiExchange houbiExchange,
-            CoinbaseExchange coinbaseExchange)
+            CoinbaseExchange coinbaseExchange,
+            IMarketService marketService)
         {
             _binanceExchange = binanceExchange;
             _houbiExchange = houbiExchange;
             _coinbaseExchange = coinbaseExchange;
+            _marketService = marketService;
         }
 
         public async Task<List<BotView>> GetList(ExchangeType exchangeType, AppUser user)
@@ -76,7 +79,26 @@ namespace multexbot.Api.Services
                 if (rootBot == null)
                     throw new AppException(AppError.UNKNOWN, "Root Bot is null");
 
+                if (rootBot.Base != request.Base)
+                    throw new AppException(AppError.UNKNOWN, "Base of Bot is wrong");
+
                 var options = JsonConvert.DeserializeObject<BotOption>(rootBot.Options);
+                
+                if (!MultexBotConstants.StableCoins.Contains(request.Quote))
+                {
+                    var market = await _marketService.SysGet(request.Quote);
+
+                    if (market == null)
+                        throw new AppException(AppError.MARKET_IS_NOT_EXIST);
+
+                    if (market.UsdPrice == 0)
+                        throw new AppException(AppError.UNKNOWN, $"MultexBot {market.Coin}/USDT 0");
+
+                    options.BasePrice /= market.UsdPrice;
+                    options.MaxPriceStep /= market.UsdPrice;
+                    options.MinPriceStep /= market.UsdPrice;
+                    options.FollowBtcBasePrice /= market.UsdPrice;
+                }
 
                 request.Options.BasePrice = options.BasePrice;
                 request.Options.FollowBtc = options.FollowBtc;
@@ -280,62 +302,64 @@ namespace multexbot.Api.Services
                     switch (order.ExchangeType)
                     {
                         case ExchangeType.UPBIT:
+                        {
+                            client = new UpbitExchangeClient(Configurations.UpbitUrl, order.ApiKey,
+                                order.SecretKey.Decrypt(Configurations.HashKey));
+
+                            if (await client.Cancel(order.ExternalId.ToString(), null))
                             {
-                                client = new UpbitExchangeClient(Configurations.UpbitUrl, order.ApiKey,
-                                    order.SecretKey.Decrypt(Configurations.HashKey));
-
-
-                                if (await client.Cancel(order.ExternalId.ToString(), null))
-                                {
-                                    Log.Information("Bot cancel order {0} {1} {2}", nameof(UpbitExchangeClient), order.Id,
-                                        order.ExternalId);
-                                }
-                                else
-                                {
-                                    Log.Information("Bot cancel order fail {0} {1} {2}", nameof(UpbitExchangeClient), order.Id,
-                                        order.ExternalId);
-                                }
-
-                                break;
+                                Log.Information("Bot cancel order {0} {1} {2}", nameof(UpbitExchangeClient), order.Id,
+                                    order.ExternalId);
                             }
+                            else
+                            {
+                                Log.Information("Bot cancel order fail {0} {1} {2}", nameof(UpbitExchangeClient),
+                                    order.Id,
+                                    order.ExternalId);
+                            }
+
+                            break;
+                        }
                         case ExchangeType.FLATA:
+                        {
+                            client = new FlataExchangeClient(Configurations.FlataUrl, order.ApiKey,
+                                order.SecretKey.Decrypt(Configurations.HashKey));
+
+
+                            if (await client.Cancel(order.ExternalId.ToString(), null))
                             {
-                                client = new FlataExchangeClient(Configurations.FlataUrl, order.ApiKey,
-                                    order.SecretKey.Decrypt(Configurations.HashKey));
-
-
-                                if (await client.Cancel(order.ExternalId.ToString(), null))
-                                {
-                                    Log.Information("Bot cancel order {0} {1} {2}", nameof(UpbitExchangeClient), order.Id,
-                                        order.ExternalId);
-                                }
-                                else
-                                {
-                                    Log.Information("Bot cancel order fail {0} {1} {2}", nameof(UpbitExchangeClient), order.Id,
-                                        order.ExternalId);
-                                }
-
-                                break;
+                                Log.Information("Bot cancel order {0} {1} {2}", nameof(UpbitExchangeClient), order.Id,
+                                    order.ExternalId);
                             }
+                            else
+                            {
+                                Log.Information("Bot cancel order fail {0} {1} {2}", nameof(UpbitExchangeClient),
+                                    order.Id,
+                                    order.ExternalId);
+                            }
+
+                            break;
+                        }
                         case ExchangeType.SPEXCHANGE:
+                        {
+                            client = new SpExchangeClient(Configurations.SpExchangeUrl, order.ApiKey,
+                                order.SecretKey.Decrypt(Configurations.HashKey));
+
+
+                            if (await client.Cancel(order.ExternalId.ToString(), null))
                             {
-                                client = new SpExchangeClient(Configurations.SpExchangeUrl, order.ApiKey,
-                                  order.SecretKey.Decrypt(Configurations.HashKey));
-
-
-                                if (await client.Cancel(order.ExternalId.ToString(), null))
-                                {
-                                    Log.Information("Bot cancel order {0} {1} {2}", nameof(UpbitExchangeClient), order.Id,
-                                        order.ExternalId);
-                                }
-                                else
-                                {
-                                    Log.Information("Bot cancel order fail {0} {1} {2}", nameof(UpbitExchangeClient), order.Id,
-                                        order.ExternalId);
-                                }
-
-                                break;
+                                Log.Information("Bot cancel order {0} {1} {2}", nameof(UpbitExchangeClient), order.Id,
+                                    order.ExternalId);
                             }
+                            else
+                            {
+                                Log.Information("Bot cancel order fail {0} {1} {2}", nameof(UpbitExchangeClient),
+                                    order.Id,
+                                    order.ExternalId);
+                            }
+
+                            break;
+                        }
                     }
                 }));
             }
@@ -354,7 +378,6 @@ namespace multexbot.Api.Services
                     Now = AppUtils.NowMilis() - TimeSpan.FromMinutes(5).TotalMilliseconds,
                     IsExpired = true
                 });
-            
         }
 
         #endregion
@@ -590,9 +613,10 @@ namespace multexbot.Api.Services
                                 #endregion
 
                                 #region Trade
+
                                 price = price.Truncate(options.PriceFix);
                                 qty = qty.Truncate(options.QtyFix);
-                                
+
                                 var total = Math.Round(price * qty, 8);
 
                                 if (bot.Side == OrderSide.BUY && quoteBalance > total)

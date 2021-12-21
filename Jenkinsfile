@@ -28,8 +28,7 @@ pipeline {
         stage('multexbot') {
           steps {
             script {
-              sh "chmod u+x /root/multex_bot/app/multexbot.yml"
-              sh "docker stack deploy -c /root/multex_bot/app/multexbot.yml multexbot --with-registry-auth"
+              sh "sudo docker stack deploy -c /root/multex_bot/app/multexbot.yml multexbot --with-registry-auth"
             }
           }
         }
