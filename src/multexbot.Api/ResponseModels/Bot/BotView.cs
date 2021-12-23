@@ -15,6 +15,10 @@ namespace multexbot.Api.Models.Bot
             Id = bot.Id;
             Guid = bot.Guid;
             UserId = bot.UserId;
+            Base = bot.Base;
+            Quote = bot.Quote;
+            Symbol = bot.Symbol;
+            Side = bot.Side;
             Email = bot.Email;
             Name = bot.Name;
             ExchangeType = bot.ExchangeType;
@@ -34,8 +38,16 @@ namespace multexbot.Api.Models.Bot
         public string Email { get; set; }
 
         public string Name { get; set; }
+        
+        public string Base { get; set; }
+        
+        public string Quote { get; set; }
+        
+        public string Symbol { get; set; }
 
         public ExchangeType ExchangeType { get; set; }
+        
+        public OrderSide Side { get; set; }
 
         public string ApiKey { get; set; }
 
@@ -48,6 +60,8 @@ namespace multexbot.Api.Models.Bot
         //Json Serialize of BotOption
         public BotOption Options { get; set; }
         
-        public List<PriceOptionView> PriceOptions { get; set; }
+        public decimal BaseBalance { get; set; }
+        
+        public decimal QuoteBalance { get; set; }
     }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -52,19 +53,19 @@ namespace multexbot.Api.Services
             if (exchangeType.HasValue)
             {
                 bots = (await dbConnection.QueryAsync<BotDto>(
-                   "SELECT * FROM Bots WHERE UserId = @UserId AND ExchangeType = @ExchangeType", new
-                   {
-                       UserId = user.Id,
-                       ExchangeType = exchangeType
-                   })).ToList();
+                    "SELECT * FROM Bots WHERE UserId = @UserId AND ExchangeType = @ExchangeType", new
+                    {
+                        UserId = user.Id,
+                        ExchangeType = exchangeType
+                    })).ToList();
             }
             else
             {
                 bots = (await dbConnection.QueryAsync<BotDto>(
-                   "SELECT * FROM Bots WHERE UserId = @UserId", new
-                   {
-                       UserId = user.Id
-                   })).ToList();
+                    "SELECT * FROM Bots WHERE UserId = @UserId", new
+                    {
+                        UserId = user.Id
+                    })).ToList();
             }
 
             if (!bots.Any())
@@ -73,6 +74,40 @@ namespace multexbot.Api.Services
             return bots.Select(bot =>
             {
                 var botView = new BotView(bot);
+
+                #region Balance
+
+                try
+                {
+                    BaseExchangeClient client = bot.ExchangeType switch
+                    {
+                        ExchangeType.UPBIT => new FlataExchangeClient(Configurations.FlataUrl, bot.ApiKey,
+                            bot.SecretKey.Decrypt(Configurations.HashKey)),
+                        ExchangeType.SPEXCHANGE => new SpExchangeClient(Configurations.SpExchangeUrl, bot.ApiKey,
+                            bot.SecretKey.Decrypt(Configurations.HashKey)),
+                        ExchangeType.FLATA => new UpbitExchangeClient(Configurations.UpbitUrl, bot.ApiKey,
+                            bot.SecretKey.Decrypt(Configurations.HashKey)),
+                        _ => throw new ArgumentOutOfRangeException()
+                    };
+
+                    var balances = client.GetFunds(new string[] {bot.Base, bot.Quote}).Result;
+
+                    if (balances.TryGetValue(bot.Base, out var baseBalance))
+                    {
+                        botView.BaseBalance = baseBalance;
+                    }
+
+                    if (balances.TryGetValue(bot.Quote, out var quoteBalance))
+                    {
+                        botView.QuoteBalance = quoteBalance;
+                    }
+                }
+                catch (Exception e)
+                {
+                    return botView;
+                }
+
+                #endregion
 
                 return botView;
             }).ToList();
@@ -91,39 +126,19 @@ namespace multexbot.Api.Services
 
             #region Get Price
 
-            switch (bot.ExchangeType)
+            BaseExchangeClient client = bot.ExchangeType switch
             {
-                case ExchangeType.UPBIT:
-                {
-                    var client = new UpbitExchangeClient(Configurations.UpbitUrl, bot.ApiKey,
-                        bot.SecretKey.Decrypt(Configurations.HashKey));
+                ExchangeType.UPBIT => new FlataExchangeClient(Configurations.FlataUrl, bot.ApiKey,
+                    bot.SecretKey.Decrypt(Configurations.HashKey)),
+                ExchangeType.SPEXCHANGE => new SpExchangeClient(Configurations.SpExchangeUrl, bot.ApiKey,
+                    bot.SecretKey.Decrypt(Configurations.HashKey)),
+                ExchangeType.FLATA => new UpbitExchangeClient(Configurations.UpbitUrl, bot.ApiKey,
+                    bot.SecretKey.Decrypt(Configurations.HashKey)),
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
-                    (bot.LastPrice, bot.LastPriceUsd, bot.OpenPrice) =
-                        await client.GetMarket(bot.Base, bot.Quote);
-
-                    break;
-                }
-                case ExchangeType.FLATA:
-                {
-                    var client = new FlataExchangeClient(Configurations.FlataUrl, bot.ApiKey,
-                        bot.SecretKey.Decrypt(Configurations.HashKey));
-
-                    (bot.LastPrice, bot.LastPriceUsd, bot.OpenPrice) =
-                        await client.GetMarket(bot.Base, bot.Quote);
-
-                    break;
-                }
-                case ExchangeType.SPEXCHANGE:
-                {
-                    var client = new SpExchangeClient(Configurations.SpExchangeUrl, bot.ApiKey,
-                        bot.SecretKey.Decrypt(Configurations.HashKey));
-
-                    (bot.LastPrice, bot.LastPriceUsd, bot.OpenPrice) =
-                        await client.GetMarket(bot.Base, bot.Quote);
-
-                    break;
-                }
-            }
+            (bot.LastPrice, bot.LastPriceUsd, bot.OpenPrice) =
+                await client.GetMarket(bot.Base, bot.Quote);
 
             #endregion
 
@@ -159,7 +174,7 @@ namespace multexbot.Api.Services
 
                 var bot = new BotDto(request, user);
 
-                int exec=0;
+                int exec = 0;
 
                 if (request.IsApiKeyChange)
                 {
@@ -179,7 +194,7 @@ namespace multexbot.Api.Services
                 if (exec == 0)
                     throw new AppException(AppError.UNKNOWN, "Update Bot fail");
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 Log.Error(e, "Update Bot fail");
                 throw new AppException(AppError.UNKNOWN, "Update Bot fail");
