@@ -1,8 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Data.Common;
-using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -147,7 +145,7 @@ namespace multexbot.Api.Services
 
             var exec = await sqlConnection.ExecuteAsync(
                 @"INSERT INTO Bots(`Guid`,UserId,Email,`Name`,ExchangeType,ApiKey,SecretKey,Symbol,Base,Quote,Side,IsActive,LastExecute,NextTime,LastPrice,LastPriceUsd,Options,RootId)
-                    VALUES(@Guid,@UserId,@Email,@Name,@ExchangeType,@ApiKey,@SecretKey,@Symbol,@Base,@Quote,@Side,@IsActive,@LastExecute,@NextTime,@LastPrice,@LastPriceUsd,@Options,RootId)",
+                    VALUES(@Guid,@UserId,@Email,@Name,@ExchangeType,@ApiKey,@SecretKey,@Symbol,@Base,@Quote,@Side,@IsActive,@LastExecute,@NextTime,@LastPrice,@LastPriceUsd,@Options,@RootId)",
                 bot);
 
             if (exec == 0)
@@ -297,71 +295,29 @@ namespace multexbot.Api.Services
 
             foreach (var order in orders)
             {
-                BaseExchangeClient client;
-
                 tasks.Add(Task.Run(async () =>
                 {
-                    switch (order.ExchangeType)
+                    BaseExchangeClient client = order.ExchangeType switch
                     {
-                        case ExchangeType.UPBIT:
-                        {
-                            client = new UpbitExchangeClient(Configurations.UpbitUrl, order.ApiKey,
-                                order.SecretKey.Decrypt(Configurations.HashKey));
+                        ExchangeType.FLATA => new FlataExchangeClient(Configurations.FlataUrl, order.ApiKey,
+                            order.SecretKey.Decrypt(Configurations.HashKey)),
+                        ExchangeType.SPEXCHANGE => new SpExchangeClient(Configurations.SpExchangeUrl, order.ApiKey,
+                            order.SecretKey.Decrypt(Configurations.HashKey)),
+                        ExchangeType.UPBIT => new UpbitExchangeClient(Configurations.UpbitUrl, order.ApiKey,
+                            order.SecretKey.Decrypt(Configurations.HashKey)),
+                        _ => throw new ArgumentOutOfRangeException()
+                    };
 
-                            if (await client.Cancel(order.ExternalId.ToString(), null))
-                            {
-                                Log.Information("Bot cancel order {0} {1} {2}", nameof(UpbitExchangeClient), order.Id,
-                                    order.ExternalId);
-                            }
-                            else
-                            {
-                                Log.Information("Bot cancel order fail {0} {1} {2}", nameof(UpbitExchangeClient),
-                                    order.Id,
-                                    order.ExternalId);
-                            }
-
-                            break;
-                        }
-                        case ExchangeType.FLATA:
-                        {
-                            client = new FlataExchangeClient(Configurations.FlataUrl, order.ApiKey,
-                                order.SecretKey.Decrypt(Configurations.HashKey));
-
-
-                            if (await client.Cancel(order.ExternalId.ToString(), null))
-                            {
-                                Log.Information("Bot cancel order {0} {1} {2}", nameof(UpbitExchangeClient), order.Id,
-                                    order.ExternalId);
-                            }
-                            else
-                            {
-                                Log.Information("Bot cancel order fail {0} {1} {2}", nameof(UpbitExchangeClient),
-                                    order.Id,
-                                    order.ExternalId);
-                            }
-
-                            break;
-                        }
-                        case ExchangeType.SPEXCHANGE:
-                        {
-                            client = new SpExchangeClient(Configurations.SpExchangeUrl, order.ApiKey,
-                                order.SecretKey.Decrypt(Configurations.HashKey));
-
-
-                            if (await client.Cancel(order.ExternalId.ToString(), null))
-                            {
-                                Log.Information("Bot cancel order {0} {1} {2}", nameof(UpbitExchangeClient), order.Id,
-                                    order.ExternalId);
-                            }
-                            else
-                            {
-                                Log.Information("Bot cancel order fail {0} {1} {2}", nameof(UpbitExchangeClient),
-                                    order.Id,
-                                    order.ExternalId);
-                            }
-
-                            break;
-                        }
+                    if (await client.Cancel(order.ExternalId.ToString(), null))
+                    {
+                        Log.Information("Bot cancel order {0} {1} {2} {3}", nameof(BaseExchangeClient), order.ExchangeType, order.Id,
+                            order.ExternalId);
+                    }
+                    else
+                    {
+                        Log.Information("Bot cancel order fail {0} {1} {2} {3}", nameof(BaseExchangeClient), order.ExchangeType,
+                            order.Id,
+                            order.ExternalId);
                     }
                 }));
             }
@@ -404,7 +360,8 @@ namespace multexbot.Api.Services
                 {
                     ExchangeType.FLATA => Configurations.FlataUrl,
                     ExchangeType.UPBIT => Configurations.UpbitUrl,
-                    _ => Configurations.SpExchangeUrl
+                    ExchangeType.SPEXCHANGE => Configurations.SpExchangeUrl,
+                    _ => throw new ArgumentOutOfRangeException()
                 };
 
                 var client = (T) Activator.CreateInstance(typeof(T), url, bot.ApiKey,

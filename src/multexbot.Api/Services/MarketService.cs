@@ -1,15 +1,19 @@
 using System;
+using System.Data;
+using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using multexbot.Api.Constants;
 using multexbot.Api.Infrastructure;
 using multexbot.Api.Infrastructure.OpenExchangeRates;
+using multexbot.Api.Models.Bot;
 using multexbot.Api.Models.Market;
 using multexbot.Api.Services.Interface;
 using MySqlConnector;
+using Newtonsoft.Json;
 using Serilog;
 using sp.Core.Exchange;
-using sp.Core.Models;
+using sp.Core.Extensions;
 using sp.Core.Utils;
 
 namespace multexbot.Api.Services
@@ -17,14 +21,16 @@ namespace multexbot.Api.Services
     public class MarketService : IMarketService
     {
         private readonly BinanceExchange _binanceExchange;
-        
-        public MarketService(){}
+
+        public MarketService()
+        {
+        }
 
         public MarketService(BinanceExchange binanceExchange)
         {
             _binanceExchange = binanceExchange;
         }
-        
+
         #region Sys
 
         public async Task<MarketDto> SysGet(string coin)
@@ -39,12 +45,12 @@ namespace multexbot.Api.Services
                 });
 
             return market;
-        }        
+        }
 
         public async Task SysUpdatePrice()
         {
             var now = AppUtils.NowMilis();
-            
+
             await using var sqlConnection = new MySqlConnection(Configurations.DbConnectionString);
             await sqlConnection.OpenAsync();
 
@@ -60,7 +66,7 @@ namespace multexbot.Api.Services
                 try
                 {
                     var price = 0m;
-                    
+
                     if (market.Coin == MultexBotConstants.KrwCoin)
                     {
                         //Follow OpenExchangeRates Get KRW
@@ -71,7 +77,7 @@ namespace multexbot.Api.Services
                         //Follow Binance
                         price = await _binanceExchange.GetUsdPrice(market.Coin);
                     }
-                    
+
                     if (price == 0)
                     {
                         if (market.PriceUpdatedTime < AppUtils.NowMilis() -
@@ -84,10 +90,13 @@ namespace multexbot.Api.Services
 
                     market.PriceUpdatedTime = now;
                     market.UsdPrice = price;
-                    
+
                     await sqlConnection.ExecuteAsync(
                         @"UPDATE Markets SET UsdPrice = @UsdPrice, PriceUpdatedTime = @PriceUpdatedTime WHERE Coin = @Coin",
                         market);
+
+                    //Update Following Bot when price is change
+                    await UpdateFollowingBot(market, sqlConnection);
                 }
                 catch (Exception e)
                 {
@@ -95,17 +104,172 @@ namespace multexbot.Api.Services
                 }
             }
         }
-        
+
         #endregion
 
         #region Private
 
-        private void Filter(SqlBuilder builder, TableRequest request)
+        private async Task UpdateFollowingBot(MarketDto market, IDbConnection dbConnection)
         {
-            if (request.Filters.TryGetValue("coin", out var coin) && !string.IsNullOrEmpty(coin))
+            var bots = (await dbConnection.QueryAsync<BotDto>(
+                    "SELECT * FROM Bots WHERE Quote = @Quote",
+                    new
+                    {
+                        Quote = market.Coin
+                    }))
+                .ToList();
+
+            var followingBots = bots.Where(x => x.RootId.HasValue).ToList();
+
+            var rootBots = bots.Where(x => !x.RootId.HasValue).ToList();
+
+            #region Update By Root Bot
+
+            foreach (var followingBot in followingBots)
             {
-                builder.Where("m.Coin = @Coin", new {Coin = coin});
+                try
+                {
+                    var rootBot = await dbConnection.QueryFirstOrDefaultAsync<BotDto>(
+                        "SELECT * FROM Bots WHERE Id = @Id",
+                        new
+                        {
+                            Id = followingBot.RootId
+                        });
+
+                    if (rootBot == null)
+                    {
+                        Log.Error("MultexBot UpdateFollowingBot: Root Bot is null");
+                        continue;
+                    }
+
+                    //Quote of Root Bot or Quote and Following Bot is not follow market
+                    if (followingBot.Quote != market.Coin && rootBot.Quote != market.Coin)
+                        continue;
+
+                    if (rootBot.Base != followingBot.Base)
+                    {
+                        Log.Error("MultexBot UpdateFollowingBot: Base of Root Bot is wrong");
+                        continue;
+                    }
+
+                    await Update(rootBot, followingBot, dbConnection);
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e, $"UpdateFollowingBot by followingBotId={followingBot.Id}");
+                }
             }
+
+            #endregion
+
+            #region Update By Following Bot
+
+            foreach (var rootBot in rootBots)
+            {
+                try
+                {
+                    var followingBot = await dbConnection.QueryFirstOrDefaultAsync<BotDto>(
+                        "SELECT * FROM Bots WHERE RootId = @RootId",
+                        new
+                        {
+                            RootId = rootBot.Id
+                        });
+
+                    if (followingBot == null)
+                    {
+                        Log.Error("MultexBot UpdateFollowingBot: Root Bot is null");
+                        continue;
+                    }
+
+                    if (rootBot.Base != followingBot.Base)
+                    {
+                        Log.Error("MultexBot UpdateFollowingBot: Base of Root Bot is wrong");
+                        continue;
+                    }
+
+                    //Quote of Root Bot or Quote and Following Bot is not follow market
+                    if (followingBot.Quote != market.Coin && rootBot.Quote != market.Coin)
+                        continue;
+
+                    await Update(rootBot, followingBot, dbConnection);
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e, $"UpdateFollowingBot by rootBotId={rootBot.Id}");
+                }
+            }
+
+            #endregion
+        }
+
+        private async Task Update(BotDto rootBot, BotDto followingBot, IDbConnection dbConnection)
+        {
+            var options = JsonConvert.DeserializeObject<BotOption>(rootBot.Options);
+
+            //Quote of Root Bot is stable coin
+            if (followingBot.Quote != rootBot.Quote)
+            {
+                var followQuoteUsdPrice = 1m;
+                var rootQuoteUsdPrice = 1m;
+
+                if (!MultexBotConstants.StableCoins.Contains(followingBot.Quote))
+                {
+                    //Market for following bot
+                    var followMarket = await SysGet(followingBot.Quote);
+
+                    if (followMarket == null)
+                    {
+                        Log.Error("MultexBot UpdateFollowingBot: {followMarket.Coin}/USDT 0");
+                        return;
+                    }
+
+                    if (followMarket.UsdPrice == 0)
+                    {
+                        Log.Error("MultexBot UpdateFollowingBot: {followMarket.Coin}/USDT 0");
+                        return;
+                    }
+
+                    followQuoteUsdPrice = followMarket.UsdPrice;
+                }
+
+                if (!MultexBotConstants.StableCoins.Contains(rootBot.Quote))
+                {
+                    //Market for root bot
+                    var rootMarket = await SysGet(rootBot.Quote);
+
+                    if (rootMarket == null)
+                    {
+                        Log.Error("MultexBot UpdateFollowingBot: {rootMarket.Coin}/USDT 0");
+                        return;
+                    }
+
+                    if (rootMarket.UsdPrice == 0)
+                    {
+                        Log.Error("MultexBot UpdateFollowingBot: {rootMarket.Coin}/USDT 0");
+                        return;
+                    }
+
+                    rootQuoteUsdPrice = rootMarket.UsdPrice;
+                }
+
+                options.BasePrice =
+                    (options.BasePrice / followQuoteUsdPrice / rootQuoteUsdPrice).Truncate(options.PriceFix);
+                options.FollowBtcBasePrice =
+                    (options.FollowBtcBasePrice / followQuoteUsdPrice / rootQuoteUsdPrice).Truncate(options.PriceFix);
+                options.MinStopPrice =
+                    (options.MinStopPrice / followQuoteUsdPrice / rootQuoteUsdPrice).Truncate(options.PriceFix);
+                options.MaxStopPrice =
+                    (options.MaxStopPrice / followQuoteUsdPrice / rootQuoteUsdPrice).Truncate(options.PriceFix);
+            }
+
+            followingBot.Options = JsonConvert.SerializeObject(options);
+
+            var exec = await dbConnection.ExecuteAsync(
+                "UPDATE Bots SET Options = @Options WHERE Id = @Id AND UserId = @UserId",
+                followingBot);
+
+            if (exec == 0)
+                Log.Error($"UpdateFollowingBot botId={followingBot.Id}");
         }
 
         #endregion
