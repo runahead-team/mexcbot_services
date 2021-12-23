@@ -34,8 +34,8 @@ namespace multexbot.Api
             services.AddSingleton<IMarketService, MarketService>();
 
             //Job
-            //services.AddHostedService<BotJob>();
-            //services.AddHostedService<UpdatePriceJob>();
+            services.AddHostedService<BotJob>();
+            services.AddHostedService<UpdatePriceJob>();
         }
     }
 }

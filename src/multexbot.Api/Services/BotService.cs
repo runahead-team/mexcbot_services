@@ -49,7 +49,7 @@ namespace multexbot.Api.Services
 
             var bots = new List<BotDto>();
 
-            if (!exchangeType.HasValue)
+            if (exchangeType.HasValue)
             {
                 bots = (await dbConnection.QueryAsync<BotDto>(
                    "SELECT * FROM Bots WHERE UserId = @UserId AND ExchangeType = @ExchangeType", new
