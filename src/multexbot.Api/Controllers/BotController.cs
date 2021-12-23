@@ -21,7 +21,7 @@ namespace multexbot.Api.Controllers
         }
 
         [HttpGet("list")]
-        public async Task<OkResponse> GetList([FromQuery] ExchangeType exchangeType)
+        public async Task<OkResponse> GetList([FromQuery] ExchangeType? exchangeType)
         {
             var result = await _botService.GetList(exchangeType, CurrentUser(true));
 

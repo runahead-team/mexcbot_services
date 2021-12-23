@@ -1,5 +1,7 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
+using System.Data.Common;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -40,17 +42,33 @@ namespace multexbot.Api.Services
             _marketService = marketService;
         }
 
-        public async Task<List<BotView>> GetList(ExchangeType exchangeType, AppUser user)
+        public async Task<List<BotView>> GetList(ExchangeType? exchangeType, AppUser user)
         {
             await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
             await dbConnection.OpenAsync();
 
-            var bots = (await dbConnection.QueryAsync<BotDto>(
-                "SELECT * FROM Bots WHERE UserId = @UserId AND ExchangeType = @ExchangeType", new
-                {
-                    UserId = user.Id,
-                    ExchangeType = exchangeType
-                })).ToList();
+            var bots = new List<BotDto>();
+
+            if (!exchangeType.HasValue)
+            {
+                bots = (await dbConnection.QueryAsync<BotDto>(
+                   "SELECT * FROM Bots WHERE UserId = @UserId AND ExchangeType = @ExchangeType", new
+                   {
+                       UserId = user.Id,
+                       ExchangeType = exchangeType
+                   })).ToList();
+            }
+            else
+            {
+                bots = (await dbConnection.QueryAsync<BotDto>(
+                   "SELECT * FROM Bots WHERE UserId = @UserId", new
+                   {
+                       UserId = user.Id
+                   })).ToList();
+            }
+
+            if (!bots.Any())
+                return new List<BotView>();
 
             return bots.Select(bot =>
             {
@@ -65,51 +83,8 @@ namespace multexbot.Api.Services
             await using var sqlConnection = new MySqlConnection(Configurations.DbConnectionString);
             await sqlConnection.OpenAsync();
 
-            #region Follow Root Bot
-
             if (request.RootId.HasValue)
-            {
-                var rootBot = await sqlConnection.QueryFirstOrDefaultAsync<BotDto>(
-                    "SELECT * FROM Bots WHERE Id = @Id",
-                    new
-                    {
-                        Id = request.RootId
-                    });
-
-                if (rootBot == null)
-                    throw new AppException(AppError.UNKNOWN, "Root Bot is null");
-
-                if (rootBot.Base != request.Base)
-                    throw new AppException(AppError.UNKNOWN, "Base of Bot is wrong");
-
-                var options = JsonConvert.DeserializeObject<BotOption>(rootBot.Options);
-                
-                if (!MultexBotConstants.StableCoins.Contains(request.Quote))
-                {
-                    var market = await _marketService.SysGet(request.Quote);
-
-                    if (market == null)
-                        throw new AppException(AppError.MARKET_IS_NOT_EXIST);
-
-                    if (market.UsdPrice == 0)
-                        throw new AppException(AppError.UNKNOWN, $"MultexBot {market.Coin}/USDT 0");
-
-                    options.BasePrice /= market.UsdPrice;
-                    options.MaxPriceStep /= market.UsdPrice;
-                    options.MinPriceStep /= market.UsdPrice;
-                    options.FollowBtcBasePrice /= market.UsdPrice;
-                }
-
-                request.Options.BasePrice = options.BasePrice;
-                request.Options.FollowBtc = options.FollowBtc;
-                request.Options.FollowBtcBasePrice = options.FollowBtcBasePrice;
-                request.Options.FollowBtcBtcPrice = options.FollowBtcBtcPrice;
-                request.Options.LastPrice = options.LastPrice;
-                request.Options.MaxPriceStep = options.MaxPriceStep;
-                request.Options.MinPriceStep = options.MinPriceStep;
-            }
-
-            #endregion
+                request = await FollowRootBot(request, sqlConnection);
 
             var bot = new BotDto(request, user);
             bot.SecretKey = bot.SecretKey.Encrypt(Configurations.HashKey);
@@ -174,30 +149,41 @@ namespace multexbot.Api.Services
 
         public async Task Update(BotUpsertRequest request, AppUser user)
         {
-            await using var sqlConnection = new MySqlConnection(Configurations.DbConnectionString);
-            await sqlConnection.OpenAsync();
-
-            var bot = new BotDto(request, user);
-
-            int exec;
-
-            if (request.IsApiKeyChange)
+            try
             {
-                bot.SecretKey = bot.SecretKey.Encrypt(Configurations.HashKey);
+                await using var sqlConnection = new MySqlConnection(Configurations.DbConnectionString);
+                await sqlConnection.OpenAsync();
 
-                exec = await sqlConnection.ExecuteAsync(
-                    @"UPDATE Bots SET Name = @Name, Base = @Base, Quote = @Quote, ApiKey = @ApiKey, SecretKey = @SecretKey, Side = @Side, IsActive = @IsActive, Options = @Options WHERE Id = @Id AND UserId = @UserId",
-                    bot);
+                if (request.RootId.HasValue)
+                    request = await FollowRootBot(request, sqlConnection);
+
+                var bot = new BotDto(request, user);
+
+                int exec=0;
+
+                if (request.IsApiKeyChange)
+                {
+                    bot.SecretKey = bot.SecretKey.Encrypt(Configurations.HashKey);
+
+                    exec = await sqlConnection.ExecuteAsync(
+                        @"UPDATE Bots SET Name = @Name, RootId = @RootId, Base = @Base, Quote = @Quote, ApiKey = @ApiKey, SecretKey = @SecretKey, Side = @Side, IsActive = @IsActive, Options = @Options WHERE Id = @Id AND UserId = @UserId",
+                        bot);
+                }
+                else
+                {
+                    exec = await sqlConnection.ExecuteAsync(
+                        @"UPDATE Bots SET Name = @Name, RootId = @RootId, Base = @Base, Quote = @Quote, Side = @Side, IsActive = @IsActive, Options = @Options WHERE Id = @Id AND UserId = @UserId",
+                        bot);
+                }
+
+                if (exec == 0)
+                    throw new AppException(AppError.UNKNOWN, "Update Bot fail");
             }
-            else
+            catch(Exception e)
             {
-                exec = await sqlConnection.ExecuteAsync(
-                    @"UPDATE Bots SET Name = @Name, Base = @Base, Quote = @Quote, Side = @Side, IsActive = @IsActive, Options = @Options WHERE Id = @Id AND UserId = @UserId",
-                    bot);
-            }
-
-            if (exec == 0)
+                Log.Error(e, "Update Bot fail");
                 throw new AppException(AppError.UNKNOWN, "Update Bot fail");
+            }
         }
 
         public async Task Delete(long id, AppUser user)
@@ -398,9 +384,12 @@ namespace multexbot.Api.Services
 
                 Log.Information("BOT {0} run", bot.Symbol);
 
-                var url = bot.ExchangeType == ExchangeType.FLATA ? Configurations.FlataUrl
-                    : bot.ExchangeType == ExchangeType.UPBIT ? Configurations.UpbitUrl
-                    : Configurations.SpExchangeUrl;
+                var url = bot.ExchangeType switch
+                {
+                    ExchangeType.FLATA => Configurations.FlataUrl,
+                    ExchangeType.UPBIT => Configurations.UpbitUrl,
+                    _ => Configurations.SpExchangeUrl
+                };
 
                 var client = (T) Activator.CreateInstance(typeof(T), url, bot.ApiKey,
                     bot.SecretKey.Decrypt(Configurations.HashKey));
@@ -834,6 +823,76 @@ namespace multexbot.Api.Services
             }
 
             return (decimal) new Random().Next((int) (from * round), (int) (to * round)) / round;
+        }
+
+        private async Task<BotUpsertRequest> FollowRootBot(BotUpsertRequest request, IDbConnection sqlConnection)
+        {
+            var rootBot = await sqlConnection.QueryFirstOrDefaultAsync<BotDto>(
+                "SELECT * FROM Bots WHERE Id = @Id",
+                new
+                {
+                    Id = request.RootId
+                });
+
+            if (rootBot == null)
+                throw new AppException(AppError.UNKNOWN, "Root Bot is null");
+
+            if (rootBot.Base != request.Base)
+                throw new AppException(AppError.UNKNOWN, "Base of Root Bot is wrong");
+
+            var options = JsonConvert.DeserializeObject<BotOption>(rootBot.Options);
+
+            //Quote of Root Bot is stable coin
+            if (request.Quote != rootBot.Quote)
+            {
+                var followQuoteUsdPrice = 1m;
+                var rootQuoteUsdPrice = 1m;
+
+                if (!MultexBotConstants.StableCoins.Contains(request.Quote))
+                {
+                    //Market for following bot
+                    var followMarket = await _marketService.SysGet(request.Quote);
+
+                    if (followMarket == null)
+                        throw new AppException(AppError.MARKET_IS_NOT_EXIST);
+
+                    if (followMarket.UsdPrice == 0)
+                        throw new AppException(AppError.UNKNOWN, $"MultexBot {followMarket.Coin}/USDT 0");
+
+                    followQuoteUsdPrice = followMarket.UsdPrice;
+                }
+
+                if (!MultexBotConstants.StableCoins.Contains(rootBot.Quote))
+                {
+                    //Market for root bot
+                    var rootMarket = await _marketService.SysGet(rootBot.Quote);
+
+                    if (rootMarket == null)
+                        throw new AppException(AppError.MARKET_IS_NOT_EXIST);
+
+                    if (rootMarket.UsdPrice == 0)
+                        throw new AppException(AppError.UNKNOWN, $"MultexBot {rootMarket.Coin}/USDT 0");
+
+                    rootQuoteUsdPrice = rootMarket.UsdPrice;
+                }
+
+                options.BasePrice /= (followQuoteUsdPrice / rootQuoteUsdPrice);
+                options.FollowBtcBasePrice /= (followQuoteUsdPrice / rootQuoteUsdPrice);
+                options.MinStopPrice /= (followQuoteUsdPrice / rootQuoteUsdPrice);
+                options.MaxStopPrice /= (followQuoteUsdPrice / rootQuoteUsdPrice);
+            }
+
+            request.Options.BasePrice = options.BasePrice.Truncate(options.PriceFix);
+            request.Options.FollowBtc = options.FollowBtc;
+            request.Options.FollowBtcBasePrice = options.FollowBtcBasePrice.Truncate(options.PriceFix);
+            request.Options.FollowBtcBtcPrice = options.FollowBtcBtcPrice;
+            request.Options.LastPrice = options.LastPrice;
+            request.Options.MaxPriceStep = options.MaxPriceStep;
+            request.Options.MinPriceStep = options.MinPriceStep;
+            request.Options.MinStopPrice = options.MinStopPrice.Truncate(options.PriceFix);
+            request.Options.MaxStopPrice = options.MaxStopPrice.Truncate(options.PriceFix);
+
+            return request;
         }
 
         #endregion

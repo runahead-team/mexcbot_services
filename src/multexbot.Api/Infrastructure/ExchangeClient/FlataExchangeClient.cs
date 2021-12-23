@@ -48,7 +48,7 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
 
             var ticker = response.ticker;
 
-            return (ticker.current, ticker.current, ticker.current);
+            return (ticker.current, 0, 0);
         }
 
         public override async Task<OrderDto> CreateLimitOrder(string @base, string quote, decimal amount, decimal price,
