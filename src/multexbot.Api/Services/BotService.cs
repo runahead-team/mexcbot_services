@@ -81,11 +81,11 @@ namespace multexbot.Api.Services
                 {
                     BaseExchangeClient client = bot.ExchangeType switch
                     {
-                        ExchangeType.UPBIT => new FlataExchangeClient(Configurations.FlataUrl, bot.ApiKey,
+                        ExchangeType.FLATA => new FlataExchangeClient(Configurations.FlataUrl, bot.ApiKey,
                             bot.SecretKey.Decrypt(Configurations.HashKey)),
                         ExchangeType.SPEXCHANGE => new SpExchangeClient(Configurations.SpExchangeUrl, bot.ApiKey,
                             bot.SecretKey.Decrypt(Configurations.HashKey)),
-                        ExchangeType.FLATA => new UpbitExchangeClient(Configurations.UpbitUrl, bot.ApiKey,
+                        ExchangeType.UPBIT => new UpbitExchangeClient(Configurations.UpbitUrl, bot.ApiKey,
                             bot.SecretKey.Decrypt(Configurations.HashKey)),
                         _ => throw new ArgumentOutOfRangeException()
                     };
@@ -102,7 +102,7 @@ namespace multexbot.Api.Services
                         botView.QuoteBalance = quoteBalance;
                     }
                 }
-                catch (Exception e)
+                catch (Exception)
                 {
                     return botView;
                 }
@@ -110,6 +110,7 @@ namespace multexbot.Api.Services
                 #endregion
 
                 return botView;
+
             }).ToList();
         }
 
