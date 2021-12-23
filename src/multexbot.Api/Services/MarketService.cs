@@ -152,7 +152,7 @@ namespace multexbot.Api.Services
                         continue;
                     }
 
-                    await Update(rootBot, followingBot, dbConnection);
+                    await UpdateDatabase(rootBot, followingBot, dbConnection);
                 }
                 catch (Exception e)
                 {
@@ -191,7 +191,7 @@ namespace multexbot.Api.Services
                     if (followingBot.Quote != market.Coin && rootBot.Quote != market.Coin)
                         continue;
 
-                    await Update(rootBot, followingBot, dbConnection);
+                    await UpdateDatabase(rootBot, followingBot, dbConnection);
                 }
                 catch (Exception e)
                 {
@@ -202,7 +202,7 @@ namespace multexbot.Api.Services
             #endregion
         }
 
-        private async Task Update(BotDto rootBot, BotDto followingBot, IDbConnection dbConnection)
+        private async Task UpdateDatabase(BotDto rootBot, BotDto followingBot, IDbConnection dbConnection)
         {
             var options = JsonConvert.DeserializeObject<BotOption>(rootBot.Options);
 
