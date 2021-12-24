@@ -164,6 +164,8 @@ namespace multexbot.Api.Services
         {
             try
             {
+                int exec = 0;
+
                 await using var sqlConnection = new MySqlConnection(Configurations.DbConnectionString);
                 await sqlConnection.OpenAsync();
 
@@ -178,12 +180,11 @@ namespace multexbot.Api.Services
                 if (oldBot.RootId != request.RootId)
                     throw new AppException(AppError.UNKNOWN, "Can not update root");
 
+                //Bot is a following bot
                 if (oldBot.RootId.HasValue)
                     request = await FollowRootBot(request, sqlConnection);
 
                 var bot = new BotDto(request, user);
-
-                int exec = 0;
 
                 if (request.IsApiKeyChange)
                 {
@@ -202,6 +203,26 @@ namespace multexbot.Api.Services
 
                 if (exec == 0)
                     throw new AppException(AppError.UNKNOWN, "Update Bot fail");
+
+                //Bot is a root bot so update following bot
+                if (!oldBot.RootId.HasValue)
+                {
+                    try
+                    {
+                        exec = await sqlConnection.ExecuteAsync(
+                            @"UPDATE Bots SET Options = @Options WHERE RootId = @RootId AND UserId = @UserId",
+                            new
+                            {
+                                Options = JsonConvert.SerializeObject(request.Options),
+                                RootId = bot.Id,
+                                UserId = bot.UserId
+                            });
+                    }
+                    catch (Exception e)
+                    {
+                        Log.Error(e, $"Update following bots by rootId={bot.Id} fail");
+                    }
+                }
             }
             catch (Exception e)
             {
