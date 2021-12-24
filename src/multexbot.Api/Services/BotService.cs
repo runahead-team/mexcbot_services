@@ -246,9 +246,11 @@ namespace multexbot.Api.Services
                             newRequest.Options.MaxStopPrice = request.Options.MaxStopPrice;
 
                             #endregion
-
+                            Log.Error($"[Console] Before {JsonConvert.SerializeObject(newRequest)}");
+                            
                             newRequest = await FollowRootBot(newRequest, sqlConnection);
-                            Log.Error($"[Console] {JsonConvert.SerializeObject(newRequest)}");
+                            
+                            Log.Error($"[Console] After {JsonConvert.SerializeObject(newRequest)}");
 
                             exec = await sqlConnection.ExecuteAsync(
                                 @"UPDATE Bots SET Options = @Options WHERE Id = @Id AND UserId = @UserId",
