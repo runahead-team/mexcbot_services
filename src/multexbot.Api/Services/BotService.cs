@@ -235,7 +235,12 @@ namespace multexbot.Api.Services
 
                             exec = await sqlConnection.ExecuteAsync(
                                 @"UPDATE Bots SET Options = @Options WHERE Id = @Id AND UserId = @UserId",
-                                newRequest);
+                                new
+                                {
+                                    Id = newRequest.Id,
+                                    UserId = newRequest.UserId,
+                                    Options = JsonConvert.SerializeObject(newRequest.Id),
+                                });
 
                             if (exec == 0)
                                 Log.Error(
@@ -243,7 +248,8 @@ namespace multexbot.Api.Services
                         }
                         catch (Exception e)
                         {
-                            Log.Error(e, $"Update following bots by id={followingBot.Id} rootId={followingBot.RootId} fail");
+                            Log.Error(e,
+                                $"Update following bots by id={followingBot.Id} rootId={followingBot.RootId} fail");
                         }
                     }
                 }
