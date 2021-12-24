@@ -27,6 +27,7 @@ namespace multexbot.Api.Models.Bot
             RootId = bot.RootId;
             IsActive = bot.IsActive;
             Options = JsonConvert.DeserializeObject<BotOption>(bot.Options);
+            Log = bot.Log;
         }
         
         public long Id { get; set; }
@@ -63,5 +64,7 @@ namespace multexbot.Api.Models.Bot
         public decimal BaseBalance { get; set; }
         
         public decimal QuoteBalance { get; set; }
+        
+        public string Log { get; set; }
     }
 }
