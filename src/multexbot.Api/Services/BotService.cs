@@ -246,11 +246,8 @@ namespace multexbot.Api.Services
                             newRequest.Options.MaxStopPrice = request.Options.MaxStopPrice;
 
                             #endregion
-                            Log.Error($"[Console] Before {JsonConvert.SerializeObject(newRequest)}");
                             
                             newRequest = await FollowRootBot(newRequest, sqlConnection);
-                            
-                            Log.Error($"[Console] After {JsonConvert.SerializeObject(newRequest)}");
 
                             exec = await sqlConnection.ExecuteAsync(
                                 @"UPDATE Bots SET Options = @Options WHERE Id = @Id AND UserId = @UserId",
@@ -920,8 +917,6 @@ namespace multexbot.Api.Services
                         throw new AppException(AppError.UNKNOWN, $"MultexBot {followMarket.Coin}/USDT 0");
 
                     followQuoteUsdPrice = followMarket.UsdPrice;
-                    
-                    Log.Error($"[Console] Price={followQuoteUsdPrice}");
                 }
 
                 if (!MultexBotConstants.StableCoins.Contains(rootBot.Quote))
@@ -940,9 +935,6 @@ namespace multexbot.Api.Services
 
                 options.BasePrice /= (followQuoteUsdPrice / rootQuoteUsdPrice);
                 options.FollowBtcBasePrice /= (followQuoteUsdPrice / rootQuoteUsdPrice);
-                
-                Log.Error($"[Console] FollowBtcBasePrice={options.FollowBtcBasePrice}");
-                
                 options.MinStopPrice /= (followQuoteUsdPrice / rootQuoteUsdPrice);
                 options.MaxStopPrice /= (followQuoteUsdPrice / rootQuoteUsdPrice);
             }
@@ -950,10 +942,6 @@ namespace multexbot.Api.Services
             request.Options.BasePrice = options.BasePrice.Truncate(options.PriceFix);
             request.Options.FollowBtc = options.FollowBtc;
             request.Options.FollowBtcBasePrice = options.FollowBtcBasePrice.Truncate(options.PriceFix);
-            
-            Log.Error($"[Console] request FollowBtcBasePrice={request.Options.FollowBtcBasePrice}");
-            
-            
             request.Options.FollowBtcBtcPrice = options.FollowBtcBtcPrice;
             request.Options.LastPrice = options.LastPrice;
             request.Options.MaxPriceStep = options.MaxPriceStep;
