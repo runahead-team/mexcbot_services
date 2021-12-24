@@ -57,6 +57,8 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
                     side = side.ToString("G"),
                     type = "LIMIT"
                 });
+            
+            Log.Error($"[Console] SNTKRW {response}");
 
             if (!success)
                 return null;
