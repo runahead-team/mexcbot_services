@@ -21,14 +21,20 @@ namespace multexbot.Api.Services
     public class MarketService : IMarketService
     {
         private readonly BinanceExchange _binanceExchange;
+        private readonly CoinbaseExchange _coinbaseExchange;
+        private readonly HoubiExchange _houbiExchange;
 
         public MarketService()
         {
         }
 
-        public MarketService(BinanceExchange binanceExchange)
+        public MarketService(BinanceExchange binanceExchange,
+            CoinbaseExchange coinbaseExchange,
+            HoubiExchange houbiExchange)
         {
             _binanceExchange = binanceExchange;
+            _coinbaseExchange = coinbaseExchange;
+            _houbiExchange = houbiExchange;
         }
 
         #region Sys
@@ -76,6 +82,12 @@ namespace multexbot.Api.Services
                     {
                         //Follow Binance
                         price = await _binanceExchange.GetUsdPrice(market.Coin);
+
+                        if (price <= 0)
+                            price = await _coinbaseExchange.GetUsdPrice(market.Coin);
+
+                        if (price <= 0)
+                            price = await _houbiExchange.GetUsdPrice(market.Coin);
                     }
 
                     if (price == 0)
@@ -83,7 +95,7 @@ namespace multexbot.Api.Services
                         if (market.PriceUpdatedTime < AppUtils.NowMilis() -
                             TimeSpan.FromSeconds(MultexBotConstants.UpdateUsdPriceInterval * 3).TotalMilliseconds)
                         {
-                            Log.Warning($"MultexBot {market.Coin}/USDT 0");
+                            Log.Warning($"MultexBot:SysUpdatePrice {market.Coin}/USDT 0");
                             continue;
                         }
                     }
