@@ -127,11 +127,11 @@ namespace multexbot.Api.Services
 
             BaseExchangeClient client = bot.ExchangeType switch
             {
-                ExchangeType.UPBIT => new FlataExchangeClient(Configurations.FlataUrl, bot.ApiKey,
+                ExchangeType.FLATA => new FlataExchangeClient(Configurations.FlataUrl, bot.ApiKey,
                     bot.SecretKey.Decrypt(Configurations.HashKey)),
                 ExchangeType.SPEXCHANGE => new SpExchangeClient(Configurations.SpExchangeUrl, bot.ApiKey,
                     bot.SecretKey.Decrypt(Configurations.HashKey)),
-                ExchangeType.FLATA => new UpbitExchangeClient(Configurations.UpbitUrl, bot.ApiKey,
+                ExchangeType.UPBIT => new UpbitExchangeClient(Configurations.UpbitUrl, bot.ApiKey,
                     bot.SecretKey.Decrypt(Configurations.HashKey)),
                 _ => throw new ArgumentOutOfRangeException()
             };
@@ -766,7 +766,6 @@ namespace multexbot.Api.Services
             return true;
         }
 
-
         private decimal RandomNumber(decimal from, decimal to)
         {
             if (from >= to)
@@ -862,6 +861,8 @@ namespace multexbot.Api.Services
             request.Options.LastPrice = options.LastPrice;
             request.Options.MaxPriceStep = options.MaxPriceStep;
             request.Options.MinPriceStep = options.MinPriceStep;
+            request.Options.MaxPriceOverStep = options.MaxPriceOverStep;
+            request.Options.MinPriceOverStep = options.MinPriceOverStep;
             request.Options.MinStopPrice = options.MinStopPrice.Truncate(options.PriceFix);
             request.Options.MaxStopPrice = options.MaxStopPrice.Truncate(options.PriceFix);
 
