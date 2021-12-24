@@ -228,7 +228,7 @@ namespace multexbot.Api.Services
                                 Base = followingBot.Base,
                                 Quote = followingBot.Quote,
                                 Symbol = followingBot.Symbol,
-                                Options = request.Options
+                                Options = JsonConvert.DeserializeObject<BotOption>(followingBot.Options)
                             };
 
                             newRequest = await FollowRootBot(newRequest, sqlConnection);
