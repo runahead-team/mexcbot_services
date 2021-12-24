@@ -20,7 +20,5 @@ namespace multexbot.Api.Constants
         public const string DefaultAdminPassword = "MultexBot@goahead@2030";
 
         public const string KrwCoin = "KRW";
-
-        public static string[] StableCoins = new string[] { "USDT", "mUSD" };
     }
 }

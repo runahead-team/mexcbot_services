@@ -117,7 +117,18 @@ namespace multexbot.Api.Services
             await sqlConnection.OpenAsync();
 
             if (request.RootId.HasValue)
+            {
+                //Root is not a main bot
+                if ((await sqlConnection.ExecuteScalarAsync<int>(
+                    "SELECT COUNT(1) FROM Bots WHERE Id = @Id AND RootId IS NOT NULL",
+                    new
+                    {
+                        Id = request.RootId.Value
+                    })) > 0)
+                    throw new AppException(AppError.UNKNOWN,"Root is not a main bot");
+                
                 request = await FollowRootBot(request, sqlConnection);
+            }
 
             var bot = new BotDto(request, user);
             bot.SecretKey = bot.SecretKey.Encrypt(Configurations.HashKey);
@@ -905,7 +916,7 @@ namespace multexbot.Api.Services
                 var followQuoteUsdPrice = 1m;
                 var rootQuoteUsdPrice = 1m;
 
-                if (!MultexBotConstants.StableCoins.Contains(request.Quote))
+                if (!AppConstants.UsdStableCoins.Contains(request.Quote))
                 {
                     //Market for following bot
                     var followMarket = await _marketService.SysGet(request.Quote);
@@ -919,7 +930,7 @@ namespace multexbot.Api.Services
                     followQuoteUsdPrice = followMarket.UsdPrice;
                 }
 
-                if (!MultexBotConstants.StableCoins.Contains(rootBot.Quote))
+                if (!AppConstants.UsdStableCoins.Contains(rootBot.Quote))
                 {
                     //Market for root bot
                     var rootMarket = await _marketService.SysGet(rootBot.Quote);

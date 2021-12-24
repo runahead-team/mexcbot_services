@@ -12,6 +12,7 @@ using multexbot.Api.Services.Interface;
 using MySqlConnector;
 using Newtonsoft.Json;
 using Serilog;
+using sp.Core.Constants;
 using sp.Core.Exchange;
 using sp.Core.Extensions;
 using sp.Core.Utils;
@@ -224,7 +225,7 @@ namespace multexbot.Api.Services
                 var followQuoteUsdPrice = 1m;
                 var rootQuoteUsdPrice = 1m;
 
-                if (!MultexBotConstants.StableCoins.Contains(followingBot.Quote))
+                if (!AppConstants.UsdStableCoins.Contains(followingBot.Quote))
                 {
                     //Market for following bot
                     var followMarket = await SysGet(followingBot.Quote);
@@ -244,7 +245,7 @@ namespace multexbot.Api.Services
                     followQuoteUsdPrice = followMarket.UsdPrice;
                 }
 
-                if (!MultexBotConstants.StableCoins.Contains(rootBot.Quote))
+                if (!AppConstants.UsdStableCoins.Contains(rootBot.Quote))
                 {
                     //Market for root bot
                     var rootMarket = await SysGet(rootBot.Quote);
