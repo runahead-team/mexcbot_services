@@ -950,6 +950,10 @@ namespace multexbot.Api.Services
             request.Options.BasePrice = options.BasePrice.Truncate(options.PriceFix);
             request.Options.FollowBtc = options.FollowBtc;
             request.Options.FollowBtcBasePrice = options.FollowBtcBasePrice.Truncate(options.PriceFix);
+            
+            Log.Error($"[Console] request FollowBtcBasePrice={request.Options.FollowBtcBasePrice}");
+            
+            
             request.Options.FollowBtcBtcPrice = options.FollowBtcBtcPrice;
             request.Options.LastPrice = options.LastPrice;
             request.Options.MaxPriceStep = options.MaxPriceStep;
