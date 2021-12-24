@@ -108,7 +108,6 @@ namespace multexbot.Api.Services
                 #endregion
 
                 return botView;
-
             }).ToList();
         }
 
@@ -168,10 +167,14 @@ namespace multexbot.Api.Services
                 await using var sqlConnection = new MySqlConnection(Configurations.DbConnectionString);
                 await sqlConnection.OpenAsync();
 
-                if (request.RootId.HasValue)
-                    request = await FollowRootBot(request, sqlConnection);
-
                 var bot = new BotDto(request, user);
+
+                var oldBot = await sqlConnection.QueryFirstOrDefaultAsync<BotDto>(
+                    "SELECT * FROM Bots WHERE Id = @Id AND UserId = @UserId",
+                    bot);
+
+                if (oldBot.RootId != request.RootId)
+                    throw new AppException(AppError.UNKNOWN, "Can not update root");
 
                 int exec = 0;
 
@@ -180,13 +183,13 @@ namespace multexbot.Api.Services
                     bot.SecretKey = bot.SecretKey.Encrypt(Configurations.HashKey);
 
                     exec = await sqlConnection.ExecuteAsync(
-                        @"UPDATE Bots SET Name = @Name, RootId = @RootId, Base = @Base, Quote = @Quote, ApiKey = @ApiKey, SecretKey = @SecretKey, Side = @Side, IsActive = @IsActive, Options = @Options WHERE Id = @Id AND UserId = @UserId",
+                        @"UPDATE Bots SET Name = @Name, Base = @Base, Quote = @Quote, ApiKey = @ApiKey, SecretKey = @SecretKey, Side = @Side, IsActive = @IsActive, Options = @Options WHERE Id = @Id AND UserId = @UserId",
                         bot);
                 }
                 else
                 {
                     exec = await sqlConnection.ExecuteAsync(
-                        @"UPDATE Bots SET Name = @Name, RootId = @RootId, Base = @Base, Quote = @Quote, Side = @Side, IsActive = @IsActive, Options = @Options WHERE Id = @Id AND UserId = @UserId",
+                        @"UPDATE Bots SET Name = @Name, Base = @Base, Quote = @Quote, Side = @Side, IsActive = @IsActive, Options = @Options WHERE Id = @Id AND UserId = @UserId",
                         bot);
                 }
 
@@ -310,12 +313,14 @@ namespace multexbot.Api.Services
 
                     if (await client.Cancel(order.ExternalId.ToString(), null))
                     {
-                        Log.Information("Bot cancel order {0} {1} {2} {3}", nameof(BaseExchangeClient), order.ExchangeType, order.Id,
+                        Log.Information("Bot cancel order {0} {1} {2} {3}", nameof(BaseExchangeClient),
+                            order.ExchangeType, order.Id,
                             order.ExternalId);
                     }
                     else
                     {
-                        Log.Information("Bot cancel order fail {0} {1} {2} {3}", nameof(BaseExchangeClient), order.ExchangeType,
+                        Log.Information("Bot cancel order fail {0} {1} {2} {3}", nameof(BaseExchangeClient),
+                            order.ExchangeType,
                             order.Id,
                             order.ExternalId);
                     }
