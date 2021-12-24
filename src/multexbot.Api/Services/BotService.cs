@@ -523,11 +523,11 @@ namespace multexbot.Api.Services
 
                 if (options.FollowBtc)
                 {
-                    if (!AppConstants.UsdStableCoins.Contains(bot.Quote))
-                    {
-                        bot.IsActive = false;
-                        stopLog += $"{bot.Symbol} not allow follow BTC price\n";
-                    }
+                    // if (!AppConstants.UsdStableCoins.Contains(bot.Quote))
+                    // {
+                    //     bot.IsActive = false;
+                    //     stopLog += $"{bot.Symbol} not allow follow BTC price\n";
+                    // }
 
                     if (options.FollowBtcBasePrice <= 0
                         || options.FollowBtcBtcPrice <= 0)
