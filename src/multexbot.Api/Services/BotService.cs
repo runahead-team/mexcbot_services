@@ -920,6 +920,8 @@ namespace multexbot.Api.Services
                         throw new AppException(AppError.UNKNOWN, $"MultexBot {followMarket.Coin}/USDT 0");
 
                     followQuoteUsdPrice = followMarket.UsdPrice;
+                    
+                    Log.Error($"[Console] Price={followQuoteUsdPrice}");
                 }
 
                 if (!MultexBotConstants.StableCoins.Contains(rootBot.Quote))
@@ -938,6 +940,9 @@ namespace multexbot.Api.Services
 
                 options.BasePrice /= (followQuoteUsdPrice / rootQuoteUsdPrice);
                 options.FollowBtcBasePrice /= (followQuoteUsdPrice / rootQuoteUsdPrice);
+                
+                Log.Error($"[Console] FollowBtcBasePrice={options.FollowBtcBasePrice}");
+                
                 options.MinStopPrice /= (followQuoteUsdPrice / rootQuoteUsdPrice);
                 options.MaxStopPrice /= (followQuoteUsdPrice / rootQuoteUsdPrice);
             }
