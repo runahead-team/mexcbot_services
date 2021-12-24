@@ -209,6 +209,7 @@ namespace multexbot.Api.Services
                 {
                     try
                     {
+                        request.RootId = bot.Id;
                         request = await FollowRootBot(request, sqlConnection);
                         
                         exec = await sqlConnection.ExecuteAsync(
