@@ -167,14 +167,21 @@ namespace multexbot.Api.Services
                 await using var sqlConnection = new MySqlConnection(Configurations.DbConnectionString);
                 await sqlConnection.OpenAsync();
 
-                var bot = new BotDto(request, user);
-
                 var oldBot = await sqlConnection.QueryFirstOrDefaultAsync<BotDto>(
                     "SELECT * FROM Bots WHERE Id = @Id AND UserId = @UserId",
-                    bot);
+                    new
+                    {
+                        Id = request.Id,
+                        UserId = user.Id
+                    });
 
                 if (oldBot.RootId != request.RootId)
                     throw new AppException(AppError.UNKNOWN, "Can not update root");
+
+                if (oldBot.RootId.HasValue)
+                    request = await FollowRootBot(request, sqlConnection);
+
+                var bot = new BotDto(request, user);
 
                 int exec = 0;
 
@@ -644,7 +651,7 @@ namespace multexbot.Api.Services
                                     {
                                         price = 0;
                                     }
-                                    
+
                                     price = price.Truncate(options.PriceFix);
 
                                     if (price > 0)
@@ -675,7 +682,7 @@ namespace multexbot.Api.Services
                                     }
 
                                     price = price.Truncate(options.PriceFix);
-                                    
+
                                     if (price > 0)
                                         await CreateLimitOrder(client, bot, qty, price, OrderSide.SELL);
                                 }
