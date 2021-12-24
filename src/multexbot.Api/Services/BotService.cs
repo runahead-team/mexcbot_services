@@ -644,6 +644,8 @@ namespace multexbot.Api.Services
                                     {
                                         price = 0;
                                     }
+                                    
+                                    price = price.Truncate(options.PriceFix);
 
                                     if (price > 0)
                                         await CreateLimitOrder(client, bot, qty, price, OrderSide.BUY);
@@ -672,6 +674,8 @@ namespace multexbot.Api.Services
                                         price = 0;
                                     }
 
+                                    price = price.Truncate(options.PriceFix);
+                                    
                                     if (price > 0)
                                         await CreateLimitOrder(client, bot, qty, price, OrderSide.SELL);
                                 }
@@ -686,12 +690,14 @@ namespace multexbot.Api.Services
                                     if (price >= maxPrice)
                                     {
                                         var buyPrice = minPrice * (1 + spreadFixPercent / 100);
+                                        buyPrice = buyPrice.Truncate(options.PriceFix);
                                         await CreateLimitOrder(client, bot, qty / 2, buyPrice, OrderSide.BUY);
                                     }
                                     //Sell more 
                                     else if (price <= minPrice)
                                     {
                                         var sellPrice = maxPrice * (1 - spreadFixPercent / 100);
+                                        sellPrice = sellPrice.Truncate(options.PriceFix);
                                         await CreateLimitOrder(client, bot, qty / 2, sellPrice, OrderSide.SELL);
                                     }
                                 }
