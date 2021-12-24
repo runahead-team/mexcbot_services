@@ -212,6 +212,8 @@ namespace multexbot.Api.Services
                         request.RootId = bot.Id;
                         request = await FollowRootBot(request, sqlConnection);
                         
+                        Log.Error($"Console {JsonConvert.SerializeObject(request.Options)}");
+                        
                         exec = await sqlConnection.ExecuteAsync(
                             @"UPDATE Bots SET Options = @Options WHERE RootId = @RootId AND UserId = @UserId",
                             new
