@@ -939,17 +939,17 @@ namespace multexbot.Api.Services
                 options.MaxStopPrice /= (followQuoteUsdPrice / rootQuoteUsdPrice);
             }
 
-            request.Options.BasePrice = options.BasePrice.Truncate(options.PriceFix);
+            request.Options.BasePrice = options.BasePrice.Truncate(request.Options.PriceFix);
             request.Options.FollowBtc = options.FollowBtc;
-            request.Options.FollowBtcBasePrice = options.FollowBtcBasePrice.Truncate(options.PriceFix);
+            request.Options.FollowBtcBasePrice = options.FollowBtcBasePrice.Truncate(request.Options.PriceFix);
             request.Options.FollowBtcBtcPrice = options.FollowBtcBtcPrice;
             request.Options.LastPrice = options.LastPrice;
             request.Options.MaxPriceStep = options.MaxPriceStep;
             request.Options.MinPriceStep = options.MinPriceStep;
             request.Options.MaxPriceOverStep = options.MaxPriceOverStep;
             request.Options.MinPriceOverStep = options.MinPriceOverStep;
-            request.Options.MinStopPrice = options.MinStopPrice.Truncate(options.PriceFix);
-            request.Options.MaxStopPrice = options.MaxStopPrice.Truncate(options.PriceFix);
+            request.Options.MinStopPrice = options.MinStopPrice.Truncate(request.Options.PriceFix);
+            request.Options.MaxStopPrice = options.MaxStopPrice.Truncate(request.Options.PriceFix);
 
             return request;
         }
