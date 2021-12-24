@@ -58,7 +58,7 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
                     type = "LIMIT"
                 });
             
-            Log.Error($"[Console] SNTKRW {response}");
+            Log.Error($"[Console] SNTKRW {JsonConvert.SerializeObject(response)}");
 
             if (!success)
                 return null;
