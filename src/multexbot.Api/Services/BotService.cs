@@ -239,7 +239,7 @@ namespace multexbot.Api.Services
                                 {
                                     Id = newRequest.Id,
                                     UserId = newRequest.UserId,
-                                    Options = JsonConvert.SerializeObject(newRequest.Id),
+                                    Options = JsonConvert.SerializeObject(newRequest.Options),
                                 });
 
                             if (exec == 0)
