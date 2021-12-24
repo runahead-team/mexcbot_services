@@ -207,25 +207,44 @@ namespace multexbot.Api.Services
                 //Bot is a root bot so update following bot
                 if (!oldBot.RootId.HasValue)
                 {
-                    try
-                    {
-                        request.RootId = bot.Id;
-                        request = await FollowRootBot(request, sqlConnection);
-                        
-                        Log.Error($"Console {JsonConvert.SerializeObject(request.Options)}");
-                        
-                        exec = await sqlConnection.ExecuteAsync(
-                            @"UPDATE Bots SET Options = @Options WHERE RootId = @RootId AND UserId = @UserId",
+                    var followingBots = (await sqlConnection.QueryAsync<BotDto>(
+                            "SELECT * FROM Bots WHERE RootId = @RootId AND UserId = @UserId",
                             new
                             {
-                                Options = JsonConvert.SerializeObject(request.Options),
                                 RootId = bot.Id,
                                 UserId = bot.UserId
-                            });
-                    }
-                    catch (Exception e)
+                            }))
+                        .ToList();
+
+                    foreach (var followingBot in followingBots)
                     {
-                        Log.Error(e, $"Update following bots by rootId={bot.Id} fail");
+                        try
+                        {
+                            var newRequest = new BotUpsertRequest()
+                            {
+                                Id = followingBot.Id,
+                                RootId = followingBot.RootId,
+                                UserId = followingBot.UserId,
+                                Base = followingBot.Base,
+                                Quote = followingBot.Quote,
+                                Symbol = followingBot.Symbol,
+                                Options = request.Options
+                            };
+
+                            newRequest = await FollowRootBot(newRequest, sqlConnection);
+
+                            exec = await sqlConnection.ExecuteAsync(
+                                @"UPDATE Bots SET Options = @Options WHERE Id = @Id AND UserId = @UserId",
+                                newRequest);
+
+                            if (exec == 0)
+                                Log.Error(
+                                    $"Update following bots by id={newRequest.Id} rootId={newRequest.RootId} fail");
+                        }
+                        catch (Exception e)
+                        {
+                            Log.Error(e, $"Update following bots by id={followingBot.Id} rootId={followingBot.RootId} fail");
+                        }
                     }
                 }
             }
