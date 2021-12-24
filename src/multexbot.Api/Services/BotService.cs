@@ -834,7 +834,7 @@ namespace multexbot.Api.Services
         private async Task<bool> CreateLimitOrder<T>(T client, BotDto bot, decimal qty, decimal price, OrderSide side)
             where T : BaseExchangeClient
         {
-            Log.Error($"[Console] qty={qty} & price={price} & side={side}");
+            Log.Error($"[Console] qty={qty} & price={price} & side={side} & client={JsonConvert.SerializeObject(client)}");
             
             var order = await client.CreateLimitOrder(bot.Base, bot.Quote, qty, price, side);
 
