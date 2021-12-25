@@ -125,8 +125,8 @@ namespace multexbot.Api.Services
                     {
                         Id = request.RootId.Value
                     })) > 0)
-                    throw new AppException(AppError.UNKNOWN,"Root is not a main bot");
-                
+                    throw new AppException(AppError.UNKNOWN, "Root is not a main bot");
+
                 request = await FollowRootBot(request, sqlConnection);
             }
 
@@ -257,7 +257,7 @@ namespace multexbot.Api.Services
                             newRequest.Options.MaxStopPrice = request.Options.MaxStopPrice;
 
                             #endregion
-                            
+
                             newRequest = await FollowRootBot(newRequest, sqlConnection);
 
                             exec = await sqlConnection.ExecuteAsync(
@@ -444,7 +444,7 @@ namespace multexbot.Api.Services
 
                 var now = AppUtils.NowMilis();
 
-                Log.Information("BOT {0} run", bot.Symbol);
+                Log.Information("BOT {0}{1} run", bot.Symbol, bot.ExchangeType);
 
                 var url = bot.ExchangeType switch
                 {
@@ -834,8 +834,9 @@ namespace multexbot.Api.Services
         private async Task<bool> CreateLimitOrder<T>(T client, BotDto bot, decimal qty, decimal price, OrderSide side)
             where T : BaseExchangeClient
         {
-            Log.Error($"[Console] qty={qty} & price={price} & side={side} & client={JsonConvert.SerializeObject(client)}");
-            
+            Log.Error(
+                $"[Console] qty={qty} & price={price} & side={side} & client={JsonConvert.SerializeObject(client)}");
+
             var order = await client.CreateLimitOrder(bot.Base, bot.Quote, qty, price, side);
 
             if (order == null)
