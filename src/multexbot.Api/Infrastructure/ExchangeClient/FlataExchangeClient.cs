@@ -54,6 +54,9 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
         public override async Task<OrderDto> CreateLimitOrder(string @base, string quote, decimal amount, decimal price,
             OrderSide side)
         {
+            Log.Error(
+                $"[Console] qty={amount} & price={price} & side={side}");
+            
             var (success, response) =
                 await SendRequest<JObject>(HttpMethod.Post, "out/api/trading/newOrder", new
                 {

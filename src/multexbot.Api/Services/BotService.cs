@@ -444,7 +444,7 @@ namespace multexbot.Api.Services
 
                 var now = AppUtils.NowMilis();
 
-                Log.Information("BOT {0}{1} run", bot.Symbol, bot.ExchangeType);
+                Log.Information("BOT {0} {1} run", bot.Symbol, bot.ExchangeType);
 
                 var url = bot.ExchangeType switch
                 {
@@ -795,7 +795,7 @@ namespace multexbot.Api.Services
                     }
                     catch (Exception e)
                     {
-                        Log.Error(e, "MmBot trade");
+                        Log.Error(e, "Bot trade");
                     }
                 }
 
@@ -834,9 +834,6 @@ namespace multexbot.Api.Services
         private async Task<bool> CreateLimitOrder<T>(T client, BotDto bot, decimal qty, decimal price, OrderSide side)
             where T : BaseExchangeClient
         {
-            Log.Error(
-                $"[Console] qty={qty} & price={price} & side={side} & client={JsonConvert.SerializeObject(client)}");
-
             var order = await client.CreateLimitOrder(bot.Base, bot.Quote, qty, price, side);
 
             if (order == null)
