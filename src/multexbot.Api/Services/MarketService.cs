@@ -275,7 +275,21 @@ namespace multexbot.Api.Services
                     (options.MaxStopPrice / followQuoteUsdPrice / rootQuoteUsdPrice).Truncate(options.PriceFix);
             }
 
-            followingBot.Options = JsonConvert.SerializeObject(options);
+            var followingOptions = JsonConvert.DeserializeObject<BotOption>(followingBot.Options);
+            //Follow option price
+            followingOptions.BasePrice = options.BasePrice;
+            followingOptions.FollowBtcBasePrice = options.FollowBtcBasePrice;
+            followingOptions.MinStopPrice = options.MinStopPrice;
+            followingOptions.MaxStopPrice = options.MaxStopPrice;
+            followingOptions.FollowBtc = options.FollowBtc;
+            followingOptions.FollowBtcBtcPrice = options.FollowBtcBtcPrice;
+            followingOptions.LastPrice = options.LastPrice;
+            followingOptions.MaxPriceStep = options.MaxPriceStep;
+            followingOptions.MinPriceStep = options.MinPriceStep;
+            followingOptions.MaxPriceOverStep = options.MaxPriceOverStep;
+            followingOptions.MinPriceOverStep = options.MinPriceOverStep;
+            
+            followingBot.Options = JsonConvert.SerializeObject(followingOptions);
 
             var exec = await dbConnection.ExecuteAsync(
                 "UPDATE Bots SET Options = @Options WHERE Id = @Id AND UserId = @UserId",
