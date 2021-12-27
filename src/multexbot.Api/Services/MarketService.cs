@@ -266,21 +266,21 @@ namespace multexbot.Api.Services
                 }
 
                 options.BasePrice =
-                    (options.BasePrice / followQuoteUsdPrice / rootQuoteUsdPrice).Truncate(options.PriceFix);
+                    (options.BasePrice / followQuoteUsdPrice / rootQuoteUsdPrice);
                 options.FollowBtcBasePrice =
-                    (options.FollowBtcBasePrice / followQuoteUsdPrice / rootQuoteUsdPrice).Truncate(options.PriceFix);
+                    (options.FollowBtcBasePrice / followQuoteUsdPrice / rootQuoteUsdPrice);
                 options.MinStopPrice =
-                    (options.MinStopPrice / followQuoteUsdPrice / rootQuoteUsdPrice).Truncate(options.PriceFix);
+                    (options.MinStopPrice / followQuoteUsdPrice / rootQuoteUsdPrice);
                 options.MaxStopPrice =
-                    (options.MaxStopPrice / followQuoteUsdPrice / rootQuoteUsdPrice).Truncate(options.PriceFix);
+                    (options.MaxStopPrice / followQuoteUsdPrice / rootQuoteUsdPrice);
             }
 
             var followingOptions = JsonConvert.DeserializeObject<BotOption>(followingBot.Options);
             //Follow option price
-            followingOptions.BasePrice = options.BasePrice;
-            followingOptions.FollowBtcBasePrice = options.FollowBtcBasePrice;
-            followingOptions.MinStopPrice = options.MinStopPrice;
-            followingOptions.MaxStopPrice = options.MaxStopPrice;
+            followingOptions.BasePrice = options.BasePrice.Truncate(followingOptions.PriceFix);
+            followingOptions.FollowBtcBasePrice = options.FollowBtcBasePrice.Truncate(followingOptions.PriceFix);
+            followingOptions.MinStopPrice = options.MinStopPrice.Truncate(followingOptions.PriceFix);
+            followingOptions.MaxStopPrice = options.MaxStopPrice.Truncate(followingOptions.PriceFix);
             followingOptions.FollowBtc = options.FollowBtc;
             followingOptions.FollowBtcBtcPrice = options.FollowBtcBtcPrice;
             followingOptions.LastPrice = options.LastPrice;
