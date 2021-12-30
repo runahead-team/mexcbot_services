@@ -73,11 +73,11 @@ namespace multexbot.Api.Controllers
 
         #region Password
 
-        [HttpGet("forgot-pwd/{email}")]
+        [HttpGet("forgot-pwd/{username}")]
         [AllowAnonymous]
-        public async Task<OkResponse> ForgotPwd(string email)
+        public async Task<OkResponse> ForgotPwd(string username)
         {
-            await _userService.ForgotPassword(email);
+            await _userService.ForgotPassword(username);
 
             return new OkResponse();
         }
