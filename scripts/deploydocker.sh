@@ -4,11 +4,11 @@ tag=$2;
 
 echo "build $service:$tag"
 
-if [ $service == "nftc" ];
+if [ $service == "multexbot" ];
 then
-docker build -t nftc:$tag -f ../src/multexbot.Api/Dockerfile ../src
-docker tag nftc:$tag sp20/nftc:$tag
-docker push sp20/nftc:$tag
+docker build -t multexbot:$tag -f ../src/multexbot.Api/Dockerfile ../src
+docker tag multexbot:$tag sp20/multexbot:$tag
+docker push sp20/multexbot:$tag
 else
 echo "service not found"
 fi
