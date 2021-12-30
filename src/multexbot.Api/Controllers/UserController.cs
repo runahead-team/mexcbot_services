@@ -74,6 +74,7 @@ namespace multexbot.Api.Controllers
         #region Password
 
         [HttpGet("forgot-pwd/{email}")]
+        [AllowAnonymous]
         public async Task<OkResponse> ForgotPwd(string email)
         {
             await _userService.ForgotPassword(email);
@@ -82,6 +83,7 @@ namespace multexbot.Api.Controllers
         }
 
         [HttpPut("reset-pwd")]
+        [AllowAnonymous]
         public async Task<OkResponse> ResetPwd([FromBody] ResetPasswordRequest request)
         {
             await _userService.ResetPassword(request);
