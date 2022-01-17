@@ -211,7 +211,7 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
             return (long) response;
         }
 
-        private async Task<(bool, T)> SendRequest<T>(HttpMethod method, string endpoint, bool isAuthentication = false,
+        private async Task<(bool, T)> SendRequest<T>(HttpMethod method, string endpoint, bool isAuth = false,
             object body = null, bool ignored400 = false)
         {
             try
@@ -220,7 +220,7 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
 
                 var requestMessage = new HttpRequestMessage(method, new Uri(_baseUri, endpoint));
 
-                if (isAuthentication)
+                if (isAuth)
                 {
                     var timestamp = await GetTimestamp();
                     var echoStr = AppUtils.NewGuidStr();
