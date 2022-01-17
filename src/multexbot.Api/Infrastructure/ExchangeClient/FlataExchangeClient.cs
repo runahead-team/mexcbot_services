@@ -68,11 +68,14 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
             if (!success)
                 return null;
 
-            var data = response["item"].ToObject<dynamic>();
+            var data = response["item"]?.ToObject<dynamic>();
+
+            if (data == null)
+                return new OrderDto();
 
             return new OrderDto
             {
-                ExternalId = (long)data.ordNo,
+                ExternalId = (long) data.ordNo,
                 Symbol = $"{@base}/{quote}",
                 Base = @base,
                 Quote = quote,
@@ -91,24 +94,27 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
             if (!success || response is null)
                 return new List<OrderDto>();
 
-            var records = response["record"].ToObject<List<dynamic>>();
+            var records = response["record"]?.ToObject<List<dynamic>>();
 
-            if(!records.Any())
+            if (records == null)
+                return new List<OrderDto>();
+
+            if (!records.Any())
                 return new List<OrderDto>();
 
             return records.Select(item => new OrderDto
             {
-                Id = (long)item.ordNo,
-                Symbol = (string)item.symbol,
-                Price = (decimal)item.ordPrc,
-                Qty = (decimal)item.remnQty,
+                ExternalId = (long) item.ordNo,
+                Symbol = (string) item.symbol,
+                Price = (decimal) item.ordPrc,
+                Qty = (decimal) item.remnQty,
                 // Filled = (decimal) item.record,
                 // Total = (decimal) item.record,
                 // Status = ConvertOrderStatus((string) item.state)
             }).ToList();
         }
 
-        public override async Task<bool> Cancel(string id, string uuid, string @base = null, string quote = null)
+        public override async Task<bool> Cancel(string id, string @base = null, string quote = null)
         {
             var (success, response) =
                 await SendRequest<dynamic>(HttpMethod.Post, "out/api/trading/cancelOrder", new
@@ -123,24 +129,31 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
         {
             var result = new Dictionary<string, decimal>();
 
-            foreach (string coin in coins)
+            foreach (var coin in coins)
             {
                 var (success, response) =
-                    await SendRequest<JObject>(HttpMethod.Get, $"out/api/trading/getCurrBalanceInfo?contflag=0&contKey={coin}&reqcount=100 ");
+                    await SendRequest<JObject>(HttpMethod.Get,
+                        $"out/api/trading/getCurrBalanceInfo?contflag=0&contKey={coin}&reqcount=100");
 
                 if (!success || response is null)
                     return new Dictionary<string, decimal>();
 
                 var data = response["record"];
 
-                if (data.Count() == 0)
+                if (data == null)
+                    continue;
+
+                if (!data.Any())
                     continue;
 
                 var funds = data.ToObject<List<dynamic>>();
 
-                foreach(var fund in funds)
+                if (funds == null) 
+                    continue;
+                
+                foreach (var fund in funds)
                 {
-                    result.Add((string)fund.curCd, (decimal)fund.boldAmt);
+                    result.Add((string) fund.curCd, (decimal) fund.boldAmt);
                 }
             }
 
@@ -163,8 +176,8 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
             {
                 orderbook.Bids.Add(new decimal[]
                 {
-                    (decimal)x.px,
-                    (decimal)x.qty,
+                    (decimal) x.px,
+                    (decimal) x.qty,
                 });
             });
 
@@ -174,8 +187,8 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
             {
                 orderbook.Asks.Add(new decimal[]
                 {
-                    (decimal)x.px,
-                    (decimal)x.qty,
+                    (decimal) x.px,
+                    (decimal) x.qty,
                 });
             });
 
@@ -213,7 +226,7 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
                 }
 
                 var responseBody = await response.Content.ReadAsStringAsync();
-                
+
                 Log.Information("{client} {endpoint} {request} {response} {responseCode}", GetType().Name, endpoint,
                     requestBody, responseBody, response.StatusCode);
 
@@ -262,7 +275,7 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
                 if (!success || response is null)
                     return string.Empty;
 
-                return (string)response.item.sessionId;
+                return (string) response.item.sessionId;
             }
             catch (Exception e)
             {

@@ -19,7 +19,7 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
 
         public abstract Task<List<OrderDto>> GetOpenOrders(string @base, string quote);
 
-        public abstract Task<bool> Cancel(string id, string uuid, string @base = null, string quote = null);
+        public abstract Task<bool> Cancel(string id, string @base = null, string quote = null);
 
         public abstract Task<Dictionary<string, decimal>> GetFunds(params string[] coins);
 

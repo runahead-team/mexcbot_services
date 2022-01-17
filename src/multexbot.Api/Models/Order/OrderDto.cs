@@ -14,6 +14,8 @@ namespace DefaultNamespace
 
         public long ExternalId { get; set; }
         
+        public string ExternalUuid { get; set; }
+        
         public string Symbol { get; set; }
 
         public string Base { get; set; }

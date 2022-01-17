@@ -85,6 +85,8 @@ namespace multexbot.Api.Services
                             bot.SecretKey.Decrypt(Configurations.HashKey)),
                         ExchangeType.UPBIT => new UpbitExchangeClient(Configurations.UpbitUrl, bot.ApiKey,
                             bot.SecretKey.Decrypt(Configurations.HashKey)),
+                        ExchangeType.LBANK => new LBankExchangeClient(Configurations.LBankUrl, bot.ApiKey,
+                            bot.SecretKey.Decrypt(Configurations.HashKey)),
                         _ => throw new ArgumentOutOfRangeException()
                     };
 
@@ -142,6 +144,8 @@ namespace multexbot.Api.Services
                 ExchangeType.SPEXCHANGE => new SpExchangeClient(Configurations.SpExchangeUrl, bot.ApiKey,
                     bot.SecretKey.Decrypt(Configurations.HashKey)),
                 ExchangeType.UPBIT => new UpbitExchangeClient(Configurations.UpbitUrl, bot.ApiKey,
+                    bot.SecretKey.Decrypt(Configurations.HashKey)),
+                ExchangeType.LBANK => new LBankExchangeClient(Configurations.LBankUrl, bot.ApiKey,
                     bot.SecretKey.Decrypt(Configurations.HashKey)),
                 _ => throw new ArgumentOutOfRangeException()
             };
@@ -338,6 +342,9 @@ namespace multexbot.Api.Services
 
                     if (bot.ExchangeType == ExchangeType.FLATA)
                         tasks.Add(Run<FlataExchangeClient>(bot));
+                    
+                    if (bot.ExchangeType == ExchangeType.LBANK)
+                        tasks.Add(Run<LBankExchangeClient>(bot));
                 }
 
                 await Task.WhenAll(tasks);
@@ -364,7 +371,7 @@ namespace multexbot.Api.Services
                     })).ToList();
 
                 if (!orders.Any())
-                    return;
+                        return;
 
                 var ids = orders.Select(x => x.Id).ToList();
 
@@ -393,21 +400,43 @@ namespace multexbot.Api.Services
                             order.SecretKey.Decrypt(Configurations.HashKey)),
                         ExchangeType.UPBIT => new UpbitExchangeClient(Configurations.UpbitUrl, order.ApiKey,
                             order.SecretKey.Decrypt(Configurations.HashKey)),
+                        ExchangeType.LBANK => new LBankExchangeClient(Configurations.LBankUrl, order.ApiKey,
+                            order.SecretKey.Decrypt(Configurations.HashKey)),
                         _ => throw new ArgumentOutOfRangeException()
                     };
 
-                    if (await client.Cancel(order.ExternalId.ToString(), null))
+                    if (order.ExchangeType == ExchangeType.UPBIT
+                        || order.ExchangeType == ExchangeType.LBANK)
                     {
-                        Log.Information("Bot cancel order {0} {1} {2} {3}", nameof(BaseExchangeClient),
-                            order.ExchangeType, order.Id,
-                            order.ExternalId);
+                        if (await client.Cancel(order.ExternalUuid, null))
+                        {
+                            Log.Information("Bot cancel order {0} {1} {2} {3}", nameof(BaseExchangeClient),
+                                order.ExchangeType, order.Id,
+                                order.ExternalUuid);
+                        }
+                        else
+                        {
+                            Log.Information("Bot cancel order fail {0} {1} {2} {3}", nameof(BaseExchangeClient),
+                                order.ExchangeType,
+                                order.Id,
+                                order.ExternalUuid);
+                        }
                     }
                     else
                     {
-                        Log.Information("Bot cancel order fail {0} {1} {2} {3}", nameof(BaseExchangeClient),
-                            order.ExchangeType,
-                            order.Id,
-                            order.ExternalId);
+                        if (await client.Cancel(order.ExternalId.ToString(), null))
+                        {
+                            Log.Information("Bot cancel order {0} {1} {2} {3}", nameof(BaseExchangeClient),
+                                order.ExchangeType, order.Id,
+                                order.ExternalId);
+                        }
+                        else
+                        {
+                            Log.Information("Bot cancel order fail {0} {1} {2} {3}", nameof(BaseExchangeClient),
+                                order.ExchangeType,
+                                order.Id,
+                                order.ExternalId);
+                        }   
                     }
                 }));
             }
@@ -451,6 +480,7 @@ namespace multexbot.Api.Services
                     ExchangeType.FLATA => Configurations.FlataUrl,
                     ExchangeType.UPBIT => Configurations.UpbitUrl,
                     ExchangeType.SPEXCHANGE => Configurations.SpExchangeUrl,
+                    ExchangeType.LBANK => Configurations.LBankUrl,
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
@@ -852,8 +882,8 @@ namespace multexbot.Api.Services
             order.IsExpired = false;
 
             var exec = await sqlConnection.ExecuteAsync(
-                @"INSERT INTO BotOrders(Guid,BotId,UserId,ExternalId,Symbol,Base,Quote,Side,Price,Qty,Total,ExpiredTime,IsExpired,`Time`)
-                      VALUES(@Guid,@BotId,@UserId,@ExternalId,@Symbol,@Base,@Quote,@Side,@Price,@Qty,@Total,@ExpiredTime,@IsExpired,@Time)",
+                @"INSERT INTO BotOrders(Guid,BotId,UserId,ExternalId,ExternalUuid,Symbol,Base,Quote,Side,Price,Qty,Total,ExpiredTime,IsExpired,`Time`)
+                      VALUES(@Guid,@BotId,@UserId,@ExternalId,@ExternalUuid,@Symbol,@Base,@Quote,@Side,@Price,@Qty,@Total,@ExpiredTime,@IsExpired,@Time)",
                 order);
 
             if (exec == 0)

@@ -73,7 +73,8 @@ namespace multexbot.Api.Constants
     {
         SPEXCHANGE = 0,
         UPBIT = 1,
-        FLATA = 2
+        FLATA = 2,
+        LBANK = 3
     }
 
     #endregion

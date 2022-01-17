@@ -98,7 +98,7 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
             }).ToList();
         }
 
-        public override async Task<bool> Cancel(string id, string uuid, string @base = null, string quote = null)
+        public override async Task<bool> Cancel(string id, string @base = null, string quote = null)
         {
             var (success, response) =
                 await SendRequest<object>(HttpMethod.Delete, $"public-api/cancel-order?id={id}", null, true);

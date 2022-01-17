@@ -39,6 +39,8 @@ namespace multexbot.Api.Infrastructure
         
         public static string SpExchangeUrl { get; set; }
         
+        public static string LBankUrl { get; set; }
+        
         public static OpenExchangeRatesConfig OpenExchangeRates { get; set; }
     }
 
