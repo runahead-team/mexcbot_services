@@ -139,6 +139,7 @@ CREATE TABLE BotOrders
     BotId BIGINT NOT NULL,
     UserId BIGINT NOT NULL,
     ExternalId BIGINT NOT NULL,
+    ExternalUuid VARCHAR(64),
     Symbol VARCHAR(32) NOT NULL,
     Base VARCHAR(32) NOT NULL,
     Quote VARCHAR(32) NOT NULL,

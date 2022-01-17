@@ -57,8 +57,6 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
                     side = side.ToString("G"),
                     type = "LIMIT"
                 });
-            
-            
 
             if (!success)
                 return null;

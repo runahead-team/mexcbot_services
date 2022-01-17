@@ -287,9 +287,6 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
 
                 var responseBody = await response.Content.ReadAsStringAsync();
 
-                Log.Information("{client} {endpoint} {request} {responseCode}", GetType().Name, endpoint,
-                    responseBody, response.StatusCode);
-
                 var responseObj = JsonConvert.DeserializeObject<JObject>(responseBody);
 
                 var success = responseObj["result"];

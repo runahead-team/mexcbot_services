@@ -342,7 +342,7 @@ namespace multexbot.Api.Services
 
                     if (bot.ExchangeType == ExchangeType.FLATA)
                         tasks.Add(Run<FlataExchangeClient>(bot));
-                    
+
                     if (bot.ExchangeType == ExchangeType.LBANK)
                         tasks.Add(Run<LBankExchangeClient>(bot));
                 }
@@ -371,7 +371,7 @@ namespace multexbot.Api.Services
                     })).ToList();
 
                 if (!orders.Any())
-                        return;
+                    return;
 
                 var ids = orders.Select(x => x.Id).ToList();
 
@@ -405,10 +405,9 @@ namespace multexbot.Api.Services
                         _ => throw new ArgumentOutOfRangeException()
                     };
 
-                    if (order.ExchangeType == ExchangeType.UPBIT
-                        || order.ExchangeType == ExchangeType.LBANK)
+                    if (order.ExchangeType == ExchangeType.LBANK)
                     {
-                        if (await client.Cancel(order.ExternalUuid, null))
+                        if (await client.Cancel(order.ExternalUuid, order.Base, order.Quote))
                         {
                             Log.Information("Bot cancel order {0} {1} {2} {3}", nameof(BaseExchangeClient),
                                 order.ExchangeType, order.Id,
@@ -436,7 +435,7 @@ namespace multexbot.Api.Services
                                 order.ExchangeType,
                                 order.Id,
                                 order.ExternalId);
-                        }   
+                        }
                     }
                 }));
             }
@@ -474,6 +473,9 @@ namespace multexbot.Api.Services
                 var now = AppUtils.NowMilis();
 
                 Log.Information("BOT {0} {1} run", bot.Symbol, bot.ExchangeType);
+
+                if (bot.ExchangeType == ExchangeType.UPBIT)
+                    return;
 
                 var url = bot.ExchangeType switch
                 {
