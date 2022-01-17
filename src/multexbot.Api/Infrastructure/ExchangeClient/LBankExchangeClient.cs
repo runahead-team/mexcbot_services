@@ -47,7 +47,7 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
             if (!success || response is null)
                 return (0, 0, 0);
 
-            var data = ((JArray)response).FirstOrDefault();
+            var data = ((JArray) response).FirstOrDefault();
 
             if (data == null)
                 return (0, 0, 0);
@@ -56,7 +56,7 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
 
             return ticker == null
                 ? (0, 0, 0)
-                : ((decimal LastPrice, decimal LastPriceUsd, decimal OpenPrice))(ticker.latest, ticker.latest, 0);
+                : ((decimal LastPrice, decimal LastPriceUsd, decimal OpenPrice)) (ticker.latest, ticker.latest, 0);
         }
 
         public override async Task<OrderDto> CreateLimitOrder(string @base, string quote, decimal amount, decimal price,
@@ -69,13 +69,13 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
 
             var (success, response) =
                 await SendRequest<dynamic>(HttpMethod.Post, $"v2/create_order.do", true,
-                new
-                {
-                    symbol = symbol,
-                    type = type,
-                    price = price,
-                    amount = amount
-                });
+                    new
+                    {
+                        symbol = symbol,
+                        type = type,
+                        price = price,
+                        amount = amount
+                    });
 
             if (!success)
                 return null;
@@ -83,7 +83,7 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
             return new OrderDto
             {
                 ExternalId = 0,
-                ExternalUuid = (string)response.order_id,
+                ExternalUuid = (string) response.order_id,
                 Symbol = symbol,
                 Base = @base,
                 Quote = quote,
@@ -122,12 +122,12 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
 
             return orders.Select(item => new OrderDto
             {
-                ExternalId = (long)item.ordNo,
-                ExternalUuid = (string)item.order_id,
-                Symbol = (string)item.symbol,
-                Price = (decimal)item.price,
-                Qty = (decimal)item.amount,
-                Filled = (decimal)item.deal_amount,
+                ExternalId = (long) item.ordNo,
+                ExternalUuid = (string) item.order_id,
+                Symbol = (string) item.symbol,
+                Price = (decimal) item.price,
+                Qty = (decimal) item.amount,
+                Filled = (decimal) item.deal_amount,
                 // Total = (decimal) item.record,
                 // Status = ConvertOrderStatus((string) item.state)
             }).ToList();
@@ -141,7 +141,6 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
             var (success, response) =
                 await SendRequest<JObject>(HttpMethod.Post, "v2/cancel_order.do", true, new
                 {
-                    api_key = _apiKey,
                     symbol = symbol,
                     order_id = id
                 });
@@ -190,19 +189,13 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
 
             var orderbook = new OrderbookView();
 
-            var bids = response["bids"].ToObject<List<decimal[]>>();
+            var bids = response["bids"]?.ToObject<List<decimal[]>>();
 
-            bids.ForEach(x =>
-            {
-                orderbook.Bids.Add(x);
-            });
+            bids?.ForEach(x => { orderbook.Bids.Add(x); });
 
-            var asks = response["asks"].ToObject<List<decimal[]>>();
+            var asks = response["asks"]?.ToObject<List<decimal[]>>();
 
-            asks.ForEach(x =>
-            {
-                orderbook.Asks.Add(x);
-            });
+            asks?.ForEach(x => { orderbook.Asks.Add(x); });
 
             return orderbook;
         }
@@ -215,7 +208,7 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
             if (!success || response is null)
                 return 0;
 
-            return (long)response;
+            return (long) response;
         }
 
         private async Task<(bool, T)> SendRequest<T>(HttpMethod method, string endpoint, bool isAuthentication = false,
@@ -246,7 +239,7 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
                     bodyJson.Add("signature_method", "HmacSHA256");
                     bodyJson.Add("timestamp", timestamp.ToString());
 
-                    var sortProperties= bodyJson.Properties()
+                    var sortProperties = bodyJson.Properties()
                         .OrderBy(x => x.Name)
                         .ToList();
 
@@ -293,7 +286,7 @@ namespace multexbot.Api.Infrastructure.ExchangeClient
 
                 var data = responseObj["data"]?.ToObject<dynamic>();
 
-                return success == null ? (false, default) : ((bool, T))(success, data);
+                return success == null ? (false, default) : ((bool, T)) (success, data);
             }
             catch (Exception e)
             {
