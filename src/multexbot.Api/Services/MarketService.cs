@@ -159,11 +159,11 @@ namespace multexbot.Api.Services
                     if (followingBot.Quote != market.Coin && rootBot.Quote != market.Coin)
                         continue;
 
-                    if (rootBot.Base != followingBot.Base)
-                    {
-                        Log.Error("MultexBot UpdateFollowingBot: Base of Root Bot is wrong");
-                        continue;
-                    }
+                    // if (rootBot.Base != followingBot.Base)
+                    // {
+                    //     Log.Error("MultexBot UpdateFollowingBot: Base of Root Bot is wrong");
+                    //     continue;
+                    // }
 
                     await UpdateDatabase(rootBot, followingBot, dbConnection);
                 }
