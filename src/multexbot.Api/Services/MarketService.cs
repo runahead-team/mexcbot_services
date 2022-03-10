@@ -159,6 +159,7 @@ namespace multexbot.Api.Services
                     if (followingBot.Quote != market.Coin && rootBot.Quote != market.Coin)
                         continue;
 
+                    //NOTE: FLATA with sntc
                     // if (rootBot.Base != followingBot.Base)
                     // {
                     //     Log.Error("MultexBot UpdateFollowingBot: Base of Root Bot is wrong");

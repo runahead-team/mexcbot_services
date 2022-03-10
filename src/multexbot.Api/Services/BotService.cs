@@ -937,8 +937,9 @@ namespace multexbot.Api.Services
             if (rootBot == null)
                 throw new AppException(AppError.UNKNOWN, "Root Bot is null");
 
-            if (rootBot.Base != request.Base)
-                throw new AppException(AppError.UNKNOWN, "Base of Root Bot is wrong");
+            //NOTE: FLATA with sntc
+            // if (rootBot.Base != request.Base)
+            //     throw new AppException(AppError.UNKNOWN, "Base of Root Bot is wrong");
 
             var options = JsonConvert.DeserializeObject<BotOption>(rootBot.Options);
 
