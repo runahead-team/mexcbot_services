@@ -1,1 +1,0 @@
-ALTER TABLE MultexBot.BotOrders ADD COLUMN ExternalUuid VARCHAR(64);
