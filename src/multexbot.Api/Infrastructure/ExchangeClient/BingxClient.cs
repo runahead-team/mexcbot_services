@@ -52,12 +52,17 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
             if (!success)
                 return (0, 0, 0);
 
-            var ticker = JObject.Parse(responseBody)["data"]?["tickers"]?[0];
+            var ticker = JObject.Parse(responseBody)["data"]["tickers"][0];
+
+            var tradePrice = decimal.Parse(ticker["tradePrice"].ToString());
+            var openPrice = decimal.Parse(ticker["openPrice"].ToString());
+
+            Log.Information($"Bingx GetMarket tradePrice={tradePrice}, openPrice={openPrice}");
 
             return (
-                decimal.Parse(ticker["tradePrice"].ToString()),
-                decimal.Parse(ticker["tradePrice"].ToString()),
-                decimal.Parse(ticker["openPrice"].ToString())
+                tradePrice,
+                tradePrice,
+                openPrice
             );
         }
 
@@ -223,8 +228,8 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
                     responseBody = await response.Content.ReadAsStringAsync();
-                    if (logInfo)
-                        Log.Information($"BingxClient:SendRequest response {endpoint} {payload} {responseBody}");
+                    // if (logInfo)
+                    Log.Information($"BingxClient:SendRequest response {endpoint} {payload} {responseBody}");
                     return (true, responseBody);
                 }
 
@@ -255,11 +260,6 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
             if (string.IsNullOrEmpty(payload))
                 return string.Empty;
 
-            Log.Information("DEBUG {@data}", 
-                JsonConvert.SerializeObject(Encoding.UTF8.GetBytes(key).ToArray()));
-            Log.Information("DEBUG {@data}", 
-                JsonConvert.SerializeObject(Encoding.UTF8.GetBytes("xuoH3ud2oPUgPK0MLne8fnlW9ihWh2jkkVC5DP8fJlNHXmWdBnTwpEtnR4OwPF0pAQ3pUUp4KfT0U2jlyA").ToArray()));
-            
             var hashMaker = new HMACSHA256(Encoding.UTF8.GetBytes(key));
             var hash = hashMaker.ComputeHash(Encoding.UTF8.GetBytes(payload));
 
