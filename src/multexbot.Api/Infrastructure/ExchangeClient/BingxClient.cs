@@ -39,9 +39,11 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
         public override async Task<(decimal LastPrice, decimal LastPriceUsd, decimal OpenPrice)> GetMarket(string @base,
             string quote)
         {
+            var payload = $"symbol={@base}-{quote}";
+
             var (success, responseBody) =
                 await SendRequest("GET",
-                    $"https://api-swap-rest.bingbon.pro/api/v1/market/getTicker?symbol={@base}-{quote}");
+                    "https://api-swap-rest.bingbon.pro/api/v1/market/getTicker", payload, false, false);
 
             if (!success)
                 return (0, 0, 0);
@@ -61,7 +63,7 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
             var payload = $"symbol={@base}-{quote}&side={side:G}&type=LIMIT&price={price}&quantity={amount}";
 
             var (success, responseBody) =
-                await SendRequest("POST", $"/openApi/spot/v1/trade/order?{payload}");
+                await SendRequest("POST", "/openApi/spot/v1/trade/order", payload, true, true);
 
             if (!success)
                 return null;
@@ -83,8 +85,10 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
 
         public override async Task<List<OrderDto>> GetOpenOrders(string @base, string quote)
         {
+            var payload = $"symbol={@base}-{quote}";
+
             var (success, responseBody) =
-                await SendRequest("GET", $" /openApi/spot/v1/trade/openOrders?symbol={@base}-{quote}");
+                await SendRequest("GET", "/openApi/spot/v1/trade/openOrders", payload, true, true);
 
             if (!success)
                 return new List<OrderDto>();
@@ -112,7 +116,7 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
             var payload = $"symbol={@base}-{quote}&orderId={id}";
 
             var (success, responseBody) =
-                await SendRequest("POST", $"/openApi/spot/v1/trade/cancel?{payload}");
+                await SendRequest("POST", $"/openApi/spot/v1/trade/cancel", payload, true, true);
 
             return success;
         }
@@ -120,7 +124,7 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
         public override async Task<Dictionary<string, decimal>> GetFunds(params string[] coins)
         {
             var (success, responseBody) =
-                await SendRequest("POST", $"/openApi/spot/v1/account/balance");
+                await SendRequest("POST", "/openApi/spot/v1/account/balance", null, true, true);
 
             var returnBalances = new Dictionary<string, decimal>();
             if (!success)
@@ -145,8 +149,10 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
 
         public override async Task<OrderbookView> GetOrderbook(string @base, string quote)
         {
+            var payload = $"symbol={@base}-{quote}";
+
             var (success, responseBody) =
-                await SendRequest("GET", $"/openApi/spot/v1/market/depth?symbol={@base}-{quote}");
+                await SendRequest("GET", $"/openApi/spot/v1/market/depth", payload, false, false);
 
             if (!success)
                 return new OrderbookView();
