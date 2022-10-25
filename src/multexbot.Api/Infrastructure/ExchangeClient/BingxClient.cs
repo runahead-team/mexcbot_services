@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net;
 using System.Net.Http;
 using System.Security.Cryptography;
@@ -127,9 +128,10 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
         public override async Task<Dictionary<string, decimal>> GetFunds(params string[] coins)
         {
             var (success, responseBody) =
-                await SendRequest("GET", "/openApi/spot/v1/account/balance", null, true, true);
+                await SendRequest("GET", "/openApi/spot/v1/account/balance", "", true, true);
 
             var returnBalances = new Dictionary<string, decimal>();
+
             if (!success)
                 return returnBalances;
 
@@ -178,17 +180,17 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
 
             if (useSignature)
             {
+                var timestamp = AppUtils.NowMilis();
+
                 if (!string.IsNullOrEmpty(payload))
                 {
-                    var timestamp = AppUtils.NowMilis();
-                    payload = $"{payload}&recvWindow=1000000&timestamp={timestamp}";
+                    payload = $"{payload}&timestamp={timestamp}";
                     var signature = HMAC_SHA256(payload, _secretKey);
                     payload = $"{payload}&signature={signature}";
                 }
                 else
                 {
-                    var timestamp = AppUtils.NowMilis();
-                    payload = $"recvWindow=1000000&timestamp={timestamp}";
+                    payload = $"timestamp={timestamp}";
                     var signature = HMAC_SHA256(payload, _secretKey);
                     payload = $"{payload}&signature={signature}";
                 }
@@ -248,14 +250,18 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
             }
         }
 
-        private static string HMAC_SHA256(string payload, string key)
+        private string HMAC_SHA256(string payload, string key)
         {
             if (string.IsNullOrEmpty(payload))
                 return string.Empty;
 
-            var hashMaker = new HMACSHA256(Encoding.ASCII.GetBytes(key));
-            var data = Encoding.ASCII.GetBytes(payload);
-            var hash = hashMaker.ComputeHash(data);
+            Log.Information("DEBUG {@data}", 
+                JsonConvert.SerializeObject(Encoding.UTF8.GetBytes(key).ToArray()));
+            Log.Information("DEBUG {@data}", 
+                JsonConvert.SerializeObject(Encoding.UTF8.GetBytes("xuoH3ud2oPUgPK0MLne8fnlW9ihWh2jkkVC5DP8fJlNHXmWdBnTwpEtnR4OwPF0pAQ3pUUp4KfT0U2jlyA").ToArray()));
+            
+            var hashMaker = new HMACSHA256(Encoding.UTF8.GetBytes(key));
+            var hash = hashMaker.ComputeHash(Encoding.UTF8.GetBytes(payload));
 
             var sb = new StringBuilder(hash.Length * 2);
 

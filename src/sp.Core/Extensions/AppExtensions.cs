@@ -110,64 +110,57 @@ namespace sp.Core.Extensions
             }
         }
 
-        private const int KeySize = 256;
-
         public static string Encrypt(this string plainText, string hashKey)
         {
-            var initVector = hashKey.Substring(0, 16);
-
-            if (string.IsNullOrEmpty(plainText))
-                return string.Empty;
-
-            var initVectorBytes = Encoding.UTF8.GetBytes(initVector);
-            var plainTextBytes = Encoding.UTF8.GetBytes(plainText);
-
-            var password = new PasswordDeriveBytes(hashKey, null);
-#pragma warning disable 618
-            var keyBytes = password.GetBytes(KeySize / 8);
-#pragma warning restore 618
-            var symmetricKey = new AesManaged
-            {
-                Padding = PaddingMode.Zeros,
-                Mode = CipherMode.CBC
-            };
-            var encryptor = symmetricKey.CreateEncryptor(keyBytes, initVectorBytes);
-            var memoryStream = new MemoryStream();
-            var cryptoStream = new CryptoStream(memoryStream, encryptor, CryptoStreamMode.Write);
-            cryptoStream.Write(plainTextBytes, 0, plainTextBytes.Length);
-            cryptoStream.FlushFinalBlock();
-            var cipherTextBytes = memoryStream.ToArray();
-            memoryStream.Close();
-            cryptoStream.Close();
-            return Convert.ToBase64String(cipherTextBytes);
+            byte[] iv = new byte[16];  
+            byte[] array;  
+  
+            using (Aes aes = Aes.Create())  
+            {  
+                aes.Key = Encoding.UTF8.GetBytes(hashKey);  
+                aes.IV = iv;  
+  
+                ICryptoTransform encryptor = aes.CreateEncryptor(aes.Key, aes.IV);  
+  
+                using (MemoryStream memoryStream = new MemoryStream())  
+                {  
+                    using (CryptoStream cryptoStream = new CryptoStream((Stream)memoryStream, encryptor, CryptoStreamMode.Write))  
+                    {  
+                        using (StreamWriter streamWriter = new StreamWriter((Stream)cryptoStream))  
+                        {  
+                            streamWriter.Write(plainText);  
+                        }  
+  
+                        array = memoryStream.ToArray();  
+                    }  
+                }  
+            }  
+  
+            return Convert.ToBase64String(array);  
         }
 
         public static string Decrypt(this string cipherText, string hashKey)
         {
-            var initVector = hashKey.Substring(0, 16);
-
-            if (string.IsNullOrEmpty(cipherText))
-                return string.Empty;
-
-            var initVectorBytes = Encoding.UTF8.GetBytes(initVector);
-            var cipherTextBytes = Convert.FromBase64String(cipherText);
-            var password = new PasswordDeriveBytes(hashKey, null);
-#pragma warning disable 618
-            var keyBytes = password.GetBytes(KeySize / 8);
-#pragma warning restore 618
-            var symmetricKey = new AesManaged
-            {
-                Padding = PaddingMode.Zeros,
-                Mode = CipherMode.CBC
-            };
-            var decryptor = symmetricKey.CreateDecryptor(keyBytes, initVectorBytes);
-            var memoryStream = new MemoryStream(cipherTextBytes);
-            var cryptoStream = new CryptoStream(memoryStream, decryptor, CryptoStreamMode.Read);
-            var plainTextBytes = new byte[cipherTextBytes.Length];
-            var decryptedByteCount = cryptoStream.Read(plainTextBytes, 0, plainTextBytes.Length);
-            memoryStream.Close();
-            cryptoStream.Close();
-            return Encoding.UTF8.GetString(plainTextBytes, 0, decryptedByteCount);
+            byte[] iv = new byte[16];  
+            byte[] buffer = Convert.FromBase64String(cipherText);  
+  
+            using (Aes aes = Aes.Create())  
+            {  
+                aes.Key = Encoding.UTF8.GetBytes(hashKey);  
+                aes.IV = iv;  
+                ICryptoTransform decryptor = aes.CreateDecryptor(aes.Key, aes.IV);  
+  
+                using (MemoryStream memoryStream = new MemoryStream(buffer))  
+                {  
+                    using (CryptoStream cryptoStream = new CryptoStream((Stream)memoryStream, decryptor, CryptoStreamMode.Read))  
+                    {  
+                        using (StreamReader streamReader = new StreamReader((Stream)cryptoStream))  
+                        {  
+                            return streamReader.ReadToEnd();  
+                        }  
+                    }  
+                }  
+            }  
         }
 
         #endregion

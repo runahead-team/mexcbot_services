@@ -8,7 +8,6 @@ using Microsoft.Extensions.Hosting;
 using Serilog;
 using sp.Core.Utils;
 using multexbot.Api.Infrastructure;
-using MySqlConnector.Logging;
 using sp.Core.Constants;
 
 namespace multexbot.Api
