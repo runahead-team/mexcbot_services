@@ -113,7 +113,6 @@ namespace multexbot.Api.Services
                 #endregion
 
                 return botView;
-                
             }).ToList();
         }
 
@@ -525,42 +524,49 @@ namespace multexbot.Api.Services
 
                 var balances = await client.GetFunds(bot.Base, bot.Quote);
 
+                decimal baseBalance = 0;
+                decimal quoteBalance = 0;
+
                 if (!balances.Any())
-                    return;
-
-                if (balances.TryGetValue(bot.Base, out var baseBalance))
                 {
-                    if (options.StopLossBase > 0)
-                    {
-                        if (baseBalance <= options.StopLossBase)
-                        {
-                            bot.IsActive = false;
-                            stopLog += $"Stop when your {bot.Base} balance lower than {options.StopLossBase}\n";
-                        }
-                    }
+                    bot.IsActive = false;
+                    stopLog += "Stop when your balances Zero\n";
                 }
                 else
                 {
-                    bot.IsActive = false;
-                    stopLog += $"Get {bot.Base} balance error\n";
-                }
-
-
-                if (balances.TryGetValue(bot.Quote, out var quoteBalance))
-                {
-                    if (options.StopLossQuote > 0)
+                    if (balances.TryGetValue(bot.Base, out baseBalance))
                     {
-                        if (quoteBalance <= options.StopLossQuote)
+                        if (options.StopLossBase > 0)
                         {
-                            bot.IsActive = false;
-                            stopLog += $"Stop when your {bot.Quote} balance lower than {options.StopLossQuote}\n";
+                            if (baseBalance <= options.StopLossBase)
+                            {
+                                bot.IsActive = false;
+                                stopLog += $"Stop when your {bot.Base} balance lower than {options.StopLossBase}\n";
+                            }
                         }
                     }
-                }
-                else
-                {
-                    bot.IsActive = false;
-                    stopLog += $"Get {bot.Quote} balance error \n";
+                    else
+                    {
+                        bot.IsActive = false;
+                        stopLog += $"Get {bot.Base} balance Zero\n";
+                    }
+
+                    if (balances.TryGetValue(bot.Quote, out quoteBalance))
+                    {
+                        if (options.StopLossQuote > 0)
+                        {
+                            if (quoteBalance <= options.StopLossQuote)
+                            {
+                                bot.IsActive = false;
+                                stopLog += $"Stop when your {bot.Quote} balance lower than {options.StopLossQuote}\n";
+                            }
+                        }
+                    }
+                    else
+                    {
+                        bot.IsActive = false;
+                        stopLog += $"Get {bot.Quote} balance Zero \n";
+                    }
                 }
 
                 decimal lastBtcPrice = 0;
