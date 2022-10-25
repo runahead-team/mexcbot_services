@@ -110,6 +110,10 @@ namespace multexbot.Api.Services
             request.Email.ValidateEmail();
             request.Password = request.Password.ToSha512Hash();
 
+            if (!request.Email.EndsWith("stepwatch.io")
+                && !request.Email.EndsWith("splabs.info"))
+                throw new AppException("Email is not allow");
+            
             await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
             await dbConnection.OpenAsync();
 
