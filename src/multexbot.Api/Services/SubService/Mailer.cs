@@ -14,6 +14,8 @@ using System.Collections.Generic;
 using System.Linq;
 using multexbot.Api.Models.Fund;
 using Newtonsoft.Json;
+using RestSharp;
+using RestSharp.Authenticators;
 using sp.Core.Extensions;
 
 namespace multexbot.Api.Services.SubService
@@ -29,75 +31,53 @@ namespace multexbot.Api.Services.SubService
             LoadMails();
         }
 
-        protected override void SendMail(string subject, string content, string email)
+        protected void SendMail(string subject, string content, params string[] emails)
         {
+            var emailsAsLog = string.Join(";", emails);
+
             Task.Run(async () =>
             {
                 try
                 {
-                    var client = new SendGridClient(Configurations.SendGrid.ApiKey);
-                    var from = new EmailAddress(Configurations.SendGrid.SenderEmail,
-                        Configurations.SendGrid.DisplayName);
-
-                    var to = new EmailAddress(email);
-
-                    var htmlContent = content;
-
-                    var msg = MailHelper.CreateSingleEmail(from, to, subject, "PlainText", htmlContent);
-
-                    var response = await client.SendEmailAsync(msg);
-
-                    if (response.StatusCode != HttpStatusCode.Accepted)
+                    var client = new RestClient(new Uri(Configurations.Mailgun.BaseUrl))
                     {
-                        var error = await response.Body.ReadAsStringAsync();
-                        Log.Error("Mailer send {0} {1} {2}", email, subject,
-                            error);
-                        return;
+                        Authenticator = new HttpBasicAuthenticator("api", Configurations.Mailgun.ApiKey)
+                    };
+
+                    var request = new RestRequest();
+                    request.AddParameter("domain", Configurations.Mailgun.Domain, ParameterType.UrlSegment);
+                    request.Resource = "{domain}/messages";
+                    request.AddParameter("from", Configurations.Mailgun.Sender);
+                    foreach (var email in emails)
+                    {
+                        request.AddParameter("to", email);
                     }
 
-                    Log.Information("Mailer sent {0} {1} {2}", email, subject, response.StatusCode);
+                    request.AddParameter("subject", subject);
+                    request.AddParameter("html", content);
+                    request.Method = Method.Post;
+
+                    var response = await client.ExecuteAsync(request);
+
+                    if (response.StatusCode != HttpStatusCode.OK)
+                        Log.Error("Mailer sent {0} {1} {2}", emailsAsLog, subject, response.StatusCode);
                 }
                 catch (Exception e)
                 {
-                    Log.Error(e, "Mailer send {0} {1}", email, subject);
+                    Log.Error(e, "Mailer send {0} {1}", emailsAsLog, subject);
                 }
             });
         }
 
-        protected override void SendMail(string subject, string content, IEnumerable<string> emails)
+
+        protected override void SendMail(string subject, string body, string email)
         {
-            Task.Run(async () =>
-            {
-                try
-                {
-                    var client = new SendGridClient(Configurations.SendGrid.ApiKey);
-                    var from = new EmailAddress(Configurations.SendGrid.SenderEmail,
-                        Configurations.SendGrid.DisplayName);
+            SendMail(subject, body, email);
+        }
 
-                    var to = emails.Select(x => new EmailAddress(x)).ToList();
-
-                    var htmlContent = content;
-
-                    var msg = MailHelper.CreateSingleEmailToMultipleRecipients(from, to, subject, "PlainText",
-                        htmlContent);
-
-                    var response = await client.SendEmailAsync(msg);
-
-                    if (response.StatusCode != HttpStatusCode.Accepted)
-                    {
-                        var error = await response.Body.ReadAsStringAsync();
-                        Log.Error("Mailer send {0} {1} {2}", "emails", subject,
-                            error);
-                        return;
-                    }
-
-                    Log.Information("Mailer sent {0} {1} {2}", "emails", subject, response.StatusCode);
-                }
-                catch (Exception e)
-                {
-                    Log.Error(e, "Mailer send {0} {1}", "emails", subject);
-                }
-            });
+        protected override void SendMail(string subject, string body, IEnumerable<string> emails)
+        {
+            SendMail(subject, body, emails);
         }
 
         protected override Task<Mail> GetMailTemplate(MailType type)
@@ -204,52 +184,6 @@ namespace multexbot.Api.Services.SubService
             }
 
             #endregion
-        }
-
-        public async Task SendDepositReceive(string email, string username, DepositEntity deposit)
-        {
-            var mail = await GetMailTemplate(MailType.RECEIVE_DEPOSIT);
-
-            mail.Content = mail.Content.Replace("{{username}}", username);
-            mail.Content = mail.Content.Replace("{{asset}}", deposit.Asset);
-            mail.Content = mail.Content.Replace("{{amount}}", deposit.Amount.ToCurrencyString());
-
-            SendMail(mail.Subject, mail.Content, email);
-        }
-
-        public async Task SendWithdrawAlert(string email, string username, WithdrawEntity withdraw)
-        {
-            var mail = await GetMailTemplate(MailType.WITHDRAW_ALERT);
-
-            mail.Content = mail.Content.Replace("{{username}}", username);
-            mail.Content = mail.Content.Replace("{{asset}}", withdraw.Asset);
-            mail.Content = mail.Content.Replace("{{address}}",
-                string.IsNullOrEmpty(withdraw.AddressTag)
-                    ? withdraw.Address
-                    : $"{withdraw.Address}:{withdraw.AddressTag}");
-
-            mail.Content = mail.Content.Replace("{{amount}}", withdraw.Amount.ToCurrencyString());
-
-            SendMail(mail.Subject, mail.Content, email);
-        }
-
-        public async Task SendKycApprove(string email, string username)
-        {
-            var mail = await GetMailTemplate(MailType.KYC_APPROVE);
-
-            mail.Content = mail.Content.Replace("{{username}}", username);
-
-            SendMail(mail.Subject, mail.Content, email);
-        }
-
-        public async Task SendKycReject(string email, string username, string note)
-        {
-            var mail = await GetMailTemplate(MailType.KYC_REJECT);
-
-            mail.Content = mail.Content.Replace("{{username}}", username);
-            mail.Content = mail.Content.Replace("{{note}}", note);
-
-            SendMail(mail.Subject, mail.Content, email);
         }
     }
 }

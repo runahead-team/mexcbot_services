@@ -14,18 +14,16 @@ namespace multexbot.Api.Infrastructure
 
         public static string HashKey { get; set; }
 
-        public static SendGridConfig SendGrid { get; set; }
-
         public static string TelegramBot { get; set; }
 
         public static int TelegramGroup { get; set; }
 
+        public static MailgunConfig Mailgun { get; set; }
+        
         public static string[] AllowOrigins { get; set; }
 
-        public static Dictionary<string, List<object>> Enums { get; set; }
+    
 
-        public static string ReCaptchaSecretKey { get; set; }
-        
         public static string UpbitUrl { get; set; }
         
         public static string FlataUrl { get; set; }
@@ -37,15 +35,19 @@ namespace multexbot.Api.Infrastructure
         public static string BingxUrl { get; set; }
         
         public static OpenExchangeRatesConfig OpenExchangeRates { get; set; }
+        
+        public static Dictionary<string, List<object>> Enums { get; set; }
     }
 
-    public class SendGridConfig
+    public class MailgunConfig
     {
+        public string BaseUrl { get; set; }
+
         public string ApiKey { get; set; }
 
-        public string SenderEmail { get; set; }
+        public string Domain { get; set; }
 
-        public string DisplayName { get; set; }
+        public string Sender { get; set; }
     }
     
     public class OpenExchangeRatesConfig
