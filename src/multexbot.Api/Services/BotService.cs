@@ -9,6 +9,7 @@ using DefaultNamespace;
 using multexbot.Api.Constants;
 using multexbot.Api.Infrastructure;
 using multexbot.Api.Infrastructure.ExchangeClient;
+using multexBot.Api.Infrastructure.ExchangeClient;
 using multexbot.Api.Models.Bot;
 using multexbot.Api.Services.Interface;
 using MySqlConnector;
@@ -345,6 +346,9 @@ namespace multexbot.Api.Services
 
                     if (bot.ExchangeType == ExchangeType.LBANK)
                         tasks.Add(Run<LBankExchangeClient>(bot));
+
+                    if (bot.ExchangeType == ExchangeType.BINGX)
+                        tasks.Add(Run<BingxClient>(bot));
                 }
 
                 await Task.WhenAll(tasks);

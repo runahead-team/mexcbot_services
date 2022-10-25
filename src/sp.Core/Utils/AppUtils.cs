@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Security.Cryptography;
 using System.Text;
 using sp.Core.Constants;
 
@@ -94,5 +95,24 @@ namespace sp.Core.Utils
         }
 
         #endregion
+        
+        public static string HMAC_SHA256(string payload, string key)
+        {
+            if (string.IsNullOrEmpty(payload))
+                return string.Empty;
+
+            var hashMaker = new HMACSHA256(Encoding.UTF8.GetBytes(key));
+            var data = Encoding.UTF8.GetBytes(payload);
+            var hash = hashMaker.ComputeHash(data);
+
+            var sb = new StringBuilder(hash.Length * 2);
+
+            foreach (var b in hash)
+                sb.Append($"{b:x2}");
+
+            var hashString = Convert.ToString(sb);
+
+            return hashString;
+        }
     }
 }

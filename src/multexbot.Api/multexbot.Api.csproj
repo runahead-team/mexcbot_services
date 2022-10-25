@@ -31,7 +31,6 @@
         <ProjectReference Include="..\sp.Core\sp.Core.csproj" />
     </ItemGroup>
     <ItemGroup>
-      <Folder Include="IntController" />
       <Folder Include="Models\Order" />
       <Folder Include="RequestModels\Log" />
       <Folder Include="ResponseModels\ApiKey" />
