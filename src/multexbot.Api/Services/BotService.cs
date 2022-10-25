@@ -113,6 +113,7 @@ namespace multexbot.Api.Services
                 #endregion
 
                 return botView;
+                
             }).ToList();
         }
 

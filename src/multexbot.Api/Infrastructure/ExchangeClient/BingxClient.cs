@@ -2,6 +2,8 @@ using System;
 using System.Collections.Generic;
 using System.Net;
 using System.Net.Http;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading.Tasks;
 using DefaultNamespace;
 using multexbot.Api.Constants;
@@ -29,10 +31,10 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
 
         public BingxClient(string baseUrl, string apiKey, string secretKey)
         {
-            _httpClient.DefaultRequestHeaders.Add("X-BX-APIKEY", apiKey);
+            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("X-BX-APIKEY", apiKey);
+            _baseUri = new Uri(baseUrl);
 
             _apiKey = apiKey;
-            _baseUri = new Uri(baseUrl);
             _secretKey = secretKey;
         }
 
@@ -43,7 +45,8 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
 
             var (success, responseBody) =
                 await SendRequest("GET",
-                    "https://api-swap-rest.bingbon.pro/api/v1/market/getTicker", payload, false, false);
+                    "/api/v1/market/getTicker", payload, false, false,
+                    new Uri("https://api-swap-rest.bingbon.pro"));
 
             if (!success)
                 return (0, 0, 0);
@@ -124,7 +127,7 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
         public override async Task<Dictionary<string, decimal>> GetFunds(params string[] coins)
         {
             var (success, responseBody) =
-                await SendRequest("POST", "/openApi/spot/v1/account/balance", null, true, true);
+                await SendRequest("GET", "/openApi/spot/v1/account/balance", null, true, true);
 
             var returnBalances = new Dictionary<string, decimal>();
             if (!success)
@@ -152,7 +155,7 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
             var payload = $"symbol={@base}-{quote}";
 
             var (success, responseBody) =
-                await SendRequest("GET", $"/openApi/spot/v1/market/depth", payload, false, false);
+                await SendRequest("GET", "/openApi/spot/v1/market/depth", payload, false, false);
 
             if (!success)
                 return new OrderbookView();
@@ -163,11 +166,11 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
         }
 
         private async Task<(bool, string)> SendRequest(string method, string endpoint, string payload = "",
-            bool useSignature = false, bool logInfo = true)
+            bool useSignature = false, bool logInfo = true, Uri otherUri = null)
         {
             var uri =
-                endpoint.StartsWith("https")
-                    ? new Uri(endpoint)
+                otherUri != null
+                    ? new Uri(otherUri, endpoint)
                     : new Uri(_baseUri, endpoint);
 
             if (logInfo)
@@ -178,15 +181,15 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
                 if (!string.IsNullOrEmpty(payload))
                 {
                     var timestamp = AppUtils.NowMilis();
-                    payload = $"{payload}&timestamp={timestamp}";
-                    var signature = AppUtils.HMAC_SHA256(payload, _secretKey);
+                    payload = $"{payload}&recvWindow=1000000&timestamp={timestamp}";
+                    var signature = HMAC_SHA256(payload, _secretKey);
                     payload = $"{payload}&signature={signature}";
                 }
                 else
                 {
                     var timestamp = AppUtils.NowMilis();
-                    payload = $"timestamp={timestamp}";
-                    var signature = AppUtils.HMAC_SHA256(payload, _secretKey);
+                    payload = $"recvWindow=1000000&timestamp={timestamp}";
+                    var signature = HMAC_SHA256(payload, _secretKey);
                     payload = $"{payload}&signature={signature}";
                 }
             }
@@ -203,10 +206,10 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
                         response = await _httpClient.GetAsync($"{uri}?{payload}");
                         break;
                     case "POST":
-                        response = await _httpClient.PostAsync(uri, new StringContent(payload));
+                        response = await _httpClient.PostAsync($"{uri}?{payload}", new StringContent(payload));
                         break;
                     case "PUT":
-                        response = await _httpClient.PutAsync(uri, new StringContent(payload));
+                        response = await _httpClient.PutAsync($"{uri}?{payload}", new StringContent(payload));
                         break;
                     case "DELETE":
                         response = await _httpClient.DeleteAsync($"{uri}?{payload}");
@@ -214,7 +217,6 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
-
 
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
@@ -244,6 +246,25 @@ namespace multexBot.Api.Infrastructure.ExchangeClient
 
                 return (false, string.Empty);
             }
+        }
+
+        private static string HMAC_SHA256(string payload, string key)
+        {
+            if (string.IsNullOrEmpty(payload))
+                return string.Empty;
+
+            var hashMaker = new HMACSHA256(Encoding.ASCII.GetBytes(key));
+            var data = Encoding.ASCII.GetBytes(payload);
+            var hash = hashMaker.ComputeHash(data);
+
+            var sb = new StringBuilder(hash.Length * 2);
+
+            foreach (var b in hash)
+                sb.Append($"{b:x2}");
+
+            var hashString = Convert.ToString(sb);
+
+            return hashString;
         }
     }
 }
