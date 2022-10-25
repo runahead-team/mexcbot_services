@@ -6,13 +6,7 @@ namespace multexbot.Api.Infrastructure
     {
         public static string DbConnectionString { get; set; }
 
-        public static string WalletUrl { get; set; }
-
-        public static string WalletKey { get; set; }
-
         public static string AppName { get; set; }
-
-        public static string ClientHost { get; set; }
 
         public static string RsaPrvKey { get; set; }
 
@@ -25,7 +19,6 @@ namespace multexbot.Api.Infrastructure
         public static string TelegramBot { get; set; }
 
         public static int TelegramGroup { get; set; }
-
 
         public static string[] AllowOrigins { get; set; }
 
@@ -40,6 +33,8 @@ namespace multexbot.Api.Infrastructure
         public static string SpExchangeUrl { get; set; }
         
         public static string LBankUrl { get; set; }
+        
+        public static string BingxUrl { get; set; }
         
         public static OpenExchangeRatesConfig OpenExchangeRates { get; set; }
     }

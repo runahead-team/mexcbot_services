@@ -88,6 +88,8 @@ namespace multexbot.Api.Services
                             bot.SecretKey.Decrypt(Configurations.HashKey)),
                         ExchangeType.LBANK => new LBankExchangeClient(Configurations.LBankUrl, bot.ApiKey,
                             bot.SecretKey.Decrypt(Configurations.HashKey)),
+                        ExchangeType.BINGX => new LBankExchangeClient(Configurations.BingxUrl, bot.ApiKey,
+                            bot.SecretKey.Decrypt(Configurations.HashKey)),
                         _ => throw new ArgumentOutOfRangeException()
                     };
 
@@ -147,6 +149,8 @@ namespace multexbot.Api.Services
                 ExchangeType.UPBIT => new UpbitExchangeClient(Configurations.UpbitUrl, bot.ApiKey,
                     bot.SecretKey.Decrypt(Configurations.HashKey)),
                 ExchangeType.LBANK => new LBankExchangeClient(Configurations.LBankUrl, bot.ApiKey,
+                    bot.SecretKey.Decrypt(Configurations.HashKey)),
+                ExchangeType.BINGX => new LBankExchangeClient(Configurations.BingxUrl, bot.ApiKey,
                     bot.SecretKey.Decrypt(Configurations.HashKey)),
                 _ => throw new ArgumentOutOfRangeException()
             };
@@ -406,6 +410,8 @@ namespace multexbot.Api.Services
                             order.SecretKey.Decrypt(Configurations.HashKey)),
                         ExchangeType.LBANK => new LBankExchangeClient(Configurations.LBankUrl, order.ApiKey,
                             order.SecretKey.Decrypt(Configurations.HashKey)),
+                        ExchangeType.BINGX => new LBankExchangeClient(Configurations.BingxUrl, order.ApiKey,
+                            order.SecretKey.Decrypt(Configurations.HashKey)),
                         _ => throw new ArgumentOutOfRangeException()
                     };
 
@@ -487,6 +493,7 @@ namespace multexbot.Api.Services
                     ExchangeType.UPBIT => Configurations.UpbitUrl,
                     ExchangeType.SPEXCHANGE => Configurations.SpExchangeUrl,
                     ExchangeType.LBANK => Configurations.LBankUrl,
+                    ExchangeType.BINGX => Configurations.BingxUrl,
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
