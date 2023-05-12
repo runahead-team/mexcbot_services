@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,6 +11,7 @@ using Newtonsoft.Json.Linq;
 using sp.Core.Constants;
 using sp.Core.Exceptions;
 using sp.Core.Extensions;
+using sp.Core.Utils;
 
 namespace mexcbot.Api.Services
 {
@@ -43,11 +45,17 @@ namespace mexcbot.Api.Services
 
         private static async Task<List<UserDto>> LoadUserFromJson()
         {
-            using var r = new StreamReader("../mexcbot.Api/JsonData/Users.json");
+            var path = "../mexcbot.Api/JsonData/Users.json";
+
+            if (AppUtils.GetEnv() == "Production")
+                path = "/app/JsonData/Users.json";
+
+            using var r = new StreamReader(path);
+
             var json = await r.ReadToEndAsync();
-            
+
             var data = JObject.Parse(json)["Users"];
-            
+
             return data != null ? JsonConvert.DeserializeObject<List<UserDto>>(data.ToString()) : new List<UserDto>();
         }
 

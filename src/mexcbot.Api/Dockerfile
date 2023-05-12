@@ -20,6 +20,5 @@ RUN dotnet publish "mexcbot.Api.csproj" -c Release -o /app/publish
 FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
-COPY mexcbot.Api/mails ./
-COPY mexcbot.Api/mails/mail_subjects.json ./
+COPY mexcbot.Api/JsonData ./
 ENTRYPOINT ["dotnet", "mexcbot.Api.dll"]

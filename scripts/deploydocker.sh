@@ -1,8 +1,8 @@
 #!/bin/sh
 tag=$1;
 
-echo "build mexcbot:$tag"
+echo "build mexcbot_services:$tag"
 
-docker build -t mexcbot:$tag -f ../src/mexcbot.Api/Dockerfile ../src
-docker tag mexcbot:$tag ra25/mexcbot:$tag
-docker push ra25/mexcbot:$tag
+docker build -t mexcbot_services:$tag -f ../src/mexcbot.Api/Dockerfile ../src
+docker tag mexcbot_services:$tag ra25/mexcbot_services:$tag
+docker push ra25/mexcbot_services:$tag

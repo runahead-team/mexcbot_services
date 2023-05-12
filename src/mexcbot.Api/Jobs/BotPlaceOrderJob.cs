@@ -194,6 +194,14 @@ namespace mexcbot.Api.Jobs
 
                 var avgOrder = (bot.MinOrderQty + bot.MaxOrderQty) / 2;
                 var numOfOrder = (int)(botUsdOrderValue / botLastPrice / avgOrder);
+                
+                //5m/numOfOrder => delay time between 2 orders;
+                var delayOrder = (int)300000 / numOfOrder;
+
+                if (bot.MatchingDelayTo != 0)
+                {
+                    delayOrder -= (int)(bot.MatchingDelayTo * 1000);
+                }
 
                 var totalQty = 0m;
                 var totalUsdVolume = 0m;
@@ -264,7 +272,7 @@ namespace mexcbot.Api.Jobs
                         await CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.BUY);   
                     }
                     
-                    await Task.Delay(TimeSpan.FromSeconds(45));
+                    await Task.Delay(TimeSpan.FromMilliseconds(delayOrder));
                 }
 
                 var toTime = AppUtils.NowMilis();
