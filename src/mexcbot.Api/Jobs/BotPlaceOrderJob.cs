@@ -191,6 +191,9 @@ namespace mexcbot.Api.Jobs
                 var avgOrder = (bot.MinOrderQty + bot.MaxOrderQty) / 2;
                 var numOfOrder = (int)(botUsdOrderValue / botLastPrice / avgOrder);
 
+                if (numOfOrder == 0)
+                    return;
+
                 //5m/numOfOrder => delay time between 2 orders;
                 var delayOrder = (int)300000 / numOfOrder;
 
@@ -207,7 +210,8 @@ namespace mexcbot.Api.Jobs
                 var basePrecision = exchangeInfo.BaseAssetPrecision;
                 for (var i = 0; i < numOfOrder; i++)
                 {
-                    var orderQty = Math.Round(RandomNumber(bot.MinOrderQty, bot.MaxOrderQty, basePrecision), basePrecision);
+                    var orderQty = Math.Round(RandomNumber(bot.MinOrderQty, bot.MaxOrderQty, basePrecision),
+                        basePrecision);
                     totalQty += orderQty;
 
                     //Ask [Price, Quantity ]
