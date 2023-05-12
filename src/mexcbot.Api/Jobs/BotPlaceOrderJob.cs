@@ -185,8 +185,9 @@ namespace mexcbot.Api.Jobs
                 if (numOfOrder == 0)
                     return;
 
+                
                 //5m/numOfOrder => delay time between 2 orders;
-                var delayOrder = (int)300000 / numOfOrder;
+                var delayOrder = (int)TimeSpan.FromMinutes(5).TotalMilliseconds / numOfOrder;
 
                 if (bot.MatchingDelayTo != 0)
                 {
@@ -278,10 +279,12 @@ namespace mexcbot.Api.Jobs
                     }
                     catch (Exception e)
                     {
-                        Log.Error(e, "");
+                        Log.Error(e,"");
                     }
                     finally
                     {
+                        Log.Information("Delay {0}s", TimeSpan.FromMilliseconds(delayOrder).Seconds);
+                        
                         await Task.Delay(TimeSpan.FromMilliseconds(delayOrder));
                     }
                 }
@@ -293,7 +296,7 @@ namespace mexcbot.Api.Jobs
             }
             catch (Exception e)
             {
-                Log.Error(e, "");
+                Log.Error(e,"");
             }
         }
 
