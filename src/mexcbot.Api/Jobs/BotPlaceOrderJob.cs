@@ -139,6 +139,12 @@ namespace mexcbot.Api.Jobs
                 var botLastPrice = decimal.Parse(botTicker24hr.LastPrice);
                 var rateVol24hr = bot.Volume24hr / btcUsdVol24hr;
 
+                if (botLastPrice <= 0 )
+                {
+                    Log.Warning("botLastPrice zero");
+                    return;
+                }
+                
                 if (botUsdVol24hr >= bot.Volume24hr)
                 {
                     Log.Warning("Volume enough");
@@ -213,6 +219,7 @@ namespace mexcbot.Api.Jobs
 
                 var quotePrecision = exchangeInfo.QuoteAssetPrecision;
                 var basePrecision = exchangeInfo.BaseAssetPrecision;
+                
                 for (var i = 0; i < numOfOrder; i++)
                 {
                     try
@@ -224,7 +231,7 @@ namespace mexcbot.Api.Jobs
                                 Id = bot.Id,
                                 Status = BotStatus.ACTIVE
                             }) != 1) {
-                            Log.Information("Bot stop");
+                            Log.Warning("Bot stop");
                             return;
                         }
                          
@@ -232,7 +239,7 @@ namespace mexcbot.Api.Jobs
 
                         if (orderbook.Asks.Count == 0 || orderbook.Asks.Count == 0)
                         {
-                            Log.Information("Orderbook empty");
+                            Log.Warning("Orderbook empty");
                             return;
                         }
 
@@ -256,37 +263,18 @@ namespace mexcbot.Api.Jobs
 
                         totalUsdVolume += orderQty * askPrice;
 
-                        #region Validation balance
-
-                        var checkBalances = await mexcClient.GetAccInformation();
-
-                        var baseBalance = decimal.Parse(checkBalances.FirstOrDefault(x => x.Asset == bot.Base).Free);
-
-                        if (baseBalance <= orderQty)
+                        if(orderQty < 0)
                         {
-                            bot.Status = BotStatus.INACTIVE;
-                            stopLog += $"Stop when your {bot.Base} balance below sell's order quantity\n";
-                        }
-
-                        var quoteBalance = decimal.Parse(balances.FirstOrDefault(x => x.Asset == bot.Quote).Free);
-
-                        if (quoteBalance <= orderQty * askPrice)
-                        {
-                            bot.Status = BotStatus.INACTIVE;
-                            stopLog += $"Stop when your {bot.Quote} balance below buy's order quantity\n";
-                        }
-
-                        //Stop
-                        if (bot.Status == BotStatus.INACTIVE)
-                        {
-                            bot.Logs = stopLog;
-                            await UpdateBot(bot);
-                            Log.Information(stopLog);
+                            Log.Warning("orderQty zero");
                             return;
                         }
-
-                        #endregion
-
+                        
+                        if(askPrice < 0)
+                        {
+                            Log.Warning("Price zero");
+                            return;
+                        }
+                        
                         if (bot.MatchingDelayFrom == 0 || bot.MatchingDelayTo == 0)
                         {
                             if (await CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
