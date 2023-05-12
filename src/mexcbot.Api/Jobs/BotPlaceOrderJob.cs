@@ -289,20 +289,22 @@ namespace mexcbot.Api.Jobs
 
                         if (bot.MatchingDelayFrom == 0 || bot.MatchingDelayTo == 0)
                         {
-                            var sellTask = CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
-                                askPrice.ToString($"F{quotePrecision}"), OrderSide.SELL);
-                            await Task.Delay(TimeSpan.FromMilliseconds(128));
-                            var buyTask = CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
-                                askPrice.ToString($"F{quotePrecision}"), OrderSide.BUY);
-                            await Task.WhenAll(sellTask, buyTask);
+                            if (await CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
+                                    askPrice.ToString($"F{quotePrecision}"), OrderSide.SELL))
+                            {
+                                await CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
+                                    askPrice.ToString($"F{quotePrecision}"), OrderSide.BUY);
+                            }
                         }
                         else
                         {
-                            await CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
-                                askPrice.ToString($"F{quotePrecision}"), OrderSide.SELL);
-                            await TradeDelay(bot);
-                            await CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
-                                askPrice.ToString($"F{quotePrecision}"), OrderSide.BUY);
+                            if (await CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
+                                    askPrice.ToString($"F{quotePrecision}"), OrderSide.SELL))
+                            {
+                                await TradeDelay(bot);
+                                await CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
+                                    askPrice.ToString($"F{quotePrecision}"), OrderSide.BUY);
+                            }
                         }
                     }
                     catch (Exception e)
