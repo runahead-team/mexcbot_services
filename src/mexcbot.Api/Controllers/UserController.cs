@@ -11,7 +11,7 @@ using sp.Core.Models;
 
 namespace mexcbot.Api.Controllers
 {
-    [Route("user")]
+    [Route("api/user")]
     public class UserController : BaseController
     {
         private readonly IUserService _userService;

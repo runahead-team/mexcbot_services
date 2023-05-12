@@ -1,6 +1,6 @@
-CREATE DATABASE IF NOT EXISTS `KenzoBot`;
+CREATE DATABASE IF NOT EXISTS `MexcBot`;
 
-USE `KenzoBot`;
+USE `MexcBot`;
 
 -- BASE
 

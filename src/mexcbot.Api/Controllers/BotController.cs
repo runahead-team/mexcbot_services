@@ -14,7 +14,7 @@ using sp.Core.Models;
 
 namespace mexcbot.Api.Controllers
 {
-    [Route("bot")]
+    [Route("api/bot")]
     public class BotController : BaseController
     {
         private readonly IBotService _botService;
