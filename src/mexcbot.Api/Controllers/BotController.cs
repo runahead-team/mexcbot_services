@@ -4,44 +4,59 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using mexcbot.Api.Controllers.Base;
 using mexcbot.Api.Infrastructure.Authentication;
+using mexcbot.Api.Infrastructure.ExchangeClient;
+using mexcbot.Api.Models.Bot;
 using mexcbot.Api.RequestModels.User;
 using mexcbot.Api.Services.Interface;
+using Newtonsoft.Json.Linq;
 using sp.Core.Exceptions;
 using sp.Core.Models;
 
 namespace mexcbot.Api.Controllers
 {
-    [Route("user")]
-    public class UserController : BaseController
+    [Route("bot")]
+    public class BotController : BaseController
     {
-        private readonly IUserService _userService;
-        private readonly RsaJwtTokenProvider _rsaJwtTokenProvider;
+        private readonly IBotService _botService;
 
-        public UserController(IUserService userService,
-            RsaJwtTokenProvider rsaJwtTokenProvider)
+        public BotController(IBotService botService)
         {
-            _userService = userService;
-            _rsaJwtTokenProvider = rsaJwtTokenProvider;
+            _botService = botService;
+        }
+
+        [HttpPost("list")]
+        public async Task<OkResponse> GetList([FromBody] TableRequest request)
+        {
+            var bots = await _botService.GetBotsAsync(request, CurrentUser());
+
+            return new OkResponse(bots);
+        }
+
+        [HttpPost("")]
+        public async Task<OkResponse> Create([FromBody] BotDto request)
+        {
+            var bot = await _botService.CreateAsync(request, CurrentUser());
+
+            return new OkResponse(bot);
+        }
+
+        [HttpPut("")]
+        public async Task<OkResponse> Update([FromBody] BotDto request)
+        {
+            await _botService.UpdateAsync(request, CurrentUser());
+
+            return new OkResponse();
         }
         
-        [HttpPost("login")]
+        [HttpGet("Candlestick")]
         [AllowAnonymous]
-        public async Task<OkResponse> Login([FromBody] LoginRequest request)
+        public async Task<OkResponse> Candlestick()
         {
-            var user = await _userService.LoginAsync(request);
+            var mexcClient = new MexcClient("https://api.mexc.com", "mx0vglSajT0Oz8xiow", "4088b3f33029404cbe071bb84579dd6a");
 
-            if (user == null)
-                throw new AppException();
+            var sticks = await mexcClient.GetExchangeInfo("OPV", "USDT");
 
-            var appUser = new AppUser()
-            {
-                Username = user.Username,
-                Email = user.Email
-            };
-
-            var jwt = _rsaJwtTokenProvider.GenerateToken(appUser);
-
-            return new OkResponse(jwt);
+            return new OkResponse(sticks);
         }
     }
 }

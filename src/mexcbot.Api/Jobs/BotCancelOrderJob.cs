@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
@@ -9,6 +10,7 @@ using mexcbot.Api.Constants;
 using mexcbot.Api.Infrastructure;
 using mexcbot.Api.Infrastructure.ExchangeClient;
 using mexcbot.Api.Models.Bot;
+using mexcbot.Api.ResponseModels.Order;
 using mexcbot.Api.Services.Interface;
 using Microsoft.Extensions.Hosting;
 using MySqlConnector;
@@ -19,55 +21,17 @@ using sp.Core.Utils;
 
 namespace mexcbot.Api.Jobs
 {
-    public class BotPlaceOrderJob : BackgroundService
+    public class BotCancelOrderJob : BackgroundService
     {
-        public BotPlaceOrderJob()
+        public BotCancelOrderJob()
         {
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var task = CreateOrderJob(stoppingToken);
+            var task = CancelOrderJob(stoppingToken);
 
             await Task.WhenAll(task);
-        }
-
-        private async Task CreateOrderJob(CancellationToken stoppingToken)
-        {
-            var ver = 1;
-
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                try
-                {
-                    Log.Information($"Ver:{ver}");
-
-                    await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
-                    await dbConnection.OpenAsync();
-
-                    var bots = (await dbConnection.QueryAsync<BotDto>(
-                        "SELECT * FROM Bots WHERE Status = @Status", new
-                        {
-                            Status = BotStatus.ACTIVE
-                        })).ToList();
-
-                    if (!bots.Any())
-                        return;
-
-                    var tasks = bots.Select(Run).ToList();
-
-                    await Task.WhenAll(tasks);
-
-                    ver++;
-
-                    await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
-                }
-                catch (Exception e)
-                {
-                    if (!(e is TaskCanceledException))
-                        Log.Error(e, "BotPlaceOrderJob:CreateOrderJob");
-                }
-            }
         }
 
         private async Task CancelOrderJob(CancellationToken stoppingToken)
@@ -76,306 +40,97 @@ namespace mexcbot.Api.Jobs
             {
                 try
                 {
+                    await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
+                    await dbConnection.OpenAsync();
+
+                    var orders = (await dbConnection.QueryAsync<OrderDto>(
+                        "SELECT * FROM BotOrders WHERE IsRunCancellation = @IsRunCancellation AND ExpiredTime <= @Now",
+                        new
+                        {
+                            IsRunCancellation = false,
+                            Now = AppUtils.NowMilis()
+                        })).ToList();
+
+                    var botIds = orders.Select(x => x.BotId).ToList();
+                    var bots = (await dbConnection.QueryAsync<BotDto>(
+                        "SELECT * FROM Bots WHERE Id IN @Ids",
+                        new
+                        {
+                            Ids = botIds
+                        })).ToList();
+
+                    foreach (var order in orders)
+                    {
+                        await Execute(order, bots, dbConnection);
+                    }
+
+                    await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
                 }
                 catch (Exception e)
                 {
                     if (!(e is TaskCanceledException))
-                        Log.Error(e, "BotPlaceOrderJob:CancelOrderJob");
+                        Log.Error(e, "BotCancelOrderJob:CancelOrderJob");
                 }
             }
         }
 
-        private async Task Run(BotDto bot)
+        private async Task Execute(OrderDto order, IEnumerable<BotDto> bots, IDbConnection dbConnection)
         {
-            var stopLog = "";
-            var now = AppUtils.NowMilis();
-
-            try
+            async Task UpdateRunFlag(string orderId, bool isRunCancellation, IDbConnection dbConnection)
             {
-                Log.Information("BOT {0} run", bot.Symbol);
-
-                var mexcClient = new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret);
-
-                var exchangeInfo = await mexcClient.GetExchangeInfo(bot.Base, bot.Quote);
-
-                #region Validate
-
-                var balances = await mexcClient.GetAccInformation();
-
-                if (!balances.Any())
+                var updateParams = new
                 {
-                    bot.Status = BotStatus.INACTIVE;
-                    stopLog += "Stop when your balances Zero\n";
-                }
-                else
-                {
-                    var baseBalance = balances.FirstOrDefault(x => x.Asset == bot.Base);
+                    OrderId = orderId,
+                    IsRunCancellation = isRunCancellation
+                };
 
-                    if (baseBalance == null || decimal.Parse(baseBalance.Free) <= 0)
-                    {
-                        bot.Status = BotStatus.INACTIVE;
-                        stopLog += $"Stop when your {bot.Base} balance below 0 or null\n";
-                    }
+                var exec = await dbConnection.ExecuteAsync(
+                    "UPDATE BotOrders SET IsRunCancellation = @IsRunCancellation WHERE OrderId = @OrderId",
+                    updateParams);
 
-                    var quoteBalance = balances.FirstOrDefault(x => x.Asset == bot.Quote);
-
-                    if (quoteBalance == null || decimal.Parse(quoteBalance.Free) <= 0)
-                    {
-                        bot.Status = BotStatus.INACTIVE;
-                        stopLog += $"Stop when your {bot.Quote} balance below 0 or null\n";
-                    }
-                }
-
-                if (exchangeInfo == null)
-                {
-                    bot.Status = BotStatus.INACTIVE;
-                    stopLog += $"Stop when exchange info not found\n";
-                }
-
-                //Stop
-                if (bot.Status == BotStatus.INACTIVE)
-                {
-                    bot.Logs = stopLog;
-                    await UpdateBot(bot);
-                    return;
-                }
-
-                #endregion
-
-                #region Follow btc candle 60m => bot's volume 60m
-
-                var startDate = now - (now % 86400000);
-                var endDate = startDate + 86400000;
-                var nowDate = now;
-
-                var preStartDate = startDate - 86400000;
-                var preEndDate = startDate;
-                var preDate = nowDate - 86400000;
-
-                var botTicker24hr = (await mexcClient.GetTicker24hr(bot.Base, bot.Quote));
-                var btcUsdVol24hr = decimal.Parse((await mexcClient.GetTicker24hr("BTC", "USDT")).QuoteVolume);
-                var botUsdVol24hr = decimal.Parse(botTicker24hr.QuoteVolume);
-                var botLastPrice = decimal.Parse(botTicker24hr.LastPrice);
-                var rateVol24hr = bot.Volume24hr / btcUsdVol24hr;
-
-                if (botUsdVol24hr >= bot.Volume24hr)
-                    return;
-
-                //NOTE: 0-Open time, 1-Open, 2-High, 3-Low, 4-Close, 5-Volume, 6-Close time, 7-Quote asset volume
-                //NOTE: 1m, 5m, 15m, 30m, 60m, 4h, 1d, 1M
-                var btcCandleStick5m = await mexcClient.GetCandleStick("BTC", "USDT", "5m");
-
-                var botCandleStick5m = await mexcClient.GetCandleStick(bot.Base, bot.Quote, "5m");
-
-                var btcCandleStickPre1Day =
-                    btcCandleStick5m.Where(x => x[0].Value<long>() >= preStartDate && x[6].Value<long>() <= preEndDate)
-                        .ToList();
-
-                var botCandleStickOnDay =
-                    botCandleStick5m.Where(x => x[0].Value<long>() >= startDate && x[6].Value<long>() <= endDate)
-                        .ToList();
-
-                var botCandleStickAtNow =
-                    botCandleStickOnDay.FirstOrDefault(x =>
-                        x[0].Value<long>() <= nowDate && nowDate <= x[6].Value<long>());
-
-                var btcCandleStickPredict =
-                    btcCandleStickPre1Day.FirstOrDefault(x =>
-                        x[0].Value<long>() <= preDate && preDate <= x[6].Value<long>());
-
-                if (btcCandleStickPredict == null || botCandleStickAtNow == null)
-                    return;
-
-                var btcUsdVolumePredict = decimal.Parse(btcCandleStickPredict[7].Value<string>());
-
-                var botUsdVolumeTarget = rateVol24hr * btcUsdVolumePredict;
-
-                var botUsdVolumeReal = decimal.Parse(botCandleStickAtNow[7].Value<string>());
-
-                var botUsdOrderValue = botUsdVolumeTarget - botUsdVolumeReal;
-
-                //If volume 5m >= predict
-                if (botUsdOrderValue > botUsdVolumeTarget)
-                    return;
-
-                #endregion
-
-                var orderbook = await mexcClient.GetOrderbook(bot.Base, bot.Quote);
-
-                if (orderbook.Asks.Count == 0 || orderbook.Asks.Count == 0)
-                    return;
-
-                var avgOrder = (bot.MinOrderQty + bot.MaxOrderQty) / 2;
-                var numOfOrder = (int)(botUsdOrderValue / botLastPrice / avgOrder);
-
-                var totalQty = 0m;
-                var totalUsdVolume = 0m;
-                var fromTime = AppUtils.NowMilis();
-
-                var precision = exchangeInfo.QuoteAssetPrecision;
-                for (var i = 0; i < numOfOrder; i++)
-                {
-                    var orderQty = Math.Round(RandomNumber(bot.MinOrderQty, bot.MaxOrderQty), precision);
-                    totalQty += orderQty;
-
-                    //Ask [Price, Quantity ]
-                    var asks = orderbook.Asks;
-                    var bids = orderbook.Bids;
-
-                    var smallestAskPrice = asks[0][0];
-                    var biggestBidPrice = bids[0][0];
-                    var askPrice = 0m;
-                    var sizePrediction = 1 / (decimal)Math.Pow(10, precision);
-
-                    askPrice = biggestBidPrice + sizePrediction == smallestAskPrice
-                        ? smallestAskPrice
-                        : RandomNumber(biggestBidPrice, smallestAskPrice);
-
-                    askPrice = Math.Round(askPrice, exchangeInfo.QuoteAssetPrecision);
-
-                    totalUsdVolume += orderQty * askPrice;
-
-                    #region Validation balance
-
-                    var checkBalances = await mexcClient.GetAccInformation();
-                    
-                    var baseBalance = decimal.Parse(checkBalances.FirstOrDefault(x => x.Asset == bot.Base).Free);
-
-                    if (baseBalance <= orderQty)
-                    {
-                        bot.Status = BotStatus.INACTIVE;
-                        stopLog += $"Stop when your {bot.Base} balance below sell's order quantity\n";
-                    }
-
-                    var quoteBalance = decimal.Parse(balances.FirstOrDefault(x => x.Asset == bot.Quote).Free);
-                    
-                    if (quoteBalance <= orderQty * askPrice)
-                    {
-                        bot.Status = BotStatus.INACTIVE;
-                        stopLog += $"Stop when your {bot.Quote} balance below buy's order quantity\n";
-                    }
-
-                    //Stop
-                    if (bot.Status == BotStatus.INACTIVE)
-                    {
-                        bot.Logs = stopLog;
-                        await UpdateBot(bot);
-                        return;
-                    }
-
-                    #endregion
-
-                    if (bot.MatchingDelayFrom == 0 || bot.MatchingDelayTo == 0)
-                    {
-                        await CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.SELL);
-                        await CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.BUY);
-                    }
-                    else
-                    {
-                        await CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.SELL);
-                        await TradeDelay(bot);
-                        await CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.BUY);   
-                    }
-
-                    Log.Information(
-                        $"Order num: #{i + 1} qty={orderQty} & price={askPrice} & time={AppUtils.NowMilis()}");
-                }
-
-                var toTime = AppUtils.NowMilis();
-
-                Log.Information(
-                    $"Summary: totalQty={totalQty} & totalUsdVolume={totalUsdVolume} & fromTime={fromTime} & toTime={toTime}");
+                if (exec != 1)
+                    Log.Error("CancelOrderJob:RunExpired {@data}", updateParams);
             }
-            catch (Exception e)
+
+            async Task UpdateStatus(OrderDto order, IDbConnection dbConnection)
             {
-                Log.Error(e, "");
+                var updateParams = new
+                {
+                    OrderId = order.OrderId,
+                    Status = order.Status,
+                    ExpiredTime = (long?)null
+                };
+
+                var exec = await dbConnection.ExecuteAsync(
+                    "UPDATE BotOrders SET Status = @Status WHERE OrderId = @OrderId",
+                    updateParams);
+
+                if (exec != 1)
+                    Log.Error("CancelOrderJob:UpdateStatus {@data}", updateParams);
+            }
+
+            await UpdateRunFlag(order.OrderId, true, dbConnection);
+
+            var bot = bots.FirstOrDefault(x => x.Id == order.BotId);
+
+            if (bot == null)
+                return;
+
+            var mexcClient = new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret);
+
+            var openOrdersFromMexc = await mexcClient.GetOpenOrder(bot.Base, bot.Quote);
+
+            if (openOrdersFromMexc.All(x => x.OrderId != order.OrderId))
+                return;
+
+            var canceledOrder = await mexcClient.CancelOrder(bot.Base, bot.Quote, order.OrderId);
+
+            if (canceledOrder != null)
+            {
+                order.Status = canceledOrder.Status;
+
+                await UpdateStatus(order, dbConnection);
             }
         }
-
-        #region Private
-
-        private async Task<bool> CreateLimitOrder(MexcClient client, BotDto bot, decimal qty, decimal price,
-            OrderSide side)
-        {
-            var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty.ToCurrencyString(), price.ToCurrencyString());
-
-            if (order == null)
-                return false;
-
-            Log.Information("Bot create order {0}",
-                $"{side} {qty.ToCurrencyString()} {bot.Symbol} at price {price.ToCurrencyString()} {order.OrderId}");
-
-            await using var sqlConnection = new MySqlConnection(Configurations.DbConnectionString);
-
-            order.BotId = bot.Id;
-            order.UserId = bot.UserId;
-
-            var exec = await sqlConnection.ExecuteAsync(
-                @"INSERT INTO BotOrders(BotId,UserId,OrderId,Symbol,OrderListId,Price,OrigQty,Type,Side,`TransactTime`)
-                      VALUES(@BotId,@UserId,@OrderId,@Symbol,@OrderListId,@Price,@OrigQty,@Type,@Side,@TransactTime)",
-                order);
-
-            if (exec == 0)
-                Log.Error("Bot insert order fail {@data}", order);
-
-            return true;
-        }
-
-        private async Task UpdateBot(BotDto bot)
-        {
-            try
-            {
-                await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
-                await dbConnection.OpenAsync();
-
-                await dbConnection.ExecuteAsync(
-                    @"UPDATE Bots SET Logs = @Logs, Status = @Status
-                    WHERE Id = @Id",
-                    bot);
-            }
-            catch (Exception e)
-            {
-                Log.Error(e, "UpdateBot");
-            }
-        }
-
-        private async Task TradeDelay(BotDto bot)
-        {
-            await Task.Delay((int)RandomNumber(bot.MatchingDelayFrom,
-                bot.MatchingDelayTo) * 1000);
-        }
-
-        private decimal RandomNumber(decimal from, decimal to)
-        {
-            if (from >= to)
-                return from;
-
-            int round;
-
-            if (from > 10)
-            {
-                round = 1000;
-            }
-            else if (from > 1)
-            {
-                round = 100000;
-            }
-            else if (from > 0.1m)
-            {
-                round = 1000000;
-            }
-            else if (from > 0.01m)
-            {
-                round = 10000000;
-            }
-            else
-            {
-                round = 100000000;
-            }
-
-            return (decimal)new Random().Next((int)(from * round), (int)(to * round)) / round;
-        }
-
-        #endregion
     }
 }

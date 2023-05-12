@@ -1,0 +1,63 @@
+CREATE DATABASE IF NOT EXISTS `KenzoBot`;
+
+USE `KenzoBot`;
+
+-- BASE
+
+-- Tokens
+CREATE TABLE Tokens
+  (
+    Id VARCHAR(128) NOT NULL,
+    `Data` VARCHAR (2048),
+    `CreatedTime` DATETIME NOT NULL DEFAULT NOW(),
+    INDEX (`Id`)
+  )
+ENGINE = InnoDB;
+
+CREATE TABLE Bots
+  (
+    Id BIGINT NOT NULL AUTO_INCREMENT,
+    UserId BIGINT NOT NULL,
+    Base VARCHAR (16) NOT NULL,
+    Quote VARCHAR (16) NOT NULL,
+    Volume24hr DECIMAL(20,8) UNSIGNED NOT NULL,
+    MatchingDelayFrom BIGINT NOT NULL,
+    MatchingDelayTo BIGINT NOT NULL,
+    MinOrderQty DECIMAL(20,8) UNSIGNED NOT NULL,
+    MaxOrderQty DECIMAL(20,8) UNSIGNED NOT NULL,
+    ApiKey VARCHAR(128) NOT NULL,
+    ApiSecret VARCHAR(128) NOT NULL,
+    Logs TEXT,
+    `Status` TINYINT NOT NULL,
+    LastRunTime BIGINT NULL,
+    CreatedTime BIGINT NOT NULL,
+    PRIMARY KEY(Id),
+    INDEX(UserId)
+  )
+ENGINE = MyISAM,
+DEFAULT CHARSET utf8
+COLLATE utf8_unicode_ci;
+ALTER TABLE Bots AUTO_INCREMENT = 1;
+
+CREATE TABLE BotOrders
+  (
+    Id BIGINT NOT NULL AUTO_INCREMENT,
+    BotId BIGINT NOT NULL,
+    UserId BIGINT NOT NULL,
+    OrderId VARCHAR(64) NOT NULL,
+    OrderListId VARCHAR(64) NOT NULL,
+    Symbol VARCHAR(32) NOT NULL,
+    Side VARCHAR(32) NOT NULL,
+    Price VARCHAR(32) NOT NULL,
+    OrigQty VARCHAR(32) NOT NULL,
+    IsRunCancellation TINYINT NOT NULL DEFAULT 0,
+    `Status` TINYINT NOT NULL,
+    ExpiredTime BIGINT NULL,
+    `Type` VARCHAR(32) NOT NULL,
+    `TransactTime` BIGINT NOT NULL,
+    PRIMARY KEY(Id),
+    INDEX(BotId),
+    INDEX(UserId)
+  )
+ENGINE = MyISAM;
+ALTER TABLE BotOrders AUTO_INCREMENT = 1;

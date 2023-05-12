@@ -19,9 +19,9 @@ using sp.Core.Utils;
 
 namespace mexcbot.Api.Jobs
 {
-    public class HandleBotJob : BackgroundService
+    public class BotPlaceOrderJob : BackgroundService
     {
-        public HandleBotJob()
+        public BotPlaceOrderJob()
         {
         }
 
@@ -65,22 +65,7 @@ namespace mexcbot.Api.Jobs
                 catch (Exception e)
                 {
                     if (!(e is TaskCanceledException))
-                        Log.Error(e, "HandleBotJob:CreateOrderJob");
-                }
-            }
-        }
-
-        private async Task CancelOrderJob(CancellationToken stoppingToken)
-        {
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                try
-                {
-                }
-                catch (Exception e)
-                {
-                    if (!(e is TaskCanceledException))
-                        Log.Error(e, "HandleBotJob:CancelOrderJob");
+                        Log.Error(e, "BotPlaceOrderJob:CreateOrderJob");
                 }
             }
         }
@@ -192,6 +177,8 @@ namespace mexcbot.Api.Jobs
 
                 var botUsdVolumeReal = decimal.Parse(botCandleStickAtNow[7].Value<string>());
 
+                Log.Information($"[Volume] real={botUsdVolumeReal} & target={botUsdVolumeTarget} & from {botCandleStickAtNow[0]} to {botCandleStickAtNow[6]}");
+
                 var botUsdOrderValue = botUsdVolumeTarget - botUsdVolumeReal;
 
                 //If volume 5m >= predict
@@ -276,9 +263,8 @@ namespace mexcbot.Api.Jobs
                         await TradeDelay(bot);
                         await CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.BUY);   
                     }
-
-                    Log.Information(
-                        $"Order num: #{i + 1} qty={orderQty} & price={askPrice} & time={AppUtils.NowMilis()}");
+                    
+                    await Task.Delay(TimeSpan.FromSeconds(45));
                 }
 
                 var toTime = AppUtils.NowMilis();
@@ -309,10 +295,11 @@ namespace mexcbot.Api.Jobs
 
             order.BotId = bot.Id;
             order.UserId = bot.UserId;
+            order.ExpiredTime = order.TransactTime + MexcBotConstants.ExpiredOrderTime;
 
             var exec = await sqlConnection.ExecuteAsync(
-                @"INSERT INTO BotOrders(BotId,UserId,OrderId,Symbol,OrderListId,Price,OrigQty,Type,Side,`TransactTime`)
-                      VALUES(@BotId,@UserId,@OrderId,@Symbol,@OrderListId,@Price,@OrigQty,@Type,@Side,@TransactTime)",
+                @"INSERT INTO BotOrders(BotId,UserId,OrderId,Symbol,OrderListId,Price,OrigQty,Type,Side,ExpiredTime,Status,`TransactTime`)
+                      VALUES(@BotId,@UserId,@OrderId,@Symbol,@OrderListId,@Price,@OrigQty,@Type,@Side,@ExpiredTime,@Status,@TransactTime)",
                 order);
 
             if (exec == 0)

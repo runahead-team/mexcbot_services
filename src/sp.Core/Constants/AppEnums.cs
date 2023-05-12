@@ -5,6 +5,7 @@ namespace sp.Core.Constants
         UNKNOWN,
         INVALID_PARAMETERS,
         INVALID_OPERATION,
+        OPERATION_FAIL,
         TOKEN_INVALID,
         TOKEN_WRONG,
         TOKEN_EXPIRED,

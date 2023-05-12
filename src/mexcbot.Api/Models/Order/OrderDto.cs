@@ -2,7 +2,7 @@ using mexcbot.Api.Constants;
 
 namespace mexcbot.Api.ResponseModels.Order
 {
-    public class OpenOrderDto
+    public class OrderDto
     {
         public long BotId { get; set; }
         

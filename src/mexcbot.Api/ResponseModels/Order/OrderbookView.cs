@@ -1,4 +1,7 @@
-namespace mexcbot.Api.Models.Order
+using System.Collections.Generic;
+using sp.Core.Utils;
+
+namespace mexcbot.Api.ResponseModels.Order
 {
     public class OrderbookView
     {
