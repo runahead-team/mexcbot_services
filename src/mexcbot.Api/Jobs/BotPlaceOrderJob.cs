@@ -1,6 +1,4 @@
 using System;
-using System.Collections.Generic;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -9,12 +7,10 @@ using mexcbot.Api.Constants;
 using mexcbot.Api.Infrastructure;
 using mexcbot.Api.Infrastructure.ExchangeClient;
 using mexcbot.Api.Models.Bot;
-using mexcbot.Api.Services.Interface;
 using Microsoft.Extensions.Hosting;
 using MySqlConnector;
 using Newtonsoft.Json.Linq;
 using Serilog;
-using sp.Core.Extensions;
 using sp.Core.Utils;
 
 namespace mexcbot.Api.Jobs
@@ -205,76 +201,89 @@ namespace mexcbot.Api.Jobs
                 var basePrecision = exchangeInfo.BaseAssetPrecision;
                 for (var i = 0; i < numOfOrder; i++)
                 {
-                    var orderbook = await mexcClient.GetOrderbook(bot.Base, bot.Quote);
-
-                    if (orderbook.Asks.Count == 0 || orderbook.Asks.Count == 0)
-                        continue;
-
-                    var orderQty = Math.Round(RandomNumber(bot.MinOrderQty, bot.MaxOrderQty, basePrecision),
-                        basePrecision);
-
-                    totalQty += orderQty;
-
-                    //Ask [Price, Quantity ]
-                    var asks = orderbook.Asks;
-                    var bids = orderbook.Bids;
-
-                    var smallestAskPrice = asks[0][0];
-                    var biggestBidPrice = bids[0][0];
-                    var askPrice = 0m;
-                    var sizePrediction = 1 / (decimal)Math.Pow(10, quotePrecision);
-
-                    askPrice = biggestBidPrice + sizePrediction == smallestAskPrice
-                        ? smallestAskPrice
-                        : RandomNumber(biggestBidPrice, smallestAskPrice, quotePrecision);
-
-                    totalUsdVolume += orderQty * askPrice;
-
-                    #region Validation balance
-
-                    var checkBalances = await mexcClient.GetAccInformation();
-
-                    var baseBalance = decimal.Parse(checkBalances.FirstOrDefault(x => x.Asset == bot.Base).Free);
-
-                    if (baseBalance <= orderQty)
+                    try
                     {
-                        bot.Status = BotStatus.INACTIVE;
-                        stopLog += $"Stop when your {bot.Base} balance below sell's order quantity\n";
+                        var orderbook = await mexcClient.GetOrderbook(bot.Base, bot.Quote);
+
+                        if (orderbook.Asks.Count == 0 || orderbook.Asks.Count == 0)
+                            continue;
+
+                        var orderQty = Math.Round(RandomNumber(bot.MinOrderQty, bot.MaxOrderQty, basePrecision),
+                            basePrecision);
+
+                        totalQty += orderQty;
+
+                        //Ask [Price, Quantity ]
+                        var asks = orderbook.Asks;
+                        var bids = orderbook.Bids;
+
+                        var smallestAskPrice = asks[0][0];
+                        var biggestBidPrice = bids[0][0];
+                        var askPrice = 0m;
+                        var sizePrediction = 1 / (decimal)Math.Pow(10, quotePrecision);
+
+                        askPrice = biggestBidPrice + sizePrediction == smallestAskPrice
+                            ? smallestAskPrice
+                            : RandomNumber(biggestBidPrice, smallestAskPrice, quotePrecision);
+
+                        totalUsdVolume += orderQty * askPrice;
+
+                        #region Validation balance
+
+                        var checkBalances = await mexcClient.GetAccInformation();
+
+                        var baseBalance = decimal.Parse(checkBalances.FirstOrDefault(x => x.Asset == bot.Base).Free);
+
+                        if (baseBalance <= orderQty)
+                        {
+                            bot.Status = BotStatus.INACTIVE;
+                            stopLog += $"Stop when your {bot.Base} balance below sell's order quantity\n";
+                        }
+
+                        var quoteBalance = decimal.Parse(balances.FirstOrDefault(x => x.Asset == bot.Quote).Free);
+
+                        if (quoteBalance <= orderQty * askPrice)
+                        {
+                            bot.Status = BotStatus.INACTIVE;
+                            stopLog += $"Stop when your {bot.Quote} balance below buy's order quantity\n";
+                        }
+
+                        //Stop
+                        if (bot.Status == BotStatus.INACTIVE)
+                        {
+                            bot.Logs = stopLog;
+                            await UpdateBot(bot);
+                            return;
+                        }
+
+                        #endregion
+
+                        if (bot.MatchingDelayFrom == 0 || bot.MatchingDelayTo == 0)
+                        {
+                            var sellTask = CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
+                                askPrice.ToString($"F{quotePrecision}"), OrderSide.SELL);
+                            await Task.Delay(TimeSpan.FromMilliseconds(50));
+                            var buyTask = CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
+                                askPrice.ToString($"F{quotePrecision}"), OrderSide.BUY);
+                            await Task.WhenAll(sellTask, buyTask);
+                        }
+                        else
+                        {
+                            await CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
+                                askPrice.ToString($"F{quotePrecision}"), OrderSide.SELL);
+                            await TradeDelay(bot);
+                            await CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
+                                askPrice.ToString($"F{quotePrecision}"), OrderSide.BUY);
+                        }
                     }
-
-                    var quoteBalance = decimal.Parse(balances.FirstOrDefault(x => x.Asset == bot.Quote).Free);
-
-                    if (quoteBalance <= orderQty * askPrice)
+                    catch (Exception e)
                     {
-                        bot.Status = BotStatus.INACTIVE;
-                        stopLog += $"Stop when your {bot.Quote} balance below buy's order quantity\n";
+                        Log.Error(e, "");
                     }
-
-                    //Stop
-                    if (bot.Status == BotStatus.INACTIVE)
+                    finally
                     {
-                        bot.Logs = stopLog;
-                        await UpdateBot(bot);
-                        return;
+                        await Task.Delay(TimeSpan.FromMilliseconds(delayOrder));
                     }
-
-                    #endregion
-
-                    if (bot.MatchingDelayFrom == 0 || bot.MatchingDelayTo == 0)
-                    {
-                        var sellTask = CreateLimitOrder(mexcClient, bot, orderQty.ToString($"N{basePrecision}"), askPrice.ToString($"N{quotePrecision}"), OrderSide.SELL);
-                        await Task.Delay(TimeSpan.FromMilliseconds(50));
-                        var buyTask = CreateLimitOrder(mexcClient, bot, orderQty.ToString($"N{basePrecision}"), askPrice.ToString($"N{quotePrecision}"), OrderSide.BUY);
-                        await Task.WhenAll(sellTask, buyTask);
-                    }
-                    else
-                    {
-                        await CreateLimitOrder(mexcClient, bot, orderQty.ToString($"N{basePrecision}"), askPrice.ToString($"N{quotePrecision}"), OrderSide.SELL);
-                        await TradeDelay(bot);
-                        await CreateLimitOrder(mexcClient, bot, orderQty.ToString($"N{basePrecision}"), askPrice.ToString($"N{quotePrecision}"), OrderSide.BUY);
-                    }
-
-                    await Task.Delay(TimeSpan.FromMilliseconds(delayOrder));
                 }
 
                 var toTime = AppUtils.NowMilis();
