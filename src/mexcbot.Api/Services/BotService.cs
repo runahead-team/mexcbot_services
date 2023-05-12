@@ -5,6 +5,7 @@ using Dapper;
 using mexcbot.Api.Constants;
 using mexcbot.Api.Infrastructure;
 using mexcbot.Api.Models.Bot;
+using mexcbot.Api.ResponseModels.Order;
 using mexcbot.Api.Services.Interface;
 using sp.Core.Constants;
 using sp.Core.Exceptions;
@@ -108,6 +109,48 @@ namespace mexcbot.Api.Services
 
                 await Task.CompletedTask;
             });
+        }
+        
+        public async Task<PagingResult<OrderDto>> GetOrderHistoryAsync(TableRequest request, AppUser appUser)
+        {
+            var result = new PagingResult<OrderDto>();
+
+            #region Validation
+
+            #endregion
+
+            await DbConnections.ExecAsync(async (dbConnection) =>
+            {
+                var builder = new SqlBuilder();
+                var (skip, take) = request.GetSkipTake();
+
+                var counter =
+                    builder.AddTemplate(
+                        @"SELECT COUNT(*)  FROM BotOrders /**where**/");
+
+                var selector =
+                    builder.AddTemplate(
+                        @"SELECT *  FROM BotOrders /**where**/ LIMIT @Skip, @Take",
+                        new
+                        {
+                            Skip = skip,
+                            Take = take
+                        });
+
+                builder.Where("UserId = @UserId", new { UserId = appUser.Id });
+
+                var total = await dbConnection.ExecuteScalarAsync<int>(
+                    counter.RawSql, counter.Parameters);
+
+                var items = (await dbConnection.QueryAsync<OrderDto>(
+                    selector.RawSql, selector.Parameters)).ToList();
+
+                result = new PagingResult<OrderDto>(items, total, request);
+
+                await Task.CompletedTask;
+            });
+
+            return result;
         }
 
         #region Sys

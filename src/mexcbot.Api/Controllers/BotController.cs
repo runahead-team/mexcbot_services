@@ -48,15 +48,12 @@ namespace mexcbot.Api.Controllers
             return new OkResponse();
         }
         
-        [HttpGet("Candlestick")]
-        [AllowAnonymous]
-        public async Task<OkResponse> Candlestick()
+        [HttpPost("order-history")]
+        public async Task<OkResponse> GetOrderHistory([FromBody] TableRequest request)
         {
-            var mexcClient = new MexcClient("https://api.mexc.com", "mx0vglSajT0Oz8xiow", "4088b3f33029404cbe071bb84579dd6a");
+            var orderHistory = await _botService.GetOrderHistoryAsync(request, CurrentUser());
 
-            var sticks = await mexcClient.GetExchangeInfo("OPV", "USDT");
-
-            return new OkResponse(sticks);
+            return new OkResponse(orderHistory);
         }
     }
 }
