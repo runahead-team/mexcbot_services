@@ -223,13 +223,16 @@ namespace mexcbot.Api.Jobs
                             {
                                 Id = bot.Id,
                                 Status = BotStatus.ACTIVE
-                            }) != 1) return;
+                            }) != 1) {
+                            Log.Information("Bot stop");
+                            return;
+                        }
                          
                         var orderbook = await mexcClient.GetOrderbook(bot.Base, bot.Quote);
 
                         if (orderbook.Asks.Count == 0 || orderbook.Asks.Count == 0)
                         {
-                            Log.Warning("Orderbook empty");
+                            Log.Information("Orderbook empty");
                             return;
                         }
 
@@ -278,7 +281,7 @@ namespace mexcbot.Api.Jobs
                         {
                             bot.Logs = stopLog;
                             await UpdateBot(bot);
-                            Log.Warning(stopLog);
+                            Log.Information(stopLog);
                             return;
                         }
 
@@ -288,7 +291,7 @@ namespace mexcbot.Api.Jobs
                         {
                             var sellTask = CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
                                 askPrice.ToString($"F{quotePrecision}"), OrderSide.SELL);
-                            await Task.Delay(TimeSpan.FromMilliseconds(100));
+                            await Task.Delay(TimeSpan.FromMilliseconds(128));
                             var buyTask = CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
                                 askPrice.ToString($"F{quotePrecision}"), OrderSide.BUY);
                             await Task.WhenAll(sellTask, buyTask);
