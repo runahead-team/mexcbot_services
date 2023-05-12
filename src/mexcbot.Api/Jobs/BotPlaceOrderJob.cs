@@ -284,7 +284,6 @@ namespace mexcbot.Api.Jobs
                             if (await CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
                                     askPrice.ToString($"F{quotePrecision}"), OrderSide.SELL))
                             {
-                                await Task.Delay(128);
                                 await CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
                                     askPrice.ToString($"F{quotePrecision}"), OrderSide.BUY);
                             }
