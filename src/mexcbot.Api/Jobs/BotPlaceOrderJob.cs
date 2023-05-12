@@ -177,7 +177,8 @@ namespace mexcbot.Api.Jobs
 
                 var botUsdVolumeReal = decimal.Parse(botCandleStickAtNow[7].Value<string>());
 
-                Log.Information($"[Volume] real={botUsdVolumeReal} & target={botUsdVolumeTarget} & from {botCandleStickAtNow[0]} to {botCandleStickAtNow[6]}");
+                Log.Information(
+                    $"[Volume] real={botUsdVolumeReal} & target={botUsdVolumeTarget} & from {botCandleStickAtNow[0]} to {botCandleStickAtNow[6]}");
 
                 var botUsdOrderValue = botUsdVolumeTarget - botUsdVolumeReal;
 
@@ -194,7 +195,7 @@ namespace mexcbot.Api.Jobs
 
                 var avgOrder = (bot.MinOrderQty + bot.MaxOrderQty) / 2;
                 var numOfOrder = (int)(botUsdOrderValue / botLastPrice / avgOrder);
-                
+
                 //5m/numOfOrder => delay time between 2 orders;
                 var delayOrder = (int)300000 / numOfOrder;
 
@@ -210,7 +211,7 @@ namespace mexcbot.Api.Jobs
                 var precision = exchangeInfo.QuoteAssetPrecision;
                 for (var i = 0; i < numOfOrder; i++)
                 {
-                    var orderQty = Math.Round(RandomNumber(bot.MinOrderQty, bot.MaxOrderQty), precision);
+                    var orderQty = Math.Round(RandomNumber(bot.MinOrderQty, bot.MaxOrderQty, precision), precision);
                     totalQty += orderQty;
 
                     //Ask [Price, Quantity ]
@@ -224,16 +225,16 @@ namespace mexcbot.Api.Jobs
 
                     askPrice = biggestBidPrice + sizePrediction == smallestAskPrice
                         ? smallestAskPrice
-                        : RandomNumber(biggestBidPrice, smallestAskPrice);
+                        : RandomNumber(biggestBidPrice, smallestAskPrice, precision);
 
-                    askPrice = Math.Round(askPrice, exchangeInfo.QuoteAssetPrecision);
+                    askPrice = Math.Round(askPrice, precision);
 
                     totalUsdVolume += orderQty * askPrice;
 
                     #region Validation balance
 
                     var checkBalances = await mexcClient.GetAccInformation();
-                    
+
                     var baseBalance = decimal.Parse(checkBalances.FirstOrDefault(x => x.Asset == bot.Base).Free);
 
                     if (baseBalance <= orderQty)
@@ -243,7 +244,7 @@ namespace mexcbot.Api.Jobs
                     }
 
                     var quoteBalance = decimal.Parse(balances.FirstOrDefault(x => x.Asset == bot.Quote).Free);
-                    
+
                     if (quoteBalance <= orderQty * askPrice)
                     {
                         bot.Status = BotStatus.INACTIVE;
@@ -262,16 +263,18 @@ namespace mexcbot.Api.Jobs
 
                     if (bot.MatchingDelayFrom == 0 || bot.MatchingDelayTo == 0)
                     {
-                        await CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.SELL);
-                        await CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.BUY);
+                        var sellTask = CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.SELL);
+                        await Task.Delay(TimeSpan.FromMilliseconds(50));
+                        var buyTask = CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.BUY);
+                        await Task.WhenAll(sellTask, buyTask);
                     }
                     else
                     {
                         await CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.SELL);
                         await TradeDelay(bot);
-                        await CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.BUY);   
+                        await CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.BUY);
                     }
-                    
+
                     await Task.Delay(TimeSpan.FromMilliseconds(delayOrder));
                 }
 
@@ -291,7 +294,8 @@ namespace mexcbot.Api.Jobs
         private async Task<bool> CreateLimitOrder(MexcClient client, BotDto bot, decimal qty, decimal price,
             OrderSide side)
         {
-            var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty.ToCurrencyString(), price.ToCurrencyString());
+            var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty.ToCurrencyString(),
+                price.ToCurrencyString());
 
             if (order == null)
                 return false;
@@ -337,38 +341,18 @@ namespace mexcbot.Api.Jobs
         private async Task TradeDelay(BotDto bot)
         {
             await Task.Delay((int)RandomNumber(bot.MatchingDelayFrom,
-                bot.MatchingDelayTo) * 1000);
+                bot.MatchingDelayTo, 1) * 1000);
         }
 
-        private decimal RandomNumber(decimal from, decimal to)
+        private decimal RandomNumber(decimal from, decimal to, int precision)
         {
             if (from >= to)
                 return from;
 
-            int round;
+            var roundPrecision = (int)Math.Pow(10, precision);
 
-            if (from > 10)
-            {
-                round = 1000;
-            }
-            else if (from > 1)
-            {
-                round = 100000;
-            }
-            else if (from > 0.1m)
-            {
-                round = 1000000;
-            }
-            else if (from > 0.01m)
-            {
-                round = 10000000;
-            }
-            else
-            {
-                round = 100000000;
-            }
-
-            return (decimal)new Random().Next((int)(from * round), (int)(to * round)) / round;
+            return (decimal)new Random().Next((int)(from * roundPrecision), (int)(to * roundPrecision)) /
+                   roundPrecision;
         }
 
         #endregion
