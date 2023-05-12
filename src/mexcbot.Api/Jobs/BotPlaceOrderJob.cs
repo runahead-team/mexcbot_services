@@ -279,7 +279,7 @@ namespace mexcbot.Api.Jobs
                     }
                     catch (Exception e)
                     {
-                        Log.Error(e,"");
+                        Log.Error(e,"Bot Order");
                     }
                     finally
                     {
@@ -296,7 +296,7 @@ namespace mexcbot.Api.Jobs
             }
             catch (Exception e)
             {
-                Log.Error(e,"");
+                Log.Error(e,"Bot run");
             }
         }
 
