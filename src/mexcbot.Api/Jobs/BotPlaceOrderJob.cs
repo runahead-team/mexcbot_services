@@ -206,6 +206,14 @@ namespace mexcbot.Api.Jobs
                 {
                     try
                     {
+                        await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
+                        if(await dbConnection.ExecuteScalarAsync<int>(
+                               "SELECT COUNT(0) FROM Bots WHERE Id = @Id AND Status = @Status", new
+                            {
+                                Id = bot.Id,
+                                Status = BotStatus.ACTIVE
+                            }) != 1) return;
+                         
                         var orderbook = await mexcClient.GetOrderbook(bot.Base, bot.Quote);
 
                         if (orderbook.Asks.Count == 0 || orderbook.Asks.Count == 0)
