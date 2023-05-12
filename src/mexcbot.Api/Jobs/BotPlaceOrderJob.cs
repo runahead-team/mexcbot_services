@@ -140,7 +140,10 @@ namespace mexcbot.Api.Jobs
                 var rateVol24hr = bot.Volume24hr / btcUsdVol24hr;
 
                 if (botUsdVol24hr >= bot.Volume24hr)
+                {
+                    Log.Warning("Volume enough");
                     return;
+                }
 
                 //NOTE: 0-Open time, 1-Open, 2-High, 3-Low, 4-Close, 5-Volume, 6-Close time, 7-Quote asset volume
                 //NOTE: 1m, 5m, 15m, 30m, 60m, 4h, 1d, 1M
@@ -165,7 +168,10 @@ namespace mexcbot.Api.Jobs
                         x[0].Value<long>() <= preDate && preDate <= x[6].Value<long>());
 
                 if (btcCandleStickPredict == null || botCandleStickAtNow == null)
+                {
+                    Log.Warning("Candlestick null");
                     return;
+                }
 
                 var btcUsdVolumePredict = decimal.Parse(btcCandleStickPredict[7].Value<string>());
 
@@ -177,7 +183,10 @@ namespace mexcbot.Api.Jobs
 
                 //If volume 5m >= predict
                 if (botUsdOrderValue > botUsdVolumeTarget)
+                {
+                    Log.Warning("Volume enough");
                     return;
+                }
 
                 #endregion
 
@@ -185,9 +194,11 @@ namespace mexcbot.Api.Jobs
                 var numOfOrder = (int)(botUsdOrderValue / botLastPrice / avgOrder);
 
                 if (numOfOrder == 0)
+                {
+                    Log.Warning("No order");
                     return;
+                }
 
-                
                 //5m/numOfOrder => delay time between 2 orders;
                 var delayOrder = (int)TimeSpan.FromMinutes(5).TotalMilliseconds / numOfOrder;
 
@@ -217,7 +228,10 @@ namespace mexcbot.Api.Jobs
                         var orderbook = await mexcClient.GetOrderbook(bot.Base, bot.Quote);
 
                         if (orderbook.Asks.Count == 0 || orderbook.Asks.Count == 0)
+                        {
+                            Log.Warning("Orderbook empty");
                             return;
+                        }
 
                         var orderQty = Math.Round(RandomNumber(bot.MinOrderQty, bot.MaxOrderQty, basePrecision),
                             basePrecision);
@@ -264,6 +278,7 @@ namespace mexcbot.Api.Jobs
                         {
                             bot.Logs = stopLog;
                             await UpdateBot(bot);
+                            Log.Warning(stopLog);
                             return;
                         }
 
