@@ -304,7 +304,7 @@ namespace mexcbot.Api.Jobs
                         Log.Error(e,"Bot order");
                     }
                     
-                    Log.Information("Delay {0}s", TimeSpan.FromMilliseconds(delayOrder).Seconds);
+                    Log.Information("Delay {0}s", TimeSpan.FromMilliseconds(delayOrder).TotalSeconds);
                     
                     await Task.Delay(TimeSpan.FromMilliseconds(delayOrder));
                 }
