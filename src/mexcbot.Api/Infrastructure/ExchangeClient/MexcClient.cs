@@ -91,7 +91,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var payload = $"symbol={@base}{quote}&side={side}&type={OrderType.LIMIT}&quantity={quantity}&price={price}";
 
             var (success, responseBody) =
-                await SendRequest("POST", "/api/v3/order", payload, true, false);
+                await SendRequest("POST", "/api/v3/order", payload, true, true);
 
             if (!success)
                 return new OrderDto();
@@ -106,7 +106,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var payload = $"symbol={@base}{quote}&orderId={orderId}";
 
             var (success, responseBody) =
-                await SendRequest("DELETE", "/api/v3/order", payload, true, false);
+                await SendRequest("DELETE", "/api/v3/order", payload, true, true);
 
             if (!success)
                 return null;
@@ -215,8 +215,10 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
                     responseBody = await response.Content.ReadAsStringAsync();
-                    // if (logInfo)
-                    Log.Information($"MexcClient:SendRequest response {endpoint} {payload} {responseBody}");
+                    
+                    if (logInfo)
+                        Log.Information($"MexcClient:SendRequest response {endpoint} {payload} {responseBody}");
+                    
                     return (true, responseBody);
                 }
 

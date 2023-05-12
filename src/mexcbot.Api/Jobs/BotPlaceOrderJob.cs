@@ -183,8 +183,6 @@ namespace mexcbot.Api.Jobs
 
                 #endregion
 
-               
-
                 var avgOrder = (bot.MinOrderQty + bot.MaxOrderQty) / 2;
                 var numOfOrder = (int)(botUsdOrderValue / botLastPrice / avgOrder);
 
@@ -207,7 +205,6 @@ namespace mexcbot.Api.Jobs
                 var basePrecision = exchangeInfo.BaseAssetPrecision;
                 for (var i = 0; i < numOfOrder; i++)
                 {
-
                     var orderbook = await mexcClient.GetOrderbook(bot.Base, bot.Quote);
 
                     if (orderbook.Asks.Count == 0 || orderbook.Asks.Count == 0)
@@ -265,16 +262,16 @@ namespace mexcbot.Api.Jobs
 
                     if (bot.MatchingDelayFrom == 0 || bot.MatchingDelayTo == 0)
                     {
-                        var sellTask = CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.SELL);
+                        var sellTask = CreateLimitOrder(mexcClient, bot, orderQty.ToString($"N{basePrecision}"), askPrice.ToString($"N{quotePrecision}"), OrderSide.SELL);
                         await Task.Delay(TimeSpan.FromMilliseconds(50));
-                        var buyTask = CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.BUY);
+                        var buyTask = CreateLimitOrder(mexcClient, bot, orderQty.ToString($"N{basePrecision}"), askPrice.ToString($"N{quotePrecision}"), OrderSide.BUY);
                         await Task.WhenAll(sellTask, buyTask);
                     }
                     else
                     {
-                        await CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.SELL);
+                        await CreateLimitOrder(mexcClient, bot, orderQty.ToString($"N{basePrecision}"), askPrice.ToString($"N{quotePrecision}"), OrderSide.SELL);
                         await TradeDelay(bot);
-                        await CreateLimitOrder(mexcClient, bot, orderQty, askPrice, OrderSide.BUY);
+                        await CreateLimitOrder(mexcClient, bot, orderQty.ToString($"N{basePrecision}"), askPrice.ToString($"N{quotePrecision}"), OrderSide.BUY);
                     }
 
                     await Task.Delay(TimeSpan.FromMilliseconds(delayOrder));
@@ -293,17 +290,20 @@ namespace mexcbot.Api.Jobs
 
         #region Private
 
-        private async Task<bool> CreateLimitOrder(MexcClient client, BotDto bot, decimal qty, decimal price,
+        private async Task<bool> CreateLimitOrder(MexcClient client, BotDto bot, string qty, string price,
             OrderSide side)
         {
-            var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty.ToCurrencyString(),
-                price.ToCurrencyString());
+            var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty,
+                price);
 
             if (order == null)
                 return false;
 
+            if(string.IsNullOrEmpty(order.OrderId))
+                return false;
+            
             Log.Information("Bot create order {0}",
-                $"{side} {qty.ToCurrencyString()} {bot.Symbol} at price {price.ToCurrencyString()} {order.OrderId}");
+                $"{side} {qty} {bot.Symbol} at price {price} {order.OrderId}");
 
             await using var sqlConnection = new MySqlConnection(Configurations.DbConnectionString);
 
