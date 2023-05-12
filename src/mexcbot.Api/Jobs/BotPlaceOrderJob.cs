@@ -288,7 +288,7 @@ namespace mexcbot.Api.Jobs
                         {
                             var sellTask = CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
                                 askPrice.ToString($"F{quotePrecision}"), OrderSide.SELL);
-                            await Task.Delay(TimeSpan.FromMilliseconds(20));
+                            await Task.Delay(TimeSpan.FromMilliseconds(64));
                             var buyTask = CreateLimitOrder(mexcClient, bot, orderQty.ToString($"F{basePrecision}"),
                                 askPrice.ToString($"F{quotePrecision}"), OrderSide.BUY);
                             await Task.WhenAll(sellTask, buyTask);
@@ -304,7 +304,7 @@ namespace mexcbot.Api.Jobs
                     }
                     catch (Exception e)
                     {
-                        Log.Error(e,"Bot Order");
+                        Log.Error(e,"Bot order");
                     }
                     finally
                     {
@@ -321,7 +321,7 @@ namespace mexcbot.Api.Jobs
             }
             catch (Exception e)
             {
-                Log.Error(e,"Bot Run");
+                Log.Error(e,"Bot run");
             }
         }
 
