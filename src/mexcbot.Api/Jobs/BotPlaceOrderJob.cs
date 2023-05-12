@@ -53,13 +53,15 @@ namespace mexcbot.Api.Jobs
                     await Task.WhenAll(tasks);
 
                     ver++;
-
-                    await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
                 }
                 catch (Exception e)
                 {
                     if (!(e is TaskCanceledException))
                         Log.Error(e, "BotPlaceOrderJob:CreateOrderJob");
+                }
+                finally
+                {
+                    await Task.Delay(TimeSpan.FromMinutes(1), stoppingToken);
                 }
             }
         }
@@ -207,7 +209,7 @@ namespace mexcbot.Api.Jobs
                         var orderbook = await mexcClient.GetOrderbook(bot.Base, bot.Quote);
 
                         if (orderbook.Asks.Count == 0 || orderbook.Asks.Count == 0)
-                            continue;
+                            return;
 
                         var orderQty = Math.Round(RandomNumber(bot.MinOrderQty, bot.MaxOrderQty, basePrecision),
                             basePrecision);
@@ -296,7 +298,7 @@ namespace mexcbot.Api.Jobs
             }
             catch (Exception e)
             {
-                Log.Error(e,"Bot run");
+                Log.Error(e,"Bot Run");
             }
         }
 
