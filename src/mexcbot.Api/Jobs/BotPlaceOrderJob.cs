@@ -40,8 +40,6 @@ namespace mexcbot.Api.Jobs
             {
                 try
                 {
-                    Log.Information($"Ver:{ver}");
-
                     await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
                     await dbConnection.OpenAsync();
 
@@ -177,9 +175,6 @@ namespace mexcbot.Api.Jobs
 
                 var botUsdVolumeReal = decimal.Parse(botCandleStickAtNow[7].Value<string>());
 
-                Log.Information(
-                    $"[Volume] real={botUsdVolumeReal} & target={botUsdVolumeTarget} & from {botCandleStickAtNow[0]} to {botCandleStickAtNow[6]}");
-
                 var botUsdOrderValue = botUsdVolumeTarget - botUsdVolumeReal;
 
                 //If volume 5m >= predict
@@ -227,8 +222,6 @@ namespace mexcbot.Api.Jobs
                     askPrice = biggestBidPrice + sizePrediction == smallestAskPrice
                         ? smallestAskPrice
                         : RandomNumber(biggestBidPrice, smallestAskPrice, precision);
-
-                    askPrice = Math.Round(askPrice, precision);
 
                     totalUsdVolume += orderQty * askPrice;
 
