@@ -186,36 +186,6 @@ namespace sp.Core.Extensions
             if (value == 0m)
                 return "0.00";
 
-            if (value > 1)
-            {
-                return value.ToString("N2");
-            }
-
-            if (value > 0.1m)
-            {
-                return value.ToString("N3");
-            }
-
-            if (value > 0.01m)
-            {
-                return value.ToString("N4");
-            }
-
-            if (value > 0.001m)
-            {
-                return value.ToString("N5");
-            }
-
-            if (value > 0.0001m)
-            {
-                return value.ToString("N6");
-            }
-
-            if (value > 0.00001m)
-            {
-                return value.ToString("N7");
-            }
-
             return value.ToString("N8");
         }
 
