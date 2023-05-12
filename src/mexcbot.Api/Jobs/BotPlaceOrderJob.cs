@@ -183,10 +183,7 @@ namespace mexcbot.Api.Jobs
 
                 #endregion
 
-                var orderbook = await mexcClient.GetOrderbook(bot.Base, bot.Quote);
-
-                if (orderbook.Asks.Count == 0 || orderbook.Asks.Count == 0)
-                    return;
+               
 
                 var avgOrder = (bot.MinOrderQty + bot.MaxOrderQty) / 2;
                 var numOfOrder = (int)(botUsdOrderValue / botLastPrice / avgOrder);
@@ -210,8 +207,15 @@ namespace mexcbot.Api.Jobs
                 var basePrecision = exchangeInfo.BaseAssetPrecision;
                 for (var i = 0; i < numOfOrder; i++)
                 {
+
+                    var orderbook = await mexcClient.GetOrderbook(bot.Base, bot.Quote);
+
+                    if (orderbook.Asks.Count == 0 || orderbook.Asks.Count == 0)
+                        continue;
+
                     var orderQty = Math.Round(RandomNumber(bot.MinOrderQty, bot.MaxOrderQty, basePrecision),
                         basePrecision);
+
                     totalQty += orderQty;
 
                     //Ask [Price, Quantity ]
