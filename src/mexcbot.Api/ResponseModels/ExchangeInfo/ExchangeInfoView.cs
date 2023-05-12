@@ -8,6 +8,8 @@ namespace mexcbot.Api.ResponseModels.ExchangeInfo
         
         public int QuoteAssetPrecision { get; set; }
         
+        public int BaseAssetPrecision { get; set; }
+        
         public decimal BaseSizePrecision { get; set; }
         
         public string QuoteAmountPrecision { get; set; }

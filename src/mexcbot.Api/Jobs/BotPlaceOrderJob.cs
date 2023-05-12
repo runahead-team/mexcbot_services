@@ -209,9 +209,10 @@ namespace mexcbot.Api.Jobs
                 var fromTime = AppUtils.NowMilis();
 
                 var precision = exchangeInfo.QuoteAssetPrecision;
+                var basePrecision = exchangeInfo.BaseAssetPrecision;
                 for (var i = 0; i < numOfOrder; i++)
                 {
-                    var orderQty = Math.Round(RandomNumber(bot.MinOrderQty, bot.MaxOrderQty, precision), precision);
+                    var orderQty = Math.Round(RandomNumber(bot.MinOrderQty, bot.MaxOrderQty, basePrecision), basePrecision);
                     totalQty += orderQty;
 
                     //Ask [Price, Quantity ]
