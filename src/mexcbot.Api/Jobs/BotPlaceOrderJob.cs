@@ -220,6 +220,8 @@ namespace mexcbot.Api.Jobs
                 var quotePrecision = exchangeInfo.QuoteAssetPrecision;
                 var basePrecision = exchangeInfo.BaseAssetPrecision;
                 
+                Log.Information("numOfOrder {0}", numOfOrder);
+                
                 for (var i = 0; i < numOfOrder; i++)
                 {
                     try
@@ -235,6 +237,8 @@ namespace mexcbot.Api.Jobs
                             return;
                         }
                          
+                        Log.Information("order #{0}", i + 1);
+                        
                         var orderbook = await mexcClient.GetOrderbook(bot.Base, bot.Quote);
 
                         if (orderbook.Asks.Count == 0 || orderbook.Asks.Count == 0)
