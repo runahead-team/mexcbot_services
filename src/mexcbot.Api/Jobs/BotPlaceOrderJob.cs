@@ -299,12 +299,10 @@ namespace mexcbot.Api.Jobs
                     {
                         Log.Error(e,"Bot order");
                     }
-                    finally
-                    {
-                        Log.Information("Delay {0}s", TimeSpan.FromMilliseconds(delayOrder).Seconds);
-                        
-                        await Task.Delay(TimeSpan.FromMilliseconds(delayOrder));
-                    }
+                    
+                    Log.Information("Delay {0}s", TimeSpan.FromMilliseconds(delayOrder).Seconds);
+                    
+                    await Task.Delay(TimeSpan.FromMilliseconds(delayOrder));
                 }
 
                 var toTime = AppUtils.NowMilis();
