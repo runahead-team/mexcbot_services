@@ -203,7 +203,7 @@ namespace mexcbot.Api.Jobs
                 var totalUsdVolume = 0m;
                 var fromTime = AppUtils.NowMilis();
 
-                var precision = exchangeInfo.QuoteAssetPrecision;
+                var quotePrecision = exchangeInfo.QuoteAssetPrecision;
                 var basePrecision = exchangeInfo.BaseAssetPrecision;
                 for (var i = 0; i < numOfOrder; i++)
                 {
@@ -217,11 +217,11 @@ namespace mexcbot.Api.Jobs
                     var smallestAskPrice = asks[0][0];
                     var biggestBidPrice = bids[0][0];
                     var askPrice = 0m;
-                    var sizePrediction = 1 / (decimal)Math.Pow(10, precision);
+                    var sizePrediction = 1 / (decimal)Math.Pow(10, quotePrecision);
 
                     askPrice = biggestBidPrice + sizePrediction == smallestAskPrice
                         ? smallestAskPrice
-                        : RandomNumber(biggestBidPrice, smallestAskPrice, precision);
+                        : RandomNumber(biggestBidPrice, smallestAskPrice, quotePrecision);
 
                     totalUsdVolume += orderQty * askPrice;
 
