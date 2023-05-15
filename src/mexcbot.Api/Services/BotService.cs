@@ -110,7 +110,7 @@ namespace mexcbot.Api.Services
                 await Task.CompletedTask;
             });
         }
-        
+
         public async Task<PagingResult<OrderDto>> GetOrderHistoryAsync(TableRequest request, AppUser appUser)
         {
             var result = new PagingResult<OrderDto>();
@@ -138,6 +138,12 @@ namespace mexcbot.Api.Services
                         });
 
                 builder.Where("UserId = @UserId", new { UserId = appUser.Id });
+
+                if (request.Filters.TryGetValue("BotId", out var stringBotId))
+                {
+                    if (long.TryParse(stringBotId, out var botId) && botId > 0)
+                        builder.Where("BotId = @BotId", new { BotId = botId });
+                }
 
                 var total = await dbConnection.ExecuteScalarAsync<int>(
                     counter.RawSql, counter.Parameters);
