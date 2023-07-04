@@ -1,5 +1,6 @@
 using System.Threading.Tasks;
 using mexcbot.Api.Models.Bot;
+using mexcbot.Api.RequestModels.Bot;
 using mexcbot.Api.ResponseModels.Order;
 using sp.Core.Models;
 
@@ -9,9 +10,9 @@ namespace mexcbot.Api.Services.Interface
     {
         Task<PagingResult<BotDto>> GetBotsAsync(TableRequest request, AppUser appUser);
 
-        Task<BotDto> CreateAsync(BotDto request, AppUser appUser);
+        Task<BotDto> CreateAsync(BotUpsertRequest request, AppUser appUser);
         
-        Task UpdateAsync(BotDto request, AppUser appUser);
+        Task UpdateAsync(BotUpsertRequest request, AppUser appUser);
 
         Task<PagingResult<OrderDto>> GetOrderHistoryAsync(TableRequest request, AppUser appUser);
     }

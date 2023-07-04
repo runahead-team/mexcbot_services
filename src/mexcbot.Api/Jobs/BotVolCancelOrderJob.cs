@@ -21,9 +21,9 @@ using sp.Core.Utils;
 
 namespace mexcbot.Api.Jobs
 {
-    public class BotCancelOrderJob : BackgroundService
+    public class BotVolCancelOrderJob : BackgroundService
     {
-        public BotCancelOrderJob()
+        public BotVolCancelOrderJob()
         {
         }
 
@@ -69,7 +69,7 @@ namespace mexcbot.Api.Jobs
                 catch (Exception e)
                 {
                     if (!(e is TaskCanceledException))
-                        Log.Error(e, "BotCancelOrderJob:CancelOrderJob");
+                        Log.Error(e, "BotVolCancelOrderJob:CancelOrderJob");
                 }
             }
         }

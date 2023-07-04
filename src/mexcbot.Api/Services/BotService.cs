@@ -5,6 +5,7 @@ using Dapper;
 using mexcbot.Api.Constants;
 using mexcbot.Api.Infrastructure;
 using mexcbot.Api.Models.Bot;
+using mexcbot.Api.RequestModels.Bot;
 using mexcbot.Api.ResponseModels.Order;
 using mexcbot.Api.Services.Interface;
 using sp.Core.Constants;
@@ -62,22 +63,16 @@ namespace mexcbot.Api.Services
             return result;
         }
 
-        public async Task<BotDto> CreateAsync(BotDto request, AppUser appUser)
+        public async Task<BotDto> CreateAsync(BotUpsertRequest request, AppUser appUser)
         {
-            request.UserId = appUser.Id;
+            var bot = new BotDto(request, appUser);
 
             await DbConnections.ExecAsync(async (dbConnection) =>
             {
-                if ((await dbConnection.ExecuteScalarAsync<int>(
-                        "SELECT COUNT(1) FROM Bots WHERE Base = @Base AND Quote = @Quote", request)) != 0)
-                    throw new AppException("Bot is existed");
-
-                request.CreatedTime = AppUtils.NowMilis();
-
                 var exec = await dbConnection.ExecuteAsync(
-                    @"INSERT INTO Bots(UserId,Base,Quote,Volume24hr,MatchingDelayFrom,MatchingDelayTo,ApiKey,ApiSecret,Logs,Status,MinOrderQty,MaxOrderQty,CreatedTime)
-                    VALUES(@UserId,@Base,@Quote,@Volume24hr,@MatchingDelayFrom,@MatchingDelayTo,@ApiKey,@ApiSecret,@Logs,@Status,@MinOrderQty,@MaxOrderQty,@CreatedTime)",
-                    request);
+                    @"INSERT INTO Bots(UserId,Base,Quote,Type,ApiKey,ApiSecret,Logs,Status,VolumeOption,MakerOption,CreatedTime)
+                    VALUES(@UserId,@Base,@Quote,@Type,@ApiKey,@ApiSecret,@Logs,@Status,@VolumeOption,@MakerOption,@CreatedTime)",
+                    bot);
 
                 if (exec != 1)
                     throw new AppException(AppError.OPERATION_FAIL);
@@ -85,12 +80,12 @@ namespace mexcbot.Api.Services
                 await Task.CompletedTask;
             });
 
-            return request;
+            return bot;
         }
 
-        public async Task UpdateAsync(BotDto request, AppUser appUser)
+        public async Task UpdateAsync(BotUpsertRequest request, AppUser appUser)
         {
-            request.UserId = appUser.Id;
+            var bot = new BotDto(request, appUser);
 
             await DbConnections.ExecAsync(async (dbConnection) =>
             {
@@ -100,8 +95,8 @@ namespace mexcbot.Api.Services
                     throw new AppException("Bot is not exist");
 
                 var exec = await dbConnection.ExecuteAsync(
-                    @"UPDATE Bots SET Volume24hr = @Volume24hr, MatchingDelayFrom = @MatchingDelayFrom, MatchingDelayTo = @MatchingDelayTo, MinOrderQty = @MinOrderQty, MaxOrderQty = @MaxOrderQty, Status = @Status
-                    WHERE UserId = @UserId AND Base = @Base AND Quote = @Quote AND Id = @Id",
+                    @"UPDATE Bots SET VolumeOption = @VolumeOption, MakerOption = @MakeMakerOptionrOptions, Status = @Status, Type = @Type
+                    WHERE UserId = @UserId AND Base = @Base AND Quote = @Quote",
                     request);
 
                 if (exec != 1)
@@ -130,7 +125,7 @@ namespace mexcbot.Api.Services
 
                 var selector =
                     builder.AddTemplate(
-                        @"SELECT *  FROM BotOrders /**where**/ LIMIT @Skip, @Take",
+                        @"SELECT *  FROM BotOrders /**where**/ ORDER BY TransactTime DESC LIMIT @Skip, @Take",
                         new
                         {
                             Skip = skip,

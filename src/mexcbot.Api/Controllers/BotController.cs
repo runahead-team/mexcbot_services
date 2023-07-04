@@ -1,15 +1,9 @@
 using System;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using mexcbot.Api.Controllers.Base;
-using mexcbot.Api.Infrastructure.Authentication;
-using mexcbot.Api.Infrastructure.ExchangeClient;
-using mexcbot.Api.Models.Bot;
-using mexcbot.Api.RequestModels.User;
+using mexcbot.Api.RequestModels.Bot;
 using mexcbot.Api.Services.Interface;
-using Newtonsoft.Json.Linq;
-using sp.Core.Exceptions;
 using sp.Core.Models;
 
 namespace mexcbot.Api.Controllers
@@ -33,7 +27,7 @@ namespace mexcbot.Api.Controllers
         }
 
         [HttpPost("")]
-        public async Task<OkResponse> Create([FromBody] BotDto request)
+        public async Task<OkResponse> Create([FromBody] BotUpsertRequest request)
         {
             var bot = await _botService.CreateAsync(request, CurrentUser());
 
@@ -41,7 +35,7 @@ namespace mexcbot.Api.Controllers
         }
 
         [HttpPut("")]
-        public async Task<OkResponse> Update([FromBody] BotDto request)
+        public async Task<OkResponse> Update([FromBody] BotUpsertRequest request)
         {
             await _botService.UpdateAsync(request, CurrentUser());
 

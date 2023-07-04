@@ -23,9 +23,9 @@ namespace mexcbot.Api
             services.AddSingleton<IUserService, UserService>();
             services.AddSingleton<IBotService, BotService>();
 
-            //Job
-            services.AddHostedService<BotPlaceOrderJob>();
-            services.AddHostedService<BotCancelOrderJob>();
+            // //Job
+            // services.AddHostedService<BotVolPlaceOrderJob>();
+            // services.AddHostedService<BotVolCancelOrderJob>();
         }
     }
 }

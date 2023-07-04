@@ -8,12 +8,20 @@ namespace mexcbot.Api.Constants
         INACTIVE = 1
     }
     
+    public enum BotType
+    {
+        VOLUME = 0,
+        MAKER = 1
+    }
+    
     public enum OrderSide
     {
         [Description("BUY")]
         BUY = 0,
         [Description("SELL")]
-        SELL = 1
+        SELL = 1,
+        [Description("BOTH")]
+        BOTH = 2
     }
     
     public enum OrderType
