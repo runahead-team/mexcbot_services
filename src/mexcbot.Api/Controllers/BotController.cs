@@ -25,6 +25,14 @@ namespace mexcbot.Api.Controllers
 
             return new OkResponse(bots);
         }
+        
+        [HttpGet("single")]
+        public async Task<OkResponse> GetBot([FromQuery] BotGetRequest request)
+        {
+            var bot = await _botService.GetBot(request, CurrentUser());
+
+            return new OkResponse(bot);
+        }
 
         [HttpPost("")]
         public async Task<OkResponse> Create([FromBody] BotUpsertRequest request)
@@ -38,6 +46,14 @@ namespace mexcbot.Api.Controllers
         public async Task<OkResponse> Update([FromBody] BotUpsertRequest request)
         {
             await _botService.UpdateAsync(request, CurrentUser());
+
+            return new OkResponse();
+        }
+        
+        [HttpPut("status")]
+        public async Task<OkResponse> UpdateStatusAsync([FromBody] BotUpdateStatusRequest request)
+        {
+            await _botService.UpdateStatusAsync(request, CurrentUser());
 
             return new OkResponse();
         }

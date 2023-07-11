@@ -13,16 +13,13 @@ namespace mexcbot.Api.Models.Bot
 
         public decimal MaxQty { get; set; }
 
-        //Price increase each execute time from MinPriceStep - MaxPriceStep
-        public bool LastPrice { get; set; }
-
         public bool IsFollowBtc { get; set; }
+        
+        public decimal FollowBtcRate { get; set; }
 
         public decimal FollowBtcBasePrice { get; set; }
 
         public decimal FollowBtcBtcPrice { get; set; }
-        
-        public decimal BasePrice { get; set; }
 
         public decimal MinPriceStep { get; set; }
 

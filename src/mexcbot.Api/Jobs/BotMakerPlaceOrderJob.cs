@@ -33,8 +33,6 @@ namespace mexcbot.Api.Jobs
 
         private async Task CreateOrderJob(CancellationToken stoppingToken)
         {
-            var ver = 1;
-
             while (!stoppingToken.IsCancellationRequested)
             {
                 try
@@ -43,20 +41,20 @@ namespace mexcbot.Api.Jobs
                     await dbConnection.OpenAsync();
 
                     var bots = (await dbConnection.QueryAsync<BotDto>(
-                        "SELECT * FROM Bots WHERE Status = @Status AND Type = @Type", new
+                        "SELECT * FROM Bots WHERE Status = @Status AND Type = @Type AND (NextRunMakerTime < @Now OR NextRunMakerTime IS NULL)",
+                        new
                         {
                             Status = BotStatus.ACTIVE,
-                            Type = BotType.MAKER
+                            Type = BotType.MAKER,
+                            Now = AppUtils.NowMilis()
                         })).ToList();
 
                     if (!bots.Any())
-                        return;
+                        continue;
 
                     var tasks = bots.Select(Run).ToList();
 
                     await Task.WhenAll(tasks);
-
-                    ver++;
                 }
                 catch (Exception e)
                 {
@@ -65,7 +63,7 @@ namespace mexcbot.Api.Jobs
                 }
                 finally
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(15), stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
                 }
             }
         }
@@ -82,6 +80,7 @@ namespace mexcbot.Api.Jobs
                 var mexcClient = new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret);
 
                 var exchangeInfo = await mexcClient.GetExchangeInfo(bot.Base, bot.Quote);
+                var selfSymbols = await mexcClient.GetSelfSymbols();
                 var bot24hr = (await mexcClient.GetTicker24hr(bot.Base, bot.Quote));
 
                 var makerOption = new BotMakerOption();
@@ -94,16 +93,22 @@ namespace mexcbot.Api.Jobs
                 var baseBalanceValue = 0m;
                 var quoteBalanceValue = 0m;
 
-                if (exchangeInfo == null)
+                if (!selfSymbols.Contains(bot.Symbol))
                 {
                     bot.Status = BotStatus.INACTIVE;
-                    stopLog += $"Stop when exchange info not found\n";
+                    stopLog += $"{bot.Symbol} is not support; \n";
+                }
+
+                if (exchangeInfo == null || string.IsNullOrEmpty(exchangeInfo.Symbol))
+                {
+                    bot.Status = BotStatus.INACTIVE;
+                    stopLog += $"Stop when exchange info not found; \n";
                 }
 
                 if (string.IsNullOrEmpty(bot.MakerOption))
                 {
                     bot.Status = BotStatus.INACTIVE;
-                    stopLog += $"Stop when maker option is null\n";
+                    stopLog += $"Stop when maker option is null; \n";
                 }
                 else
                 {
@@ -118,7 +123,7 @@ namespace mexcbot.Api.Jobs
                             || makerOption.FollowBtcBtcPrice <= 0)
                         {
                             bot.Status = BotStatus.INACTIVE;
-                            stopLog += "Follow BTC price settings wrong\n";
+                            stopLog += "Follow BTC price settings wrong; \n";
                         }
 
                         var lastBtcPriceStr = (await mexcClient.GetTicker24hr("BTC", "USDT")).LastPrice;
@@ -133,10 +138,10 @@ namespace mexcbot.Api.Jobs
                         }
                     }
 
-                    if (bot24hr == null)
+                    if (bot24hr == null || string.IsNullOrEmpty(bot24hr.Symbol))
                     {
                         bot.Status = BotStatus.INACTIVE;
-                        stopLog += "Bot get 24hr fail\n";
+                        stopLog += "Bot get 24hr fail; \n";
                     }
                     else
                     {
@@ -148,84 +153,104 @@ namespace mexcbot.Api.Jobs
                         if (makerOption.MinStopPrice < 0 && botLastPrice <= makerOption.MinStopPrice)
                         {
                             bot.Status = BotStatus.INACTIVE;
-                            stopLog += $"Stop when price cross down {makerOption.MinStopPrice}\n";
+                            stopLog += $"Stop when price cross down {makerOption.MinStopPrice}; \n";
                         }
 
                         if (makerOption.MaxStopPrice > 0 && botLastPrice >= makerOption.MaxStopPrice)
                         {
                             bot.Status = BotStatus.INACTIVE;
-                            stopLog += $"Stop when price cross up {makerOption.MaxStopPrice}\n";
+                            stopLog += $"Stop when price cross up {makerOption.MaxStopPrice}; \n";
                         }
                     }
 
                     if (!balances.Any())
                     {
                         bot.Status = BotStatus.INACTIVE;
-                        stopLog += "Stop when your balances Zero\n";
+                        stopLog += "Stop when your balances Zero; \n";
                     }
                     else
                     {
-                        var baseBalance = balances.FirstOrDefault(x => x.Asset == bot.Base);
-
-                        if (baseBalance == null)
+                        if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.SELL)
                         {
-                            bot.Status = BotStatus.INACTIVE;
-                            stopLog += $"Stop when your {bot.Base} balance below 0 or null\n";
-                        }
-                        else
-                        {
-                            if (decimal.TryParse(baseBalance.Free, out var value))
-                                baseBalanceValue = value;
+                            var baseBalance = balances.FirstOrDefault(x => x.Asset == bot.Base);
 
-                            if (baseBalanceValue <= 0)
+                            if (baseBalance == null)
                             {
                                 bot.Status = BotStatus.INACTIVE;
-                                stopLog += $"Stop when your {bot.Base} balance below 0 or null\n";
+                                stopLog += $"Stop when your {bot.Base} balance below 0 or null; \n";
                             }
                             else
                             {
-                                if (makerOption.StopLossBase > 0)
+                                if (decimal.TryParse(baseBalance.Free, out var value))
+                                    baseBalanceValue = value;
+
+                                if (baseBalanceValue <= 0)
                                 {
-                                    if (baseBalanceValue <= makerOption.StopLossBase)
+                                    bot.Status = BotStatus.INACTIVE;
+                                    stopLog += $"Stop when your {bot.Base} balance below 0 or null; \n";
+                                }
+                                else
+                                {
+                                    if (makerOption.StopLossBase > 0)
                                     {
-                                        bot.Status = BotStatus.INACTIVE;
-                                        stopLog +=
-                                            $"Stop when your {bot.Base} balance lower than {makerOption.StopLossBase}\n";
+                                        if (baseBalanceValue <= makerOption.StopLossBase)
+                                        {
+                                            bot.Status = BotStatus.INACTIVE;
+                                            stopLog +=
+                                                $"Stop when your {bot.Base} balance lower than {makerOption.StopLossBase}; \n";
+                                        }
                                     }
                                 }
                             }
                         }
 
-                        var quoteBalance = balances.FirstOrDefault(x => x.Asset == bot.Quote);
-
-                        if (quoteBalance == null)
+                        if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.BUY)
                         {
-                            bot.Status = BotStatus.INACTIVE;
-                            stopLog += $"Stop when your {bot.Quote} balance below 0 or null\n";
-                        }
-                        else
-                        {
-                            if (decimal.TryParse(quoteBalance.Free, out var value))
-                                quoteBalanceValue = value;
+                            var quoteBalance = balances.FirstOrDefault(x => x.Asset == bot.Quote);
 
-                            if (quoteBalanceValue <= 0)
+                            if (quoteBalance == null)
                             {
                                 bot.Status = BotStatus.INACTIVE;
-                                stopLog += $"Stop when your {bot.Quote} balance below 0 or null\n";
+                                stopLog += $"Stop when your {bot.Quote} balance below 0 or null; \n";
                             }
                             else
                             {
-                                if (makerOption.StopLossQuote > 0)
+                                if (decimal.TryParse(quoteBalance.Free, out var value))
+                                    quoteBalanceValue = value;
+
+                                if (quoteBalanceValue <= 0)
                                 {
-                                    if (quoteBalanceValue <= makerOption.StopLossQuote)
+                                    bot.Status = BotStatus.INACTIVE;
+                                    stopLog += $"Stop when your {bot.Quote} balance below 0 or null; \n";
+                                }
+                                else
+                                {
+                                    if (makerOption.StopLossQuote > 0)
                                     {
-                                        bot.Status = BotStatus.INACTIVE;
-                                        stopLog +=
-                                            $"Stop when your {bot.Quote} balance lower than {makerOption.StopLossQuote}\n";
+                                        if (quoteBalanceValue <= makerOption.StopLossQuote)
+                                        {
+                                            bot.Status = BotStatus.INACTIVE;
+                                            stopLog +=
+                                                $"Stop when your {bot.Quote} balance lower than {makerOption.StopLossQuote}; \n";
+                                        }
                                     }
                                 }
                             }
                         }
+                    }
+                }
+
+                if (exchangeInfo != null && bot24hr != null && !string.IsNullOrEmpty(exchangeInfo.Symbol) &&
+                    !string.IsNullOrEmpty(bot24hr.Symbol))
+                {
+                    var mexcMinQty = (decimal.Parse(exchangeInfo.QuoteAmountPrecision) /
+                                      decimal.Parse(bot24hr.LastPrice));
+
+                    if (makerOption.MinQty < mexcMinQty)
+                    {
+                        bot.Status = BotStatus.INACTIVE;
+                        stopLog +=
+                            $"Min quantity must be bigger than required quantity {mexcMinQty}; \n";
                     }
                 }
 
@@ -255,7 +280,7 @@ namespace mexcbot.Api.Jobs
                     if (orderbook == null || orderbook.Asks.Count == 0 || orderbook.Asks.Count == 0)
                         return;
 
-                    const decimal spreadHighPercent = 2;
+                    const decimal spreadHighPercent = 5;
                     const decimal spreadFixPercent = 0.5m;
 
                     if (orderbook.Asks.Count == 0 || orderbook.Bids.Count == 0)
@@ -283,7 +308,8 @@ namespace mexcbot.Api.Jobs
                                     var change = 100 * (lastBtcPrice - makerOption.FollowBtcBtcPrice) /
                                                  makerOption.FollowBtcBtcPrice;
 
-                                    change = change * 0.5m;
+                                    if (makerOption.FollowBtcRate > 0)
+                                        change = change * makerOption.FollowBtcRate;
 
                                     price = RandomNumber(
                                         makerOption.FollowBtcBasePrice + makerOption.FollowBtcBasePrice *
@@ -365,68 +391,42 @@ namespace mexcbot.Api.Jobs
 
                                 #endregion
 
-                                // #region Order Over Step
-                                //
-                                // if (makerOption.MinPriceOverStep < 0)
-                                // {
-                                //     if (makerOption.LastPrice)
-                                //     {
-                                //         price = RandomNumber(
-                                //             bot.LastPrice + (makerOption.MinPriceStep + makerOption.MinPriceOverStep) *
-                                //             bot.LastPrice / 100,
-                                //             bot.LastPrice + makerOption.MinPriceStep * bot.LastPrice / 100);
-                                //     }
-                                //     else if (makerOption.BasePrice > 0)
-                                //     {
-                                //         price = RandomNumber(
-                                //             makerOption.BasePrice +
-                                //             (makerOption.MinPriceStep + makerOption.MinPriceOverStep) *
-                                //             makerOption.BasePrice / 100,
-                                //             makerOption.BasePrice +
-                                //             makerOption.MaxPriceStep * makerOption.BasePrice / 100);
-                                //     }
-                                //     else
-                                //     {
-                                //         price = 0;
-                                //     }
-                                //
-                                //     price = Decimal.Truncate(makerOption.PriceFix);
-                                //
-                                //     if (price > 0)
-                                //         await CreateLimitOrder(client, bot, qty, price, OrderSide.BUY);
-                                // }
-                                //
-                                // if (makerOption.MaxPriceOverStep > 0)
-                                // {
-                                //     if (makerOption.LastPrice)
-                                //     {
-                                //         price = RandomNumber(
-                                //             bot.LastPrice + makerOption.MaxPriceOverStep *
-                                //             bot.LastPrice / 100,
-                                //             bot.LastPrice + (makerOption.MaxPriceStep + makerOption.MaxPriceOverStep) *
-                                //             bot.LastPrice / 100);
-                                //     }
-                                //     else if (makerOption.BasePrice > 0)
-                                //     {
-                                //         price = RandomNumber(
-                                //             makerOption.BasePrice + makerOption.MaxPriceOverStep *
-                                //             makerOption.BasePrice / 100,
-                                //             makerOption.BasePrice +
-                                //             (makerOption.MaxPriceStep + makerOption.MaxPriceOverStep) *
-                                //             makerOption.BasePrice / 100);
-                                //     }
-                                //     else
-                                //     {
-                                //         price = 0;
-                                //     }
-                                //
-                                //     price = Decimal.Truncate(makerOption.PriceFix);
-                                //
-                                //     if (price > 0)
-                                //         await CreateLimitOrder(client, bot, qty, price, OrderSide.SELL);
-                                // }
-                                //
-                                // #endregion
+                                #region Order Over Step
+
+                                var overStepPrice = 0m;
+
+                                if (makerOption.MinPriceOverStep < 0)
+                                {
+                                    if (price > 0)
+                                    {
+                                        overStepPrice = RandomNumber(
+                                            price + (makerOption.MinPriceStep + makerOption.MinPriceOverStep) * price /
+                                            100,
+                                            price + makerOption.MinPriceStep * price / 100, quotePrecision);
+                                    }
+
+                                    if (overStepPrice > 0)
+                                        await CreateLimitOrder(mexcClient, bot, qty.ToString($"F{basePrecision}"),
+                                            overStepPrice.ToString($"F{quotePrecision}"), OrderSide.BUY);
+                                }
+
+                                if (makerOption.MaxPriceOverStep > 0)
+                                {
+                                    if (price > 0)
+                                    {
+                                        overStepPrice = RandomNumber(
+                                            price + makerOption.MaxPriceOverStep *
+                                            price / 100,
+                                            price + (makerOption.MaxPriceStep + makerOption.MaxPriceOverStep) *
+                                            price / 100, quotePrecision);
+                                    }
+
+                                    if (overStepPrice > 0)
+                                        await CreateLimitOrder(mexcClient, bot, qty.ToString($"F{basePrecision}"),
+                                            overStepPrice.ToString($"F{quotePrecision}"), OrderSide.SELL);
+                                }
+
+                                #endregion
 
                                 #region BTC Spread
 
@@ -437,7 +437,6 @@ namespace mexcbot.Api.Jobs
                                     {
                                         var buyPrice = minPrice * (1 + spreadFixPercent / 100);
                                         buyPrice = buyPrice.Truncate(quotePrecision);
-                                        qty /= 2;
                                         await CreateLimitOrder(mexcClient, bot, qty.ToString($"F{basePrecision}"),
                                             buyPrice.ToString($"F{quotePrecision}"), OrderSide.BUY);
                                     }
@@ -446,13 +445,13 @@ namespace mexcbot.Api.Jobs
                                     {
                                         var sellPrice = maxPrice * (1 - spreadFixPercent / 100);
                                         sellPrice = sellPrice.Truncate(quotePrecision);
-                                        qty /= 2;
                                         await CreateLimitOrder(mexcClient, bot, qty.ToString($"F{basePrecision}"),
                                             sellPrice.ToString($"F{quotePrecision}"), OrderSide.SELL);
                                     }
                                 }
 
                                 #endregion
+                                
                             }, CancellationToken.None));
                         }
 
@@ -490,12 +489,17 @@ namespace mexcbot.Api.Jobs
             await using var sqlConnection = new MySqlConnection(Configurations.DbConnectionString);
 
             order.BotId = bot.Id;
+            order.BotType = bot.Type;
             order.UserId = bot.UserId;
-            order.ExpiredTime = order.TransactTime + MexcBotConstants.ExpiredOrderTime;
+
+            if (bot.MakerOptionObj != null && bot.MakerOptionObj.OrderExp > 0)
+                order.ExpiredTime = order.TransactTime + (bot.MakerOptionObj.OrderExp * 1000);
+            else
+                order.ExpiredTime = order.TransactTime + MexcBotConstants.ExpiredOrderTime;
 
             var exec = await sqlConnection.ExecuteAsync(
-                @"INSERT INTO BotOrders(BotId,UserId,OrderId,Symbol,OrderListId,Price,OrigQty,Type,Side,ExpiredTime,Status,`TransactTime`)
-                      VALUES(@BotId,@UserId,@OrderId,@Symbol,@OrderListId,@Price,@OrigQty,@Type,@Side,@ExpiredTime,@Status,@TransactTime)",
+                @"INSERT INTO BotOrders(BotId,BotType,UserId,OrderId,Symbol,OrderListId,Price,OrigQty,Type,Side,ExpiredTime,Status,`TransactTime`)
+                      VALUES(@BotId,@BotType,@UserId,@OrderId,@Symbol,@OrderListId,@Price,@OrigQty,@Type,@Side,@ExpiredTime,@Status,@TransactTime)",
                 order);
 
             if (exec == 0)
@@ -513,15 +517,18 @@ namespace mexcbot.Api.Jobs
 
                 if (isInactive)
                 {
+                    bot.NextRunMakerTime = AppUtils.NowMilis() + (long)TimeSpan.FromMinutes(1).TotalMilliseconds;
+                    
                     await dbConnection.ExecuteAsync(
-                        @"UPDATE Bots SET Logs = @Logs, Status = @Status, NextTime = @NextTime
+                        @"UPDATE Bots SET Logs = @Logs, Status = @Status, NextRunMakerTime = @NextRunMakerTime
                     WHERE Id = @Id",
                         bot);
+                    
                 }
                 else
                 {
                     await dbConnection.ExecuteAsync(
-                        @"UPDATE Bots SET NextTime = @NextTime
+                        @"UPDATE Bots SET NextRunMakerTime = @NextRunMakerTime
                     WHERE Id = @Id",
                         bot);
                 }

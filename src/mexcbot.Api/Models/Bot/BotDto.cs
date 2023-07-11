@@ -23,8 +23,11 @@ namespace mexcbot.Api.Models.Bot
             UserId = user.Id;
             Base = request.Base;
             Quote = request.Quote;
-            VolumeOption = JsonConvert.SerializeObject(request.VolumeOption);
-            MakerOption = JsonConvert.SerializeObject(request.MakerOption);
+            Type = request.Type;
+            VolumeOption = request.VolumeOption == null
+                ? string.Empty
+                : JsonConvert.SerializeObject(request.VolumeOption);
+            MakerOption = request.MakerOption == null ? string.Empty : JsonConvert.SerializeObject(request.MakerOption);
             ApiKey = request.ApiKey;
             ApiSecret = request.ApiSecret;
             Logs = request.Logs;
@@ -44,6 +47,9 @@ namespace mexcbot.Api.Models.Bot
                 {
                     var volumeOption = request.VolumeOption;
 
+                    if (volumeOption == null)
+                        throw new AppException(AppError.INVALID_PARAMETERS, "Volume Option can not be null");
+
                     if (volumeOption.Volume24hr < 0
                         || volumeOption.MinOrderQty < 0
                         || volumeOption.MaxOrderQty <= 0)
@@ -57,18 +63,21 @@ namespace mexcbot.Api.Models.Bot
                 {
                     var makerOption = request.MakerOption;
 
+                    if (makerOption == null)
+                        throw new AppException(AppError.INVALID_PARAMETERS, "Maker Option can not be null");
+
                     if (makerOption.MinQty < 0
                         || makerOption.MaxQty < 0
                         || makerOption.MinTradePerExec <= 0
                         || makerOption.MaxTradePerExec <= 0
                         || makerOption.MinInterval <= 0
                         || makerOption.MaxInterval <= 0
-                        || makerOption.BasePrice < 0
                         || makerOption.MinStopPrice < 0
                         || makerOption.MaxStopPrice < 0
                         || makerOption.StopLossBase < 0
                         || makerOption.StopLossQuote < 0
-                        || makerOption.OrderExp < 0)
+                        || makerOption.OrderExp < 0
+                        || makerOption.FollowBtcRate < 0)
                         throw new AppException(AppError.INVALID_PARAMETERS, JsonConvert.SerializeObject(makerOption));
 
                     if (makerOption.MinPriceStep > makerOption.MaxPriceStep)
@@ -100,9 +109,17 @@ namespace mexcbot.Api.Models.Bot
 
         public BotType Type { get; set; }
 
-        public string VolumeOption { get; set; }
-        
-        public string MakerOption { get; set; }
+        [JsonIgnore] public string VolumeOption { get; set; }
+
+        public BotVolumeOption VolumeOptionObj => !string.IsNullOrEmpty(VolumeOption)
+            ? JsonConvert.DeserializeObject<BotVolumeOption>(VolumeOption)
+            : new BotVolumeOption();
+
+        [JsonIgnore] public string MakerOption { get; set; }
+
+        public BotMakerOption MakerOptionObj => !string.IsNullOrEmpty(MakerOption)
+            ? JsonConvert.DeserializeObject<BotMakerOption>(MakerOption)
+            : new BotMakerOption();
 
         public string ApiKey { get; set; }
 
@@ -113,8 +130,10 @@ namespace mexcbot.Api.Models.Bot
         public BotStatus Status { get; set; }
 
         public long LastRunTime { get; set; }
-        
+
         public long NextRunMakerTime { get; set; }
+        
+        public long NextRunVolTime { get; set; }
 
         public long CreatedTime { get; set; }
     }

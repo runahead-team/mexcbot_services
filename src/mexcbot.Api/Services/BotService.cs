@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
@@ -53,9 +55,36 @@ namespace mexcbot.Api.Services
                     counter.RawSql, counter.Parameters);
 
                 var items = (await dbConnection.QueryAsync<BotDto>(
-                    selector.RawSql, selector.Parameters)).ToList();
+                    selector.RawSql, selector.Parameters)).ToArray();
+
+                await MapOrderAsync(dbConnection, items);
 
                 result = new PagingResult<BotDto>(items, total, request);
+
+                await Task.CompletedTask;
+            });
+
+            return result;
+        }
+
+        public async Task<BotDto> GetBot(BotGetRequest request, AppUser appUser)
+        {
+            var result = new BotDto();
+
+            await DbConnections.ExecAsync(async (dbConnection) =>
+            {
+                var bot = await dbConnection.QueryFirstOrDefaultAsync<BotDto>(
+                    "SELECT * FROM Bots WHERE Type = @Type AND Id = @Id AND UserId = @UserId",
+                    new
+                    {
+                        Id = request.Id,
+                        Type = request.Type,
+                        UserId = appUser.Id
+                    });
+
+                result = bot ?? throw new AppException("Bot not found");
+                
+                await MapOrderAsync(dbConnection, result);
 
                 await Task.CompletedTask;
             });
@@ -90,14 +119,44 @@ namespace mexcbot.Api.Services
             await DbConnections.ExecAsync(async (dbConnection) =>
             {
                 if ((await dbConnection.ExecuteScalarAsync<int>(
-                        "SELECT COUNT(1) FROM Bots WHERE UserId = @UserId AND Base = @Base AND Quote = @Quote",
-                        request)) != 1)
+                        "SELECT COUNT(1) FROM Bots WHERE UserId = @UserId AND Id = @Id AND Type = @Type",
+                        bot)) != 1)
                     throw new AppException("Bot is not exist");
 
                 var exec = await dbConnection.ExecuteAsync(
-                    @"UPDATE Bots SET VolumeOption = @VolumeOption, MakerOption = @MakeMakerOptionrOptions, Status = @Status, Type = @Type
-                    WHERE UserId = @UserId AND Base = @Base AND Quote = @Quote",
-                    request);
+                    @"UPDATE Bots SET VolumeOption = @VolumeOption, MakerOption = @MakerOption, NextRunMakerTime = 0
+                    WHERE UserId = @UserId AND Id = @Id AND Type = @Type",
+                    bot);
+
+                if (exec != 1)
+                    throw new AppException(AppError.OPERATION_FAIL);
+
+                await Task.CompletedTask;
+            });
+        }
+
+        public async Task UpdateStatusAsync(BotUpdateStatusRequest request, AppUser appUser)
+        {
+            await DbConnections.ExecAsync(async (dbConnection) =>
+            {
+                if ((await dbConnection.ExecuteScalarAsync<int>(
+                        "SELECT COUNT(1) FROM Bots WHERE UserId = @UserId AND Id = @Id",
+                        new
+                        {
+                            UserId = appUser.Id,
+                            Id = request.Id
+                        })) != 1)
+                    throw new AppException("Bot is not exist");
+
+                var exec = await dbConnection.ExecuteAsync(
+                    @"UPDATE Bots SET Status = @Status
+                    WHERE UserId = @UserId AND Id = @Id",
+                    new
+                    {
+                        UserId = appUser.Id,
+                        Id = request.Id,
+                        Status = request.Status
+                    });
 
                 if (exec != 1)
                     throw new AppException(AppError.OPERATION_FAIL);
@@ -155,6 +214,18 @@ namespace mexcbot.Api.Services
         }
 
         #region Sys
+
+        #endregion
+
+        #region Prv
+
+        private async Task MapOrderAsync(IDbConnection dbConnection, params BotDto[] bots)
+        {
+            foreach (var bot in bots)
+            {
+                bot.ApiSecret = "**********************";
+            }
+        }
 
         #endregion
     }

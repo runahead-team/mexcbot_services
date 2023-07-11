@@ -143,6 +143,21 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 ? new List<MexcAccBalance>()
                 : JsonConvert.DeserializeObject<List<MexcAccBalance>>(data.ToString());
         }
+        
+        public async Task<List<string>> GetSelfSymbols()
+        {
+            var (success, responseBody) =
+                await SendRequest("GET", "/api/v3/selfSymbols", string.Empty, true, false);
+
+            if (!success)
+                return new List<string>();
+
+            var data = JObject.Parse(responseBody)["data"];
+
+            return data == null
+                ? new List<string>()
+                : JsonConvert.DeserializeObject<List<string>>(data.ToString());
+        }
 
         public async Task<OrderbookView> GetOrderbook(string @base, string quote)
         {

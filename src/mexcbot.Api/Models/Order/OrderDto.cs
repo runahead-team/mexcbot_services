@@ -6,6 +6,8 @@ namespace mexcbot.Api.ResponseModels.Order
     {
         public long BotId { get; set; }
         
+        public BotType BotType { get; set; }
+        
         public long UserId { get; set; }
         
         public string Symbol { get; set; }

@@ -11,5 +11,10 @@ namespace mexcbot.Api.Models.Bot
         public decimal MinOrderQty { get; set; }
         
         public decimal MaxOrderQty { get; set; }
+        
+        //Execute interval
+        public int MinInterval { get; set; }
+
+        public int MaxInterval { get; set; }
     }
 }

@@ -28,6 +28,7 @@ CREATE TABLE Bots
     Logs TEXT,
     `Status` TINYINT NOT NULL,
     LastRunTime BIGINT NULL,
+     NextRunVolTime BIGINT NULL,
     NextRunMakerTime BIGINT NULL,
     CreatedTime BIGINT NOT NULL,
     PRIMARY KEY(Id),
@@ -42,6 +43,7 @@ CREATE TABLE BotOrders
   (
     Id BIGINT NOT NULL AUTO_INCREMENT,
     BotId BIGINT NOT NULL,
+    BotType TINYINT NOT NULL,
     UserId BIGINT NOT NULL,
     OrderId VARCHAR(64) NOT NULL,
     OrderListId VARCHAR(64) NOT NULL,
