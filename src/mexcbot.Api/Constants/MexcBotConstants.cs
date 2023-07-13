@@ -15,7 +15,10 @@ namespace mexcbot.Api.Constants
         //14400s = 4h
         public const int UpdateUsdPriceInterval = 14400;
 
+        //15000 = 15s
+        public const int ExpiredOrderTime = 15000;
+        
         //60000 = 1p
-        public const int ExpiredOrderTime = 60000;
+        public const int BotVolInterval = 60000;
     }
 }

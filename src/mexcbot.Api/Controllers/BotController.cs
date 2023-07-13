@@ -65,5 +65,13 @@ namespace mexcbot.Api.Controllers
 
             return new OkResponse(orderHistory);
         }
+        
+        [HttpDelete("")]
+        public async Task<OkResponse> DeleteBotAsync([FromQuery] long id)
+        {
+            await _botService.DeleteBotAsync(id, CurrentUser());
+
+            return new OkResponse();
+        }
     }
 }

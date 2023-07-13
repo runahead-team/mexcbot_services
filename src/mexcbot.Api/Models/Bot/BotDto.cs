@@ -1,6 +1,9 @@
 using System;
+using System.Collections.Generic;
 using mexcbot.Api.Constants;
+using mexcbot.Api.Models.Mexc;
 using mexcbot.Api.RequestModels.Bot;
+using mexcbot.Api.ResponseModels.ExchangeInfo;
 using Newtonsoft.Json;
 using sp.Core.Constants;
 using sp.Core.Exceptions;
@@ -121,6 +124,18 @@ namespace mexcbot.Api.Models.Bot
             ? JsonConvert.DeserializeObject<BotMakerOption>(MakerOption)
             : new BotMakerOption();
 
+        [JsonIgnore] public string AccountInfo { get; set; }
+
+        public MexcAccInfo AccountInfoObj => !string.IsNullOrEmpty(AccountInfo)
+            ? JsonConvert.DeserializeObject<MexcAccInfo>(AccountInfo)
+            : new MexcAccInfo();
+
+        [JsonIgnore] public string ExchangeInfo { get; set; }
+
+        public ExchangeInfoView ExchangeInfoObj => !string.IsNullOrEmpty(ExchangeInfo)
+            ? JsonConvert.DeserializeObject<ExchangeInfoView>(ExchangeInfo)
+            : new ExchangeInfoView();
+
         public string ApiKey { get; set; }
 
         public string ApiSecret { get; set; }
@@ -132,7 +147,7 @@ namespace mexcbot.Api.Models.Bot
         public long LastRunTime { get; set; }
 
         public long NextRunMakerTime { get; set; }
-        
+
         public long NextRunVolTime { get; set; }
 
         public long CreatedTime { get; set; }

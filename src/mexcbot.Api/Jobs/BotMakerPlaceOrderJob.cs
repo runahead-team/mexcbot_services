@@ -8,6 +8,7 @@ using mexcbot.Api.Constants;
 using mexcbot.Api.Infrastructure;
 using mexcbot.Api.Infrastructure.ExchangeClient;
 using mexcbot.Api.Models.Bot;
+using mexcbot.Api.Models.Mexc;
 using Microsoft.Extensions.Hosting;
 using MySqlConnector;
 using Newtonsoft.Json;
@@ -82,13 +83,42 @@ namespace mexcbot.Api.Jobs
                 var exchangeInfo = await mexcClient.GetExchangeInfo(bot.Base, bot.Quote);
                 var selfSymbols = await mexcClient.GetSelfSymbols();
                 var bot24hr = (await mexcClient.GetTicker24hr(bot.Base, bot.Quote));
+                var balances = await mexcClient.GetAccInformation();
+
+                #region Update info bot
+
+                try
+                {
+                    await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
+                    await dbConnection.OpenAsync();
+
+                    var accInfo = new MexcAccInfo
+                    {
+                        Balances = balances
+                    };
+
+                    bot.ExchangeInfo = (exchangeInfo == null || string.IsNullOrEmpty(exchangeInfo.Symbol))
+                        ? string.Empty
+                        : JsonConvert.SerializeObject(exchangeInfo);
+                    bot.AccountInfo = !balances.Any() ? string.Empty : JsonConvert.SerializeObject(accInfo);
+
+                    await dbConnection.ExecuteAsync(
+                        @"UPDATE Bots SET ExchangeInfo = @ExchangeInfo, AccountInfo = @AccountInfo
+                    WHERE Id = @Id",
+                        bot);
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e, "BotMakerPlaceOrderJob: Update Bots {Id} {@data1} {@data2}", bot.Id, bot.ExchangeInfo,
+                        bot.AccountInfo);
+                }
+
+                #endregion
 
                 var makerOption = new BotMakerOption();
                 var lastBtcPrice = 0m;
 
                 #region Validate
-
-                var balances = await mexcClient.GetAccInformation();
 
                 var baseBalanceValue = 0m;
                 var quoteBalanceValue = 0m;
@@ -278,13 +308,19 @@ namespace mexcbot.Api.Jobs
                     var orderbook = (await mexcClient.GetOrderbook(bot.Base, bot.Quote));
 
                     if (orderbook == null || orderbook.Asks.Count == 0 || orderbook.Asks.Count == 0)
+                    {
+                        Log.Error("Order not found");
                         return;
+                    }
 
                     const decimal spreadHighPercent = 5;
                     const decimal spreadFixPercent = 0.5m;
 
                     if (orderbook.Asks.Count == 0 || orderbook.Bids.Count == 0)
+                    {
+                        Log.Error("Order not found");
                         return;
+                    }
 
                     var maxPrice = orderbook.Asks.Min(x => x[0]);
                     var minPrice = orderbook.Bids.Max(x => x[0]);
@@ -407,7 +443,7 @@ namespace mexcbot.Api.Jobs
 
                                     if (overStepPrice > 0)
                                         await CreateLimitOrder(mexcClient, bot, qty.ToString($"F{basePrecision}"),
-                                            overStepPrice.ToString($"F{quotePrecision}"), OrderSide.BUY);
+                                            overStepPrice.ToString($"F{quotePrecision}"), OrderSide.BUY, true);
                                 }
 
                                 if (makerOption.MaxPriceOverStep > 0)
@@ -423,7 +459,7 @@ namespace mexcbot.Api.Jobs
 
                                     if (overStepPrice > 0)
                                         await CreateLimitOrder(mexcClient, bot, qty.ToString($"F{basePrecision}"),
-                                            overStepPrice.ToString($"F{quotePrecision}"), OrderSide.SELL);
+                                            overStepPrice.ToString($"F{quotePrecision}"), OrderSide.SELL, true);
                                 }
 
                                 #endregion
@@ -451,7 +487,6 @@ namespace mexcbot.Api.Jobs
                                 }
 
                                 #endregion
-                                
                             }, CancellationToken.None));
                         }
 
@@ -472,7 +507,7 @@ namespace mexcbot.Api.Jobs
         #region Private
 
         private async Task<bool> CreateLimitOrder(MexcClient client, BotDto bot, string qty, string price,
-            OrderSide side)
+            OrderSide side, bool isOverStepOrder = false)
         {
             var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty,
                 price);
@@ -492,7 +527,7 @@ namespace mexcbot.Api.Jobs
             order.BotType = bot.Type;
             order.UserId = bot.UserId;
 
-            if (bot.MakerOptionObj != null && bot.MakerOptionObj.OrderExp > 0)
+            if (isOverStepOrder && bot.MakerOptionObj != null && bot.MakerOptionObj.OrderExp > 0)
                 order.ExpiredTime = order.TransactTime + (bot.MakerOptionObj.OrderExp * 1000);
             else
                 order.ExpiredTime = order.TransactTime + MexcBotConstants.ExpiredOrderTime;
@@ -518,12 +553,11 @@ namespace mexcbot.Api.Jobs
                 if (isInactive)
                 {
                     bot.NextRunMakerTime = AppUtils.NowMilis() + (long)TimeSpan.FromMinutes(1).TotalMilliseconds;
-                    
+
                     await dbConnection.ExecuteAsync(
                         @"UPDATE Bots SET Logs = @Logs, Status = @Status, NextRunMakerTime = @NextRunMakerTime
                     WHERE Id = @Id",
                         bot);
-                    
                 }
                 else
                 {

@@ -28,8 +28,10 @@ CREATE TABLE Bots
     Logs TEXT,
     `Status` TINYINT NOT NULL,
     LastRunTime BIGINT NULL,
-     NextRunVolTime BIGINT NULL,
+    NextRunVolTime BIGINT NULL,
     NextRunMakerTime BIGINT NULL,
+    ExchangeInfo TEXT,
+    AccountInfo TEXT,
     CreatedTime BIGINT NOT NULL,
     PRIMARY KEY(Id),
     INDEX(UserId)

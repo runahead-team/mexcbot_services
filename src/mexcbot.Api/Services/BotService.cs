@@ -6,10 +6,14 @@ using System.Threading.Tasks;
 using Dapper;
 using mexcbot.Api.Constants;
 using mexcbot.Api.Infrastructure;
+using mexcbot.Api.Infrastructure.ExchangeClient;
 using mexcbot.Api.Models.Bot;
+using mexcbot.Api.Models.Mexc;
 using mexcbot.Api.RequestModels.Bot;
 using mexcbot.Api.ResponseModels.Order;
 using mexcbot.Api.Services.Interface;
+using Newtonsoft.Json;
+using Serilog;
 using sp.Core.Constants;
 using sp.Core.Exceptions;
 using sp.Core.Models;
@@ -49,7 +53,8 @@ namespace mexcbot.Api.Services
                             Take = take
                         });
 
-                builder.Where("UserId = @UserId", new { UserId = appUser.Id });
+                builder.Where("UserId = @UserId",
+                    new { UserId = appUser.Id });
 
                 var total = await dbConnection.ExecuteScalarAsync<int>(
                     counter.RawSql, counter.Parameters);
@@ -57,7 +62,7 @@ namespace mexcbot.Api.Services
                 var items = (await dbConnection.QueryAsync<BotDto>(
                     selector.RawSql, selector.Parameters)).ToArray();
 
-                await MapOrderAsync(dbConnection, items);
+                await MapOrderAsync(items);
 
                 result = new PagingResult<BotDto>(items, total, request);
 
@@ -83,8 +88,8 @@ namespace mexcbot.Api.Services
                     });
 
                 result = bot ?? throw new AppException("Bot not found");
-                
-                await MapOrderAsync(dbConnection, result);
+
+                await MapOrderAsync(result);
 
                 await Task.CompletedTask;
             });
@@ -96,11 +101,28 @@ namespace mexcbot.Api.Services
         {
             var bot = new BotDto(request, appUser);
 
+            var mexcClient = new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret);
+
+            var exchangeInfo = await mexcClient.GetExchangeInfo(bot.Base, bot.Quote);
+            var accBalances = await mexcClient.GetAccInformation();
+
+            var accInfo = new MexcAccInfo
+            {
+                Balances = accBalances
+            };
+
+            bot.ExchangeInfo = (exchangeInfo == null || string.IsNullOrEmpty(exchangeInfo.Symbol))
+                ? string.Empty
+                : JsonConvert.SerializeObject(exchangeInfo);
+            bot.AccountInfo = (!accBalances.Any())
+                ? string.Empty
+                : JsonConvert.SerializeObject(accInfo);
+
             await DbConnections.ExecAsync(async (dbConnection) =>
             {
                 var exec = await dbConnection.ExecuteAsync(
-                    @"INSERT INTO Bots(UserId,Base,Quote,Type,ApiKey,ApiSecret,Logs,Status,VolumeOption,MakerOption,CreatedTime)
-                    VALUES(@UserId,@Base,@Quote,@Type,@ApiKey,@ApiSecret,@Logs,@Status,@VolumeOption,@MakerOption,@CreatedTime)",
+                    @"INSERT INTO Bots(UserId,Base,Quote,Type,ApiKey,ApiSecret,Logs,Status,VolumeOption,MakerOption,ExchangeInfo,AccountInfo,CreatedTime)
+                    VALUES(@UserId,@Base,@Quote,@Type,@ApiKey,@ApiSecret,@Logs,@Status,@VolumeOption,@MakerOption,@ExchangeInfo,@AccountInfo,@CreatedTime)",
                     bot);
 
                 if (exec != 1)
@@ -139,23 +161,31 @@ namespace mexcbot.Api.Services
         {
             await DbConnections.ExecAsync(async (dbConnection) =>
             {
-                if ((await dbConnection.ExecuteScalarAsync<int>(
-                        "SELECT COUNT(1) FROM Bots WHERE UserId = @UserId AND Id = @Id",
-                        new
-                        {
-                            UserId = appUser.Id,
-                            Id = request.Id
-                        })) != 1)
+                var bot = await dbConnection.QueryFirstOrDefaultAsync<BotDto>(
+                    "SELECT * FROM Bots WHERE UserId = @UserId AND Id = @Id",
+                    new
+                    {
+                        UserId = appUser.Id,
+                        Id = request.Id
+                    });
+
+                if (bot == null)
                     throw new AppException("Bot is not exist");
 
+                var logs = bot.Logs;
+
+                if (request.Status == BotStatus.INACTIVE && bot.Status == BotStatus.ACTIVE)
+                    logs = string.Empty;
+
                 var exec = await dbConnection.ExecuteAsync(
-                    @"UPDATE Bots SET Status = @Status
+                    @"UPDATE Bots SET Status = @Status, Logs = @Logs
                     WHERE UserId = @UserId AND Id = @Id",
                     new
                     {
                         UserId = appUser.Id,
                         Id = request.Id,
-                        Status = request.Status
+                        Status = request.Status,
+                        Logs = logs
                     });
 
                 if (exec != 1)
@@ -199,6 +229,12 @@ namespace mexcbot.Api.Services
                         builder.Where("BotId = @BotId", new { BotId = botId });
                 }
 
+                if (request.Filters.TryGetValue("BotType", out var botTypeStr))
+                {
+                    if (Enum.TryParse(botTypeStr, out BotType botType))
+                        builder.Where("BotType = @BotType", new { BotType = botType });
+                }
+
                 var total = await dbConnection.ExecuteScalarAsync<int>(
                     counter.RawSql, counter.Parameters);
 
@@ -213,13 +249,49 @@ namespace mexcbot.Api.Services
             return result;
         }
 
+        public async Task DeleteBotAsync(long botId, AppUser appUser)
+        {
+            await DbConnections.ExecAsync(async (dbConnection) =>
+            {
+                var bot = await dbConnection.QueryFirstOrDefaultAsync<BotDto>(
+                    "SELECT * FROM Bots WHERE Id = @Id AND UserId = @UserId",
+                    new
+                    {
+                        Id = botId,
+                        UserId = appUser.Id
+                    });
+
+                if (bot == null)
+                    throw new AppException("Bot not found");
+
+                if (bot.Status == BotStatus.ACTIVE)
+                    throw new AppException("Bot is active");
+
+                var deleteParams = new
+                {
+                    Id = botId,
+                    UserId = appUser.Id
+                };
+
+                var exec = await dbConnection.ExecuteAsync(
+                    "DELETE FROM Bots WHERE Id = @Id AND UserId = @UserId",
+                    deleteParams);
+
+                if (exec != 1)
+                {
+                    Log.Error("BotService:DeleteBotAsync exec fail {@data}", deleteParams);
+                    throw new AppException("Delete fail");
+                }
+            });
+        }
+
         #region Sys
 
         #endregion
 
         #region Prv
 
-        private async Task MapOrderAsync(IDbConnection dbConnection, params BotDto[] bots)
+        private async Task MapOrderAsync(params BotDto[] bots)
         {
             foreach (var bot in bots)
             {

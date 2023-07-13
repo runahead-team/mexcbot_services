@@ -7,6 +7,7 @@ using mexcbot.Api.Constants;
 using mexcbot.Api.Infrastructure;
 using mexcbot.Api.Infrastructure.ExchangeClient;
 using mexcbot.Api.Models.Bot;
+using mexcbot.Api.Models.Mexc;
 using Microsoft.Extensions.Hosting;
 using MySqlConnector;
 using Newtonsoft.Json;
@@ -41,7 +42,8 @@ namespace mexcbot.Api.Jobs
                     await dbConnection.OpenAsync();
 
                     var bots = (await dbConnection.QueryAsync<BotDto>(
-                        "SELECT * FROM Bots WHERE Status = @Status AND Type = @Type AND (NextRunVolTime < @Now OR NextRunVolTime IS NULL)", new
+                        "SELECT * FROM Bots WHERE Status = @Status AND Type = @Type AND (NextRunVolTime < @Now OR NextRunVolTime IS NULL)",
+                        new
                         {
                             Status = BotStatus.ACTIVE,
                             Type = BotType.VOLUME,
@@ -82,6 +84,37 @@ namespace mexcbot.Api.Jobs
 
                 var exchangeInfo = await mexcClient.GetExchangeInfo(bot.Base, bot.Quote);
                 var selfSymbols = await mexcClient.GetSelfSymbols();
+                var balances = await mexcClient.GetAccInformation();
+                
+                #region Update info bot
+
+                try
+                {
+                    await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
+                    await dbConnection.OpenAsync();
+
+                    var accInfo = new MexcAccInfo
+                    {
+                        Balances = balances
+                    };
+
+                    bot.ExchangeInfo = (exchangeInfo == null || string.IsNullOrEmpty(exchangeInfo.Symbol))
+                        ? string.Empty
+                        : JsonConvert.SerializeObject(exchangeInfo);
+                    bot.AccountInfo = !balances.Any() ? string.Empty : JsonConvert.SerializeObject(accInfo);
+
+                    await dbConnection.ExecuteAsync(
+                        @"UPDATE Bots SET ExchangeInfo = @ExchangeInfo, AccountInfo = @AccountInfo
+                    WHERE Id = @Id",
+                        bot);
+                }
+                catch (Exception e)
+                {
+                    Log.Error(e, "BotMakerPlaceOrderJob: Update Bots {Id} {@data1} {@data2}", bot.Id, bot.ExchangeInfo,
+                        bot.AccountInfo);
+                }
+
+                #endregion
 
                 #region Validate
 
@@ -90,8 +123,6 @@ namespace mexcbot.Api.Jobs
                     bot.Status = BotStatus.INACTIVE;
                     stopLog += $"{bot.Symbol} is not support\n";
                 }
-
-                var balances = await mexcClient.GetAccInformation();
 
                 if (!balances.Any())
                 {
@@ -123,6 +154,9 @@ namespace mexcbot.Api.Jobs
                     stopLog += $"Stop when exchange info not found\n";
                 }
 
+                //default
+                bot.NextRunVolTime = now;
+                
                 if (string.IsNullOrEmpty(bot.VolumeOption))
                 {
                     bot.Status = BotStatus.INACTIVE;
@@ -130,7 +164,7 @@ namespace mexcbot.Api.Jobs
                 }
                 else
                 {
-                    bot.NextRunMakerTime =
+                    bot.NextRunVolTime =
                         now + (int)RandomNumber(bot.VolumeOptionObj.MinInterval, bot.VolumeOptionObj.MaxInterval, 0) *
                         1000;
                 }
@@ -243,7 +277,7 @@ namespace mexcbot.Api.Jobs
                     {
                         Log.Warning("No order");
 
-                        bot.NextRunVolTime = now + (long)TimeSpan.FromMinutes(1).TotalMilliseconds;
+                        bot.NextRunVolTime = now + MexcBotConstants.BotVolInterval;
 
                         await UpdateBot(bot, false);
                         return;
@@ -419,7 +453,7 @@ namespace mexcbot.Api.Jobs
                 else
                 {
                     await dbConnection.ExecuteAsync(
-                        @"UPDATE Bots SET NextVolRunTime = @NextVolRunTime
+                        @"UPDATE Bots SET NextRunVolTime = @NextRunVolTime
                     WHERE Id = @Id",
                         bot);
                 }

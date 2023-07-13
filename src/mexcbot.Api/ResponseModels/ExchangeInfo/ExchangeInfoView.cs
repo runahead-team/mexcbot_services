@@ -13,5 +13,11 @@ namespace mexcbot.Api.ResponseModels.ExchangeInfo
         public decimal BaseSizePrecision { get; set; }
         
         public string QuoteAmountPrecision { get; set; }
+        
+        public string[] OrderTypes { get; set; }
+        
+        public string[] Permissions { get; set; }
+        
+        public string Status { get; set; }
     }
 }
