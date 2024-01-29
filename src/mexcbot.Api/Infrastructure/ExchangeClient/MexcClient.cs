@@ -18,7 +18,7 @@ using sp.Core.Utils;
 
 namespace mexcbot.Api.Infrastructure.ExchangeClient
 {
-    public class MexcClient
+    public class MexcClient : ExchangeClient
     {
         private readonly Uri _baseUri;
         private readonly string _apiKey;
@@ -129,19 +129,19 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             return JsonConvert.DeserializeObject<List<OpenOrderView>>(responseBody);
         }
 
-        public async Task<List<MexcAccBalance>> GetAccInformation()
+        public async Task<List<AccBalance>> GetAccInformation()
         {
             var (success, responseBody) =
                 await SendRequest("GET", "/api/v3/account", string.Empty, true, false);
 
             if (!success)
-                return new List<MexcAccBalance>();
+                return new List<AccBalance>();
 
             var data = JObject.Parse(responseBody)["balances"];
 
             return data == null
-                ? new List<MexcAccBalance>()
-                : JsonConvert.DeserializeObject<List<MexcAccBalance>>(data.ToString());
+                ? new List<AccBalance>()
+                : JsonConvert.DeserializeObject<List<AccBalance>>(data.ToString());
         }
         
         public async Task<List<string>> GetSelfSymbols()

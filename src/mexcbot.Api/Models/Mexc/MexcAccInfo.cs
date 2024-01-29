@@ -4,6 +4,6 @@ namespace mexcbot.Api.Models.Mexc
 {
     public class MexcAccInfo
     {
-        public List<MexcAccBalance> Balances { get; set; }
+        public List<AccBalance> Balances { get; set; }
     }
 }

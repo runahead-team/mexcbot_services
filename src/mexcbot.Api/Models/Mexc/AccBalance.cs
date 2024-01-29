@@ -1,6 +1,6 @@
 namespace mexcbot.Api.Models.Mexc
 {
-    public class MexcAccBalance
+    public class AccBalance
     {
         public string Asset { get; set; }
         
