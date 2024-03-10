@@ -27,6 +27,7 @@ namespace mexcbot.Api.Models.Bot
             Base = request.Base;
             Quote = request.Quote;
             Type = request.Type;
+            ExchangeType = request.ExchangeType;
             VolumeOption = request.VolumeOption == null
                 ? string.Empty
                 : JsonConvert.SerializeObject(request.VolumeOption);
@@ -108,9 +109,13 @@ namespace mexcbot.Api.Models.Bot
 
         public string Quote { get; set; }
 
-        public string Symbol => $"{Base}{Quote}";
-
         public BotType Type { get; set; }
+
+        public BotExchangeType ExchangeType { get; set; }
+
+        public string Symbol => ExchangeType == BotExchangeType.LBANK
+            ? $"{Base.ToLower()}_{Quote.ToLower()}"
+            : $"{Base}{Quote}";
 
         [JsonIgnore] public string VolumeOption { get; set; }
 
@@ -126,9 +131,9 @@ namespace mexcbot.Api.Models.Bot
 
         [JsonIgnore] public string AccountInfo { get; set; }
 
-        public MexcAccInfo AccountInfoObj => !string.IsNullOrEmpty(AccountInfo)
-            ? JsonConvert.DeserializeObject<MexcAccInfo>(AccountInfo)
-            : new MexcAccInfo();
+        public AccInfo AccountInfoObj => !string.IsNullOrEmpty(AccountInfo)
+            ? JsonConvert.DeserializeObject<AccInfo>(AccountInfo)
+            : new AccInfo();
 
         [JsonIgnore] public string ExchangeInfo { get; set; }
 

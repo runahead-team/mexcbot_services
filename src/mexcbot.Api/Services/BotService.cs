@@ -101,12 +101,18 @@ namespace mexcbot.Api.Services
         {
             var bot = new BotDto(request, appUser);
 
-            var mexcClient = new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret);
+            ExchangeClient client = bot.ExchangeType switch
+            {
+                BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
+                BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey,
+                    bot.ApiSecret),
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
-            var exchangeInfo = await mexcClient.GetExchangeInfo(bot.Base, bot.Quote);
-            var accBalances = await mexcClient.GetAccInformation();
+            var exchangeInfo = await client.GetExchangeInfo(bot.Base, bot.Quote);
+            var accBalances = await client.GetAccInformation();
 
-            var accInfo = new MexcAccInfo
+            var accInfo = new AccInfo
             {
                 Balances = accBalances
             };

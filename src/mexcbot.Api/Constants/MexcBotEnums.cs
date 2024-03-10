@@ -14,6 +14,12 @@ namespace mexcbot.Api.Constants
         MAKER = 1
     }
     
+    public enum BotExchangeType
+    {
+        MEXC = 0,
+        LBANK = 1
+    }
+    
     public enum OrderSide
     {
         [Description("BUY")]

@@ -18,6 +18,8 @@ namespace mexcbot.Api.Infrastructure
         
         public static string MexcUrl { get; set; }
         
+        public static string LBankUrl { get; set; }
+        
         public static Dictionary<string, List<object>> Enums { get; set; }
     }
 }

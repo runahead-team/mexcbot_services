@@ -8,6 +8,8 @@ namespace mexcbot.Api.ResponseModels.Order
         
         public BotType BotType { get; set; }
         
+        public BotExchangeType BotExchangeType { get; set; }
+        
         public long UserId { get; set; }
         
         public string Symbol { get; set; }

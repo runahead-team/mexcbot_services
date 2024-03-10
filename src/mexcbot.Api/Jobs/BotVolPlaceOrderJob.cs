@@ -93,7 +93,7 @@ namespace mexcbot.Api.Jobs
                     await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
                     await dbConnection.OpenAsync();
 
-                    var accInfo = new MexcAccInfo
+                    var accInfo = new AccInfo
                     {
                         Balances = balances
                     };
@@ -422,12 +422,13 @@ namespace mexcbot.Api.Jobs
 
             order.BotId = bot.Id;
             order.BotType = bot.Type;
+            order.BotExchangeType = bot.ExchangeType;
             order.UserId = bot.UserId;
             order.ExpiredTime = order.TransactTime + MexcBotConstants.ExpiredOrderTime;
 
             var exec = await sqlConnection.ExecuteAsync(
-                @"INSERT INTO BotOrders(BotId,BotType,UserId,OrderId,Symbol,OrderListId,Price,OrigQty,Type,Side,ExpiredTime,Status,`TransactTime`)
-                      VALUES(@BotId,@BotType,@UserId,@OrderId,@Symbol,@OrderListId,@Price,@OrigQty,@Type,@Side,@ExpiredTime,@Status,@TransactTime)",
+                @"INSERT INTO BotOrders(BotId,BotType,BotExchangeType,UserId,OrderId,Symbol,OrderListId,Price,OrigQty,Type,Side,ExpiredTime,Status,`TransactTime`)
+                      VALUES(@BotId,@BotType,@BotExchangeType,@UserId,@OrderId,@Symbol,@OrderListId,@Price,@OrigQty,@Type,@Side,@ExpiredTime,@Status,@TransactTime)",
                 order);
 
             if (exec == 0)
