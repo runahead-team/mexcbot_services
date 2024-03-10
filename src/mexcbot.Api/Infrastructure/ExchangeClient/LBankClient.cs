@@ -268,9 +268,6 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                             new KeyValuePair<string, string>(key, value));
                     }
 
-                    // requestBody.Add(
-                    //     new KeyValuePair<string, string>("contentType", "application/x-www-form-urlencoded"));
-
                     var repairedStr = HMAC_MD5(parameters).ToUpper();
                     var signature = HMAC_SHA256(repairedStr, _secretKey);
                     
