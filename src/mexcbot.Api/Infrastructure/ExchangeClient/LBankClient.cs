@@ -172,7 +172,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
         public async Task<List<AccBalance>> GetAccInformation()
         {
             var (success, responseBody) =
-                await SendRequest<JArray>(HttpMethod.Post, "/v2/user_info.do", true, null, true);
+                await SendRequest<JArray>(HttpMethod.Post, "/v2/user_info.do", true);
 
             if (!success)
                 return new List<AccBalance>();
@@ -232,14 +232,13 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             try
             {
                 var requestBody = new List<KeyValuePair<string, string>>();
-                var uri = new Uri(_baseUri, endpoint);
                 var requestMessage = new HttpRequestMessage(method, new Uri(_baseUri, endpoint));
                 var parameters = "";
 
                 if (isAuth)
                 {
                     var timestamp = await GetTimestamp();
-                    var echoStr = AppUtils.NewGuidStr();
+                    var echoStr = AppUtils.RandomString(35);
 
                     var bodyJson = new JObject();
 
@@ -247,16 +246,14 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                     {
                         bodyJson = JObject.FromObject(body);
                     }
-
-                    bodyJson.Add("api_key", _apiKey);
-                    bodyJson.Add("echostr", echoStr);
-                    bodyJson.Add("signature_method", "HmacSHA256");
+                    
                     bodyJson.Add("timestamp", timestamp.ToString());
-
+                    bodyJson.Add("signature_method", "HmacSHA256");
+                    bodyJson.Add("echostr", echoStr);
+                    bodyJson.Add("api_key", _apiKey);
                     var sortProperties = bodyJson.Properties()
                         .OrderBy(x => x.Name)
                         .ToList();
-
                     foreach (var property in sortProperties)
                     {
                         var key = property.Name;
@@ -266,11 +263,17 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                             parameters += $"{key}={value}";
                         else
                             parameters += $"{key}={value}&";
-
-                        requestBody.Add(new KeyValuePair<string, string>(key, value));
+                        
+                        requestBody.Add(
+                            new KeyValuePair<string, string>(key, value));
                     }
 
-                    var signature = HMAC_SHA256(HMAC_MD5(parameters), _secretKey);
+                    // requestBody.Add(
+                    //     new KeyValuePair<string, string>("contentType", "application/x-www-form-urlencoded"));
+
+                    var repairedStr = HMAC_MD5(parameters).ToUpper();
+                    var signature = HMAC_SHA256(repairedStr, _secretKey);
+                    
                     requestBody.Add(new KeyValuePair<string, string>("sign", signature));
 
                     var requestContent = new FormUrlEncodedContent(requestBody);

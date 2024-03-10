@@ -15,7 +15,6 @@ namespace mexcbot.Api.Controllers.Base
 
             var idClaim = claims.FirstOrDefault(x => x.Type == "id");
 
-
             if (idClaim == null)
             {
                 if (allowAnonymous)

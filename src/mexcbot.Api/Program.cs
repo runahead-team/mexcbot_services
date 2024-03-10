@@ -73,7 +73,7 @@ namespace mexcbot.Api
                     builder.UseStartup<Startup>()
                         .UseKestrel(options =>
                         {
-                            options.Listen(IPAddress.Any, 5000, o => o.Protocols =
+                            options.Listen(IPAddress.Any, 6000, o => o.Protocols =
                                 HttpProtocols.Http1);
                         })
                 );

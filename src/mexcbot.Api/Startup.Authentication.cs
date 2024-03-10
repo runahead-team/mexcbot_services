@@ -14,8 +14,8 @@ namespace mexcbot.Api
     {
         public void ConfigureAuth(IServiceCollection services)
         {
-            JwtSecurityTokenHandler.DefaultInboundClaimTypeMap.Clear();
-            
+            JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
+
             services
                 .AddAuthentication()
                 .AddJwtBearer("USER",

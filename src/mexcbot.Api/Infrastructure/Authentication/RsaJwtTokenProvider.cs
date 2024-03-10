@@ -49,8 +49,6 @@ namespace mexcbot.Api.Infrastructure.Authentication
                     identity.AddClaim(scopeClaim);
                 }
             }
-
-
             var willExpire =
                 DateTime.UtcNow.AddSeconds(expiredInSeconds == 0
                     ? MexcBotConstants.TokenExpiryInSeconds

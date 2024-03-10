@@ -1,11 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
     <PropertyGroup>
-        <TargetFramework>netcoreapp3.1</TargetFramework>
-        <Protobuf_ToolsOs>macosx</Protobuf_ToolsOs>
-        <Protobuf_ToolsCpu>x64</Protobuf_ToolsCpu>
+        <TargetFramework>net8.0</TargetFramework>
     </PropertyGroup>
     <ItemGroup>
-      <PackageReference Include="Newtonsoft.Json" Version="12.0.3" />
+      <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     </ItemGroup>
 </Project>

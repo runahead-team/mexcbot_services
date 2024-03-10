@@ -127,8 +127,8 @@ namespace mexcbot.Api.Services
             await DbConnections.ExecAsync(async (dbConnection) =>
             {
                 var exec = await dbConnection.ExecuteAsync(
-                    @"INSERT INTO Bots(UserId,Base,Quote,Type,ApiKey,ApiSecret,Logs,Status,VolumeOption,MakerOption,ExchangeInfo,AccountInfo,CreatedTime)
-                    VALUES(@UserId,@Base,@Quote,@Type,@ApiKey,@ApiSecret,@Logs,@Status,@VolumeOption,@MakerOption,@ExchangeInfo,@AccountInfo,@CreatedTime)",
+                    @"INSERT INTO Bots(UserId,Base,Quote,Type,ExchangeType,ApiKey,ApiSecret,Logs,Status,VolumeOption,MakerOption,ExchangeInfo,AccountInfo,CreatedTime)
+                    VALUES(@UserId,@Base,@Quote,@Type,@ExchangeType,@ApiKey,@ApiSecret,@Logs,@Status,@VolumeOption,@MakerOption,@ExchangeInfo,@AccountInfo,@CreatedTime)",
                     bot);
 
                 if (exec != 1)
@@ -303,6 +303,8 @@ namespace mexcbot.Api.Services
             {
                 bot.ApiSecret = "**********************";
             }
+
+            await Task.CompletedTask;
         }
 
         #endregion
