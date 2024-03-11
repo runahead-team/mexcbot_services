@@ -16,6 +16,7 @@ using mexcbot.Api.ResponseModels.Order;
 using mexcbot.Api.ResponseModels.Ticker;
 using Serilog;
 using Newtonsoft.Json.Linq;
+using sp.Core.Exceptions;
 using sp.Core.Utils;
 
 namespace mexcbot.Api.Infrastructure.ExchangeClient
@@ -60,16 +61,43 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
         public async Task<List<JArray>> GetCandleStick(string @base, string quote, string interval)
         {
+            var startDate = AppUtils.NowMilis() - (AppUtils.NowMilis() % 86400000);
+            var queryFromTime = startDate - 86400000;
+
             //type: minute1, minute5, minute15, minute30, hour1, hour4, hour8, hour12, day1, week1, month1
-            var payload = $"symbol={@base.ToLower()}_{quote.ToLower()}&type={interval}";
+            var payload = $"symbol={@base.ToLower()}_{quote.ToLower()}";
+            payload += $"&size=2000&type={interval}";
+            payload += $"&time={(queryFromTime / 1000).ToString()}";
 
             var (success, responseBody) =
-                await SendRequest<string>(HttpMethod.Get, "/v2/kline.do", false, payload, false);
+                await SendRequest<JArray>(HttpMethod.Get, $"/v2/kline.do?{payload}", false, null, false);
+
+            var result = new List<JArray>();
 
             if (!success)
-                return new List<JArray>();
+                return result;
 
-            return JsonConvert.DeserializeObject<List<JArray>>(responseBody);
+            var dataStr = responseBody.ToString();
+            result = JsonConvert.DeserializeObject<List<JArray>>(dataStr);
+            
+            result = result?.Select(x =>
+            {
+                if (!long.TryParse(x.First().ToString(), out var timeSeconds))
+                {
+                    Log.Error("Candle stick parse time fail");
+                    throw new AppException();
+                }
+
+                var jToken = JToken.FromObject(x);
+                jToken[0] = timeSeconds * 1000;
+
+                return x = new JArray()
+                {
+                    jToken
+                };
+            }).ToList();
+
+            return result;
         }
 
         public async Task<Ticker24hrView> GetTicker24hr(string @base, string quote)
@@ -104,7 +132,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var type = side == OrderSide.BUY ? "buy" : "sell";
 
             var (success, response) =
-                await SendRequest<dynamic>(HttpMethod.Post, $"/v2/create_order.do", true,
+                await SendRequest<dynamic>(HttpMethod.Post, $"/v2/supplement/create_order.do", true,
                     new
                     {
                         symbol = baseSymbol,
@@ -123,8 +151,10 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 OrderId = (string)response.order_id,
                 Symbol = baseSymbol,
                 Price = price,
+                Type = "LIMIT",
                 Side = type,
                 OrigQty = quantity,
+                TransactTime = AppUtils.NowMilis(),
                 Status = OrderStatus.NEW
             };
         }
@@ -135,13 +165,32 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             symbol = symbol.ToLower();
 
             var (success, response) =
-                await SendRequest<JObject>(HttpMethod.Post, "v2/cancel_order.do", true, new
+                await SendRequest<JObject>(HttpMethod.Post, "/v2/supplement/cancel_order.do", true, new
                 {
                     symbol = symbol,
-                    order_id = orderId
+                    orderId = orderId
                 });
 
-            return JsonConvert.DeserializeObject<CanceledOrderView>(response.ToString());
+            if (!success || response is null)
+                return new CanceledOrderView();
+
+            var data = response.ToObject<dynamic>();
+
+            if (data is null)
+                return new CanceledOrderView();
+
+            return new CanceledOrderView
+            {
+                OrderId = (string)data.orderId,
+                Symbol = (string)data.symbol,
+                OrigClientOrderId = (string)data.origClientOrderId,
+                Price = (string)data.price,
+                OrigQty = (string)data.origQty,
+                ExecutedQty = (string)data.executedQty,
+                Side = (string)data.tradeType,
+                TimeInForce = (string)data.timeInForce,
+                LbankOrderStatus = (string)data.status
+            };
         }
 
         public async Task<List<OpenOrderView>> GetOpenOrder(string @base, string quote)
@@ -150,11 +199,11 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             symbol = symbol.ToLower();
 
             var (success, response) =
-                await SendRequest<JObject>(HttpMethod.Post, "v2/orders_info_history.do", true, new
+                await SendRequest<JObject>(HttpMethod.Post, "/v2/supplement/orders_info_history.do", true, new
                 {
-                    api_key = _apiKey,
                     symbol = symbol,
-                    status = 0,
+                    current_page = "1",
+                    page_length = "100"
                 });
 
             if (!success || response is null)
@@ -170,9 +219,11 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
             return orders.Select(item => new OpenOrderView
             {
-                OrderId = (string)item.order_id,
+                OrderId = (string)item.orderId,
                 Symbol = (string)item.symbol,
                 Price = (string)item.price,
+                Side = (string)item.type,
+                OrigQty = (string)item.origQty
             }).ToList();
         }
 
@@ -215,7 +266,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
         public async Task<OrderbookView> GetOrderbook(string @base, string quote)
         {
             var baseSymbol = $"{@base.ToLower()}_{quote.ToLower()}";
-            
+
             //default size
             var payload = $"symbol={baseSymbol}&size=100";
 

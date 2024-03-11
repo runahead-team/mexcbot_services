@@ -131,9 +131,19 @@ namespace mexcbot.Api.Jobs
 
             var canceledOrder = await client.CancelOrder(bot.Base, bot.Quote, order.OrderId);
 
-            if (canceledOrder != null)
+            if (canceledOrder != null && !string.IsNullOrEmpty(canceledOrder.Symbol))
             {
-                order.Status = canceledOrder.Status;
+                //-1: Cancelled 0: Unfilled 1: Partially filled 2: Completely filled 3: Partially filled has been cancelled 4: Cancellation is being processed
+                if (bot.ExchangeType == BotExchangeType.LBANK)
+                    order.Status = canceledOrder.LbankOrderStatus switch
+                    {
+                        "-1" => OrderStatus.CANCELED,
+                        "2" => OrderStatus.PARTIALLY_FILLED,
+                        "3" => OrderStatus.PARTIALLY_CANCELED,
+                        _ => OrderStatus.CANCELED
+                    };
+                else
+                    order.Status = canceledOrder.Status;
 
                 await UpdateStatus(order, dbConnection);
             }

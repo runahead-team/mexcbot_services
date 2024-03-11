@@ -2,8 +2,11 @@ using System;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
 using mexcbot.Api.Controllers.Base;
+using mexcbot.Api.Infrastructure;
+using mexcbot.Api.Infrastructure.ExchangeClient;
 using mexcbot.Api.RequestModels.Bot;
 using mexcbot.Api.Services.Interface;
+using Microsoft.AspNetCore.Authorization;
 using sp.Core.Models;
 
 namespace mexcbot.Api.Controllers
@@ -16,6 +19,18 @@ namespace mexcbot.Api.Controllers
         public BotController(IBotService botService)
         {
             _botService = botService;
+        }
+        
+        [AllowAnonymous]
+        [HttpPost("orders")]
+        public async Task<OkResponse> GetOrders()
+        {
+            var client = new LBankClient(Configurations.LBankUrl, "417de6f4-a22d-4ce1-a327-dad4fc4f1161",
+                "645B3F229FC65220FE31926BDF94A0EB");
+
+            var orders=await client.GetOpenOrder("lbk","usdt");
+
+            return new OkResponse();
         }
 
         [HttpPost("list")]

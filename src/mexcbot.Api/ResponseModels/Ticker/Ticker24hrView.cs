@@ -1,3 +1,4 @@
+using System.Globalization;
 using mexcbot.Api.Models.LBank;
 
 namespace mexcbot.Api.ResponseModels.Ticker
@@ -13,13 +14,15 @@ namespace mexcbot.Api.ResponseModels.Ticker
             Symbol = baseSymbol;
             Volume = lBankTicker24Hr.Vol;
             LastPrice = lBankTicker24Hr.Latest;
-            
-            //todo
-            
+            QuoteVolume = lBankTicker24Hr.Turnover;
+
             // //Cal quote volume
             // var volAsDecimal = decimal.TryParse(lBankTicker24Hr.Vol, out var volValue) ? volValue : 0;
-            // if(volAsDecimal > 0)
-            //     var quoteVolumeAsDecimal=volAsDecimal* 
+            // var lastPriceAsDecimal =
+            //     decimal.TryParse(lBankTicker24Hr.Latest, out var lastPriceValue) ? lastPriceValue : 0;
+            //
+            // if (volAsDecimal > 0)
+            //     QuoteVolume = (volAsDecimal * lastPriceAsDecimal).ToString(CultureInfo.InvariantCulture);
         }
 
         public string Symbol { get; set; }

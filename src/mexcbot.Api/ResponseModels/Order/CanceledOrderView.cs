@@ -22,10 +22,12 @@ namespace mexcbot.Api.ResponseModels.Order
         
         public OrderStatus Status { get; set; }
 
-        public long TimeInForce { get; set; }
+        public string TimeInForce { get; set; }
         
         public string Type { get; set; }
         
         public string Side { get; set; }
+
+        public string LbankOrderStatus { get; set; }
     }
 }

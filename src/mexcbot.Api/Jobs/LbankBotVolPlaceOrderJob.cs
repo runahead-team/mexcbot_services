@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,9 +18,9 @@ using sp.Core.Utils;
 
 namespace mexcbot.Api.Jobs
 {
-    public class BotVolPlaceOrderJob : BackgroundService
+    public class LbankBotVolPlaceOrderJob : BackgroundService
     {
-        public BotVolPlaceOrderJob()
+        public LbankBotVolPlaceOrderJob()
         {
         }
 
@@ -47,7 +48,7 @@ namespace mexcbot.Api.Jobs
                         {
                             Status = BotStatus.ACTIVE,
                             Type = BotType.VOLUME,
-                            ExchangeType = BotExchangeType.MEXC, 
+                            ExchangeType = BotExchangeType.LBANK,
                             Now = AppUtils.NowMilis()
                         })).ToList();
 
@@ -63,7 +64,7 @@ namespace mexcbot.Api.Jobs
                 catch (Exception e)
                 {
                     if (!(e is TaskCanceledException))
-                        Log.Error(e, "BotVolPlaceOrderJob:CreateOrderJob");
+                        Log.Error(e, "LbankBotVolPlaceOrderJob:CreateOrderJob");
                 }
                 finally
                 {
@@ -84,6 +85,8 @@ namespace mexcbot.Api.Jobs
                 ExchangeClient client = bot.ExchangeType switch
                 {
                     BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
+                    BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey,
+                        bot.ApiSecret),
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
@@ -224,31 +227,46 @@ namespace mexcbot.Api.Jobs
                     //NOTE: 0-Open time, 1-Open, 2-High, 3-Low, 4-Close, 5-Volume, 6-Close time, 7-Quote asset volume
                     //NOTE: 1m, 5m, 15m, 30m, 60m, 4h, 1d, 1M
 
-                    var btcCandleStick5m = await client.GetCandleStick("BTC", "USDT", "5m");
+                    //LBANK: //type: minute1, minute5, minute15, minute30, hour1, hour4, hour8, hour12, day1, week1, month1
+                    var type5m = bot.ExchangeType == BotExchangeType.LBANK ? "minute5" : "5m";
 
-                    var botCandleStick5m = await client.GetCandleStick(bot.Base, bot.Quote, "5m");
+                    var btcCandleStick5m = await client.GetCandleStick("BTC", "USDT", type5m);
+
+                    var botCandleStick5m = await client.GetCandleStick(bot.Base, bot.Quote, type5m);
 
                     if (btcCandleStick5m.Count <= 0 && botCandleStick5m.Count <= 0)
-                        Log.Warning("Get candle stick fail");
+                        Log.Warning("Get Candle Stick fail");
 
-                    var btcCandleStickPre1Day =
-                        btcCandleStick5m.Where(x =>
-                                x[0].Value<long>() >= preStartDate && x[6].Value<long>() <= preEndDate)
-                            .ToList();
+                    var btcCandleStickPre1Day = new List<JArray>();
+                    var botCandleStickOnDay = new List<JArray>();
+                    var botCandleStickAtNow = new JArray();
+                    var btcCandleStickPredict = new JArray();
 
-                    var botCandleStickOnDay =
-                        botCandleStick5m.Where(x => x[0].Value<long>() >= startDate && x[6].Value<long>() <= endDate)
-                            .ToList();
+                    if (bot.ExchangeType == BotExchangeType.LBANK)
+                    {
+                    }
+                    else
+                    {
+                        btcCandleStickPre1Day =
+                            btcCandleStick5m.Where(x =>
+                                    x[0].Value<long>() >= preStartDate && x[6].Value<long>() <= preEndDate)
+                                .ToList();
 
-                    var botCandleStickAtNow =
-                        botCandleStickOnDay.FirstOrDefault(x =>
-                            x[0].Value<long>() <= nowDate && nowDate <= x[6].Value<long>());
+                        botCandleStickOnDay =
+                            botCandleStick5m
+                                .Where(x => x[0].Value<long>() >= startDate && x[6].Value<long>() <= endDate)
+                                .ToList();
 
-                    var btcCandleStickPredict =
-                        btcCandleStickPre1Day.FirstOrDefault(x =>
-                            x[0].Value<long>() <= preDate && preDate <= x[6].Value<long>());
+                        botCandleStickAtNow =
+                            botCandleStickOnDay.FirstOrDefault(x =>
+                                x[0].Value<long>() <= nowDate && nowDate <= x[6].Value<long>());
 
-                    if (btcCandleStickPredict == null || botCandleStickAtNow == null)
+                        btcCandleStickPredict =
+                            btcCandleStickPre1Day.FirstOrDefault(x =>
+                                x[0].Value<long>() <= preDate && preDate <= x[6].Value<long>());
+                    }
+
+                    if ((btcCandleStickPredict == null || botCandleStickAtNow == null))
                     {
                         Log.Warning("Candlestick null");
                         return;
@@ -370,21 +388,21 @@ namespace mexcbot.Api.Jobs
 
                             if (volumeOption.MatchingDelayFrom == 0 || volumeOption.MatchingDelayTo == 0)
                             {
-                                if (await CreateLimitOrder(client, bot, orderQty.ToString($"F{basePrecision}"),
-                                        askPrice.ToString($"F{quotePrecision}"), OrderSide.SELL))
+                                if (await CreateLimitOrder(client, bot, orderQty.ToString($"F{basePrecision.ToString()}"),
+                                        askPrice.ToString($"F{quotePrecision.ToString()}"), OrderSide.SELL))
                                 {
-                                    await CreateLimitOrder(client, bot, orderQty.ToString($"F{basePrecision}"),
-                                        askPrice.ToString($"F{quotePrecision}"), OrderSide.BUY);
+                                    await CreateLimitOrder(client, bot, orderQty.ToString($"F{basePrecision.ToString()}"),
+                                        askPrice.ToString($"F{quotePrecision.ToString()}"), OrderSide.BUY);
                                 }
                             }
                             else
                             {
-                                if (await CreateLimitOrder(client, bot, orderQty.ToString($"F{basePrecision}"),
-                                        askPrice.ToString($"F{quotePrecision}"), OrderSide.SELL))
+                                if (await CreateLimitOrder(client, bot, orderQty.ToString($"F{basePrecision.ToString()}"),
+                                        askPrice.ToString($"F{quotePrecision.ToString()}"), OrderSide.SELL))
                                 {
                                     await TradeDelay(bot);
-                                    await CreateLimitOrder(client, bot, orderQty.ToString($"F{basePrecision}"),
-                                        askPrice.ToString($"F{quotePrecision}"), OrderSide.BUY);
+                                    await CreateLimitOrder(client, bot, orderQty.ToString($"F{basePrecision.ToString()}"),
+                                        askPrice.ToString($"F{quotePrecision.ToString()}"), OrderSide.BUY);
                                 }
                             }
                         }
