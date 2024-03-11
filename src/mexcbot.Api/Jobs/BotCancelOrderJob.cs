@@ -116,14 +116,20 @@ namespace mexcbot.Api.Jobs
             if (bot == null)
                 return;
 
-            var mexcClient = new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret);
+            ExchangeClient client = bot.ExchangeType switch
+            {
+                BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
+                BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey,
+                    bot.ApiSecret),
+                _ => throw new ArgumentOutOfRangeException()
+            };
 
-            var openOrdersFromMexc = await mexcClient.GetOpenOrder(bot.Base, bot.Quote);
+            var openOrders = await client.GetOpenOrder(bot.Base, bot.Quote);
 
-            if (openOrdersFromMexc.All(x => x.OrderId != order.OrderId))
+            if (openOrders.All(x => x.OrderId != order.OrderId))
                 return;
 
-            var canceledOrder = await mexcClient.CancelOrder(bot.Base, bot.Quote, order.OrderId);
+            var canceledOrder = await client.CancelOrder(bot.Base, bot.Quote, order.OrderId);
 
             if (canceledOrder != null)
             {

@@ -43,15 +43,17 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
         public async Task<ExchangeInfoView> GetExchangeInfo(string @base, string quote)
         {
-            var payload = $"symbol={@base.ToLower()}_{quote.ToLower()}";
+            var endpoint = $"symbol={@base.ToLower()}_{quote.ToLower()}";
 
             var (success, responseBody) =
-                await SendRequest<JArray>(HttpMethod.Get, "/v2/accuracy.do", false, payload, false);
+                await SendRequest<JArray>(HttpMethod.Get, $"/v2/accuracy.do?{endpoint}", false, null, false);
 
             if (!success)
                 return new ExchangeInfoView();
 
-            var lBankExchangeInfo = JsonConvert.DeserializeObject<LBankExchangeInfo>(responseBody.First().ToString());
+            var dataStr = responseBody.First().ToString();
+
+            var lBankExchangeInfo = JsonConvert.DeserializeObject<LBankExchangeInfo>(dataStr);
 
             return lBankExchangeInfo == null ? new ExchangeInfoView() : new ExchangeInfoView(lBankExchangeInfo);
         }
@@ -76,17 +78,21 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var payload = $"symbol={baseSymbol}";
 
             var (success, responseBody) =
-                await SendRequest<string>(HttpMethod.Get, "/v2/ticker/24hr.do", false, payload, false);
+                await SendRequest<JArray>(HttpMethod.Get, $"/v2/ticker/24hr.do?{payload}", false, null, false);
 
             if (!success)
                 return new Ticker24hrView();
 
-            var data = JObject.Parse(responseBody)["ticker"];
+            var data = JObject.Parse(responseBody[0].ToString())["ticker"];
 
             if (data == null)
                 return new Ticker24hrView();
 
-            var lBankTicker24Hr = JsonConvert.DeserializeObject<LBankTicker24hr>(data.ToString());
+            var dataStr = data.ToString();
+            if (dataStr.Contains('.'))
+                dataStr = dataStr.Replace(".", ",");
+
+            var lBankTicker24Hr = JsonConvert.DeserializeObject<LBankTicker24hr>(dataStr);
 
             return lBankTicker24Hr == null ? new Ticker24hrView() : new Ticker24hrView(baseSymbol, lBankTicker24Hr);
         }
@@ -98,7 +104,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var type = side == OrderSide.BUY ? "buy" : "sell";
 
             var (success, response) =
-                await SendRequest<dynamic>(HttpMethod.Post, $"v2/create_order.do", true,
+                await SendRequest<dynamic>(HttpMethod.Post, $"/v2/create_order.do", true,
                     new
                     {
                         symbol = baseSymbol,
@@ -113,6 +119,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             return new OrderDto
             {
                 OrderListId = 0,
+                BotExchangeType = BotExchangeType.LBANK,
                 OrderId = (string)response.order_id,
                 Symbol = baseSymbol,
                 Price = price,
@@ -172,47 +179,53 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
         public async Task<List<AccBalance>> GetAccInformation()
         {
             var (success, responseBody) =
-                await SendRequest<JArray>(HttpMethod.Post, "/v2/user_info.do", true);
+                await SendRequest<JObject>(HttpMethod.Post, "/v2/supplement/user_info_account.do", true);
 
             if (!success)
                 return new List<AccBalance>();
 
             var data = responseBody["balances"];
 
-            return data == null
-                ? new List<AccBalance>()
-                : JsonConvert.DeserializeObject<List<AccBalance>>(data.ToString());
+            if (data == null)
+                return new List<AccBalance>();
+
+            var balances = JsonConvert.DeserializeObject<List<AccBalance>>(data.ToString())
+                .Where(x => decimal.Parse(x.Free) > 0m).Select(x => new AccBalance()
+                {
+                    Asset = x.Asset,
+                    Free = x.Free.Replace(".", ",")
+                }).ToList();
+
+            return balances;
         }
 
         public async Task<List<string>> GetSelfSymbols()
         {
             var (success, responseBody) =
-                await SendRequest<string>(HttpMethod.Get, "/v2/currencyPairs.do", false, string.Empty, true);
+                await SendRequest<JArray>(HttpMethod.Get, "/v2/currencyPairs.do", false, string.Empty, true);
 
             if (!success)
                 return new List<string>();
 
-            var data = JObject.Parse(responseBody)["data"];
-
-            return data == null
+            return responseBody == null
                 ? new List<string>()
-                : JsonConvert.DeserializeObject<List<string>>(data.ToString());
+                : JsonConvert.DeserializeObject<List<string>>(responseBody.ToString());
         }
 
         public async Task<OrderbookView> GetOrderbook(string @base, string quote)
         {
             var baseSymbol = $"{@base.ToLower()}_{quote.ToLower()}";
-            var payload = $"symbol={baseSymbol}";
+            
+            //default size
+            var payload = $"symbol={baseSymbol}&size=100";
 
             var (success, responseBody) =
-                await SendRequest<string>(HttpMethod.Get, "/v2/depth.do", false, payload, false);
+                await SendRequest<JObject>(HttpMethod.Get, $"/v2/depth.do?{payload}", false, null, false);
 
             if (!success)
                 return new OrderbookView();
 
-            var data = JObject.Parse(responseBody);
-
-            return JsonConvert.DeserializeObject<OrderbookView>(data.ToString());
+            return JsonConvert.DeserializeObject<OrderbookView>(responseBody.ToString());
         }
 
         private async Task<long> GetTimestamp()
@@ -246,7 +259,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                     {
                         bodyJson = JObject.FromObject(body);
                     }
-                    
+
                     bodyJson.Add("timestamp", timestamp.ToString());
                     bodyJson.Add("signature_method", "HmacSHA256");
                     bodyJson.Add("echostr", echoStr);
@@ -263,14 +276,14 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                             parameters += $"{key}={value}";
                         else
                             parameters += $"{key}={value}&";
-                        
+
                         requestBody.Add(
                             new KeyValuePair<string, string>(key, value));
                     }
 
                     var repairedStr = HMAC_MD5(parameters).ToUpper();
                     var signature = HMAC_SHA256(repairedStr, _secretKey);
-                    
+
                     requestBody.Add(new KeyValuePair<string, string>("sign", signature));
 
                     var requestContent = new FormUrlEncodedContent(requestBody);

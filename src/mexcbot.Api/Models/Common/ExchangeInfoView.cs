@@ -11,8 +11,13 @@ namespace mexcbot.Api.ResponseModels.ExchangeInfo
         public ExchangeInfoView(LBankExchangeInfo lBankExchangeInfo)
         {
             Symbol = lBankExchangeInfo.Symbol;
-            QuoteAssetPrecision = int.TryParse(lBankExchangeInfo.PriceAccuracy, out var priceAccuracyValue) ? priceAccuracyValue : 0;
-            BaseAssetPrecision = int.TryParse(lBankExchangeInfo.QuantityAccuracy, out var qtyAccuracyValue) ? qtyAccuracyValue : 0;
+            QuoteAmountPrecision = lBankExchangeInfo.MinTranQua;
+            QuoteAssetPrecision = int.TryParse(lBankExchangeInfo.PriceAccuracy, out var priceAccuracyValue)
+                ? priceAccuracyValue
+                : 0;
+            BaseAssetPrecision = int.TryParse(lBankExchangeInfo.QuantityAccuracy, out var qtyAccuracyValue)
+                ? qtyAccuracyValue
+                : 0;
         }
 
         public string Symbol { get; set; }
