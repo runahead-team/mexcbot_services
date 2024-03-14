@@ -527,7 +527,7 @@ namespace mexcbot.Api.Jobs
             OrderSide side, bool isOverStepOrder = false)
         {
             price = bot.ExchangeType == BotExchangeType.LBANK ? price.Replace(",", ".") : price;
-            qty = bot.ExchangeType == BotExchangeType.LBANK ? qty.Replace(",", ".") : price;
+            qty = bot.ExchangeType == BotExchangeType.LBANK ? qty.Replace(",", ".") : qty;
 
             var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty,
                 price);

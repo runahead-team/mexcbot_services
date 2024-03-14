@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -80,11 +81,10 @@ namespace mexcbot.Api.Jobs
 
             try
             {
-                Log.Information("BOT {0} run", bot.Symbol);
+                Log.Information("LBank BOT {0} run", bot.Symbol);
 
                 ExchangeClient client = bot.ExchangeType switch
                 {
-                    BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
                     BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey,
                         bot.ApiSecret),
                     _ => throw new ArgumentOutOfRangeException()
@@ -232,39 +232,20 @@ namespace mexcbot.Api.Jobs
 
                     var btcCandleStick5m = await client.GetCandleStick("BTC", "USDT", type5m);
 
-                    var botCandleStick5m = await client.GetCandleStick(bot.Base, bot.Quote, type5m);
+                    var botCandleStick5m = (await client.GetCandleStick(bot.Base, bot.Quote, type5m));
 
                     if (btcCandleStick5m.Count <= 0 && botCandleStick5m.Count <= 0)
                         Log.Warning("Get Candle Stick fail");
 
-                    var btcCandleStickPre1Day = new List<JArray>();
-                    var botCandleStickOnDay = new List<JArray>();
-                    var botCandleStickAtNow = new JArray();
-                    var btcCandleStickPredict = new JArray();
+                    var btcCandleStickPre1Day =
+                        btcCandleStick5m.Where(x => x[0].Value<long>() >= preStartDate).ToList();
 
-                    if (bot.ExchangeType == BotExchangeType.LBANK)
-                    {
-                    }
-                    else
-                    {
-                        btcCandleStickPre1Day =
-                            btcCandleStick5m.Where(x =>
-                                    x[0].Value<long>() >= preStartDate && x[6].Value<long>() <= preEndDate)
-                                .ToList();
+                    var botCandleStickOnDay = botCandleStick5m.Where(x => x[0].Value<long>() >= startDate).ToList();
 
-                        botCandleStickOnDay =
-                            botCandleStick5m
-                                .Where(x => x[0].Value<long>() >= startDate && x[6].Value<long>() <= endDate)
-                                .ToList();
+                    var botCandleStickAtNow = botCandleStickOnDay.LastOrDefault(x => x[0].Value<long>() <= nowDate);
 
-                        botCandleStickAtNow =
-                            botCandleStickOnDay.FirstOrDefault(x =>
-                                x[0].Value<long>() <= nowDate && nowDate <= x[6].Value<long>());
-
-                        btcCandleStickPredict =
-                            btcCandleStickPre1Day.FirstOrDefault(x =>
-                                x[0].Value<long>() <= preDate && preDate <= x[6].Value<long>());
-                    }
+                    var btcCandleStickPredict =
+                        btcCandleStickPre1Day.LastOrDefault(x => x[0].Value<long>() <= preDate);
 
                     if ((btcCandleStickPredict == null || botCandleStickAtNow == null))
                     {
@@ -272,26 +253,29 @@ namespace mexcbot.Api.Jobs
                         return;
                     }
 
-                    var btcUsdVolumePredict = decimal.Parse(btcCandleStickPredict[7].Value<string>());
+                    var btcUsdVolumePredict = decimal.Parse(btcCandleStickPredict[5].Value<string>().Replace(".", ","))
+                                              * decimal.Parse(
+                                                  btcCandleStickPredict[4].Value<string>().Replace(".", ","));
 
-                    Log.Warning($"btcUsdVolume5m 1day before {btcUsdVolumePredict}");
+                    Log.Warning($"btcUsdVolume5m 1day before {btcUsdVolumePredict.ToString()}");
 
                     var botUsdVolumeTarget = rateVol24hr * btcUsdVolumePredict;
 
-                    var botUsdVolumeReal = decimal.Parse(botCandleStickAtNow[7].Value<string>());
+                    var botUsdVolumeReal = decimal.Parse(botCandleStickAtNow[5].Value<string>().Replace(".", ","))
+                                           * decimal.Parse(botCandleStickAtNow[4].Value<string>().Replace(".", ","));
 
                     var botUsdOrderValue = botUsdVolumeTarget - botUsdVolumeReal;
 
-                    Log.Warning($"botUsdOrderValue5m {botUsdOrderValue}");
+                    Log.Warning($"botUsdOrderValue5m {botUsdOrderValue.ToString()}");
 
-                    Log.Warning($"botUsdVolumeTarget5m {botUsdVolumeTarget}");
+                    Log.Warning($"botUsdVolumeTarget5m {botUsdVolumeTarget.ToString()}");
 
-                    Log.Warning($"botUsdVolumeReal5m {botUsdVolumeReal}");
+                    Log.Warning($"botUsdVolumeReal5m {botUsdVolumeReal.ToString()}");
 
                     //If volume 5m >= predict
                     if (botUsdOrderValue > botUsdVolumeTarget)
                     {
-                        Log.Warning("Volume enough");
+                        Log.Error("Volume enough");
                         return;
                     }
 
@@ -302,7 +286,7 @@ namespace mexcbot.Api.Jobs
 
                     if (numOfOrder <= 0)
                     {
-                        Log.Warning("No order");
+                        Log.Error("No order");
 
                         bot.NextRunVolTime = now + MexcBotConstants.BotVolInterval;
 
@@ -311,11 +295,20 @@ namespace mexcbot.Api.Jobs
                     }
 
                     //5m/numOfOrder => delay time between 2 orders;
-                    var delayOrder = (int)TimeSpan.FromMinutes(5).TotalMilliseconds / numOfOrder;
+                    //if numOfOrder > 5m => 30m/numOfOrder => delay time between 2 orders;
+                    var millisecond5m = TimeSpan.FromMinutes(5).TotalMilliseconds;
+                    var maxTimeToMatch = volumeOption.MatchingDelayTo != 0
+                        ? numOfOrder * (volumeOption.MatchingDelayTo * 1000)
+                        : numOfOrder;
+                    
+                    var timing = maxTimeToMatch > millisecond5m ? millisecond5m * 6 : millisecond5m;
+                    var delayOrder = (int)timing / maxTimeToMatch;
 
-                    if (volumeOption.MatchingDelayTo != 0)
+                    //if delayOrder==0 => total time to complete is more than 30m
+                    if (delayOrder < 0)
                     {
-                        delayOrder -= (int)(volumeOption.MatchingDelayTo * 1000);
+                        Log.Error("Delay order can not below 0");
+                        return;
                     }
 
                     var totalQty = 0m;
@@ -388,20 +381,24 @@ namespace mexcbot.Api.Jobs
 
                             if (volumeOption.MatchingDelayFrom == 0 || volumeOption.MatchingDelayTo == 0)
                             {
-                                if (await CreateLimitOrder(client, bot, orderQty.ToString($"F{basePrecision.ToString()}"),
+                                if (await CreateLimitOrder(client, bot,
+                                        orderQty.ToString($"F{basePrecision.ToString()}"),
                                         askPrice.ToString($"F{quotePrecision.ToString()}"), OrderSide.SELL))
                                 {
-                                    await CreateLimitOrder(client, bot, orderQty.ToString($"F{basePrecision.ToString()}"),
+                                    await CreateLimitOrder(client, bot,
+                                        orderQty.ToString($"F{basePrecision.ToString()}"),
                                         askPrice.ToString($"F{quotePrecision.ToString()}"), OrderSide.BUY);
                                 }
                             }
                             else
                             {
-                                if (await CreateLimitOrder(client, bot, orderQty.ToString($"F{basePrecision.ToString()}"),
+                                if (await CreateLimitOrder(client, bot,
+                                        orderQty.ToString($"F{basePrecision.ToString()}"),
                                         askPrice.ToString($"F{quotePrecision.ToString()}"), OrderSide.SELL))
                                 {
                                     await TradeDelay(bot);
-                                    await CreateLimitOrder(client, bot, orderQty.ToString($"F{basePrecision.ToString()}"),
+                                    await CreateLimitOrder(client, bot,
+                                        orderQty.ToString($"F{basePrecision.ToString()}"),
                                         askPrice.ToString($"F{quotePrecision.ToString()}"), OrderSide.BUY);
                                 }
                             }
@@ -433,6 +430,9 @@ namespace mexcbot.Api.Jobs
         private async Task<bool> CreateLimitOrder(ExchangeClient client, BotDto bot, string qty, string price,
             OrderSide side)
         {
+            price = bot.ExchangeType == BotExchangeType.LBANK ? price.Replace(",", ".") : price;
+            qty = bot.ExchangeType == BotExchangeType.LBANK ? qty.Replace(",", ".") : qty;
+
             var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty,
                 price);
 
@@ -442,8 +442,8 @@ namespace mexcbot.Api.Jobs
             if (string.IsNullOrEmpty(order.OrderId))
                 return false;
 
-            Log.Information("Bot create order {0}",
-                $"{side} {qty} {bot.Symbol} at price {price} {order.OrderId}");
+            var msg = side.ToString() + " " + qty + " " + bot.Symbol + " at price " + " " + price + " " + order.OrderId;
+            Log.Information("Bot create order {0}", msg);
 
             await using var sqlConnection = new MySqlConnection(Configurations.DbConnectionString);
 

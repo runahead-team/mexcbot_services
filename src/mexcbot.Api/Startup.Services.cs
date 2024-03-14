@@ -25,6 +25,7 @@ namespace mexcbot.Api
 
             // //Job
             services.AddHostedService<BotVolPlaceOrderJob>();
+            services.AddHostedService<LbankBotVolPlaceOrderJob>();
             services.AddHostedService<BotMakerPlaceOrderJob>();
             services.AddHostedService<BotCancelOrderJob>();
         }

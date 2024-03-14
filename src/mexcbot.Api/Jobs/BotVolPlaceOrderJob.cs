@@ -299,6 +299,12 @@ namespace mexcbot.Api.Jobs
                     {
                         delayOrder -= (int)(volumeOption.MatchingDelayTo * 1000);
                     }
+                    
+                    if (delayOrder < 0)
+                    {
+                        Log.Error("Delay order can not below 0");
+                        return;
+                    }
 
                     var totalQty = 0m;
                     var totalUsdVolume = 0m;

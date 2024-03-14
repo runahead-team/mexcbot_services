@@ -78,8 +78,9 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 return result;
 
             var dataStr = responseBody.ToString();
+
             result = JsonConvert.DeserializeObject<List<JArray>>(dataStr);
-            
+
             result = result?.Select(x =>
             {
                 if (!long.TryParse(x.First().ToString(), out var timeSeconds))
@@ -90,11 +91,10 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
                 var jToken = JToken.FromObject(x);
                 jToken[0] = timeSeconds * 1000;
+                var jTokenStr = jToken.ToString();
+                var jArr = JArray.Parse(jTokenStr);
 
-                return x = new JArray()
-                {
-                    jToken
-                };
+                return jArr;
             }).ToList();
 
             return result;
