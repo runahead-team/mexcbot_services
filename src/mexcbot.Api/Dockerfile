@@ -1,9 +1,9 @@
 #See https://aka.ms/containerfastmode to understand how Visual Studio uses this Dockerfile to build your images for faster debugging.
 
-FROM mcr.microsoft.com/dotnet/core/aspnet:8.0 AS base
+FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
 
-FROM mcr.microsoft.com/dotnet/core/sdk:8.0 AS build
+FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 COPY mexcbot.Api/mexcbot.Api.csproj mexcbot.Api/
 COPY sp.Core/sp.Core.csproj sp.Core/
@@ -22,3 +22,5 @@ WORKDIR /app
 COPY --from=publish /app/publish .
 COPY mexcbot.Api/JsonData ./
 ENTRYPOINT ["dotnet", "mexcbot.Api.dll"]
+
+
