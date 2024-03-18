@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -165,7 +166,7 @@ namespace mexcbot.Api.Jobs
 
                         var lastBtcPriceStr = (await client.GetTicker24hr("BTC", "USDT")).LastPrice;
 
-                        if (decimal.TryParse(lastBtcPriceStr, out var btcPrice))
+                        if (decimal.TryParse(lastBtcPriceStr, new NumberFormatInfo(), out var btcPrice))
                             lastBtcPrice = btcPrice;
 
                         if (lastBtcPrice <= 0)
@@ -182,7 +183,7 @@ namespace mexcbot.Api.Jobs
                     }
                     else
                     {
-                        var botLastPrice = decimal.Parse(bot24hr.LastPrice);
+                        var botLastPrice = decimal.Parse(bot24hr.LastPrice, new NumberFormatInfo());
 
                         if (botLastPrice == 0)
                             return;
@@ -218,7 +219,7 @@ namespace mexcbot.Api.Jobs
                             }
                             else
                             {
-                                if (decimal.TryParse(baseBalance.Free, out var value))
+                                if (decimal.TryParse(baseBalance.Free, new NumberFormatInfo(), out var value))
                                     baseBalanceValue = value;
 
                                 if (baseBalanceValue <= 0)
@@ -252,7 +253,7 @@ namespace mexcbot.Api.Jobs
                             }
                             else
                             {
-                                if (decimal.TryParse(quoteBalance.Free, out var value))
+                                if (decimal.TryParse(quoteBalance.Free, new NumberFormatInfo(), out var value))
                                     quoteBalanceValue = value;
 
                                 if (quoteBalanceValue <= 0)
@@ -280,8 +281,8 @@ namespace mexcbot.Api.Jobs
                 if (exchangeInfo != null && bot24hr != null && !string.IsNullOrEmpty(exchangeInfo.Symbol) &&
                     !string.IsNullOrEmpty(bot24hr.Symbol))
                 {
-                    var minQty = (decimal.Parse(exchangeInfo.QuoteAmountPrecision) /
-                                  decimal.Parse(bot24hr.LastPrice));
+                    var minQty = (decimal.Parse(exchangeInfo.QuoteAmountPrecision, new NumberFormatInfo()) /
+                                  decimal.Parse(bot24hr.LastPrice, new NumberFormatInfo()));
 
                     if (makerOption.MinQty < minQty)
                     {
@@ -398,13 +399,17 @@ namespace mexcbot.Api.Jobs
 
                                 if (makerOption.Side == OrderSide.BUY && quoteBalanceValue > total)
                                 {
-                                    await CreateLimitOrder(client, bot, qty.ToString($"F{basePrecision.ToString()}"),
-                                        price.ToString($"F{quotePrecision.ToString()}"), OrderSide.BUY, false);
+                                    await CreateLimitOrder(client, bot,
+                                        qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
+                                        price.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()),
+                                        OrderSide.BUY, false);
                                 }
                                 else if (makerOption.Side == OrderSide.SELL && baseBalanceValue > qty)
                                 {
-                                    await CreateLimitOrder(client, bot, qty.ToString($"F{basePrecision.ToString()}"),
-                                        price.ToString($"F{quotePrecision.ToString()}"), OrderSide.SELL);
+                                    await CreateLimitOrder(client, bot,
+                                        qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
+                                        price.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()),
+                                        OrderSide.SELL);
                                 }
                                 else if (makerOption.Side == OrderSide.BOTH && baseBalanceValue > qty &&
                                          quoteBalanceValue > total)
@@ -413,25 +418,25 @@ namespace mexcbot.Api.Jobs
                                         makerOption.MaxMatchingTime == 0)
                                     {
                                         if (await CreateLimitOrder(client, bot,
-                                                qty.ToString($"F{basePrecision.ToString()}"),
-                                                price.ToString($"F{quotePrecision.ToString()}"), OrderSide.SELL))
+                                                qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
+                                                price.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.SELL))
                                         {
                                             await CreateLimitOrder(client, bot,
-                                                qty.ToString($"F{basePrecision.ToString()}"),
-                                                price.ToString($"F{quotePrecision.ToString()}"), OrderSide.BUY);
+                                                qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
+                                                price.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.BUY);
                                         }
                                     }
                                     else
                                     {
                                         if (await CreateLimitOrder(client, bot,
-                                                qty.ToString($"F{basePrecision.ToString()}"),
-                                                price.ToString($"F{quotePrecision.ToString()}"), OrderSide.SELL))
+                                                qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
+                                                price.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.SELL))
                                         {
                                             await TradeDelay(bot);
 
                                             await CreateLimitOrder(client, bot,
-                                                qty.ToString($"F{basePrecision.ToString()}"),
-                                                price.ToString($"F{quotePrecision.ToString()}"), OrderSide.BUY);
+                                                qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
+                                                price.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.BUY);
                                         }
                                     }
                                 }
@@ -454,8 +459,8 @@ namespace mexcbot.Api.Jobs
 
                                     if (overStepPrice > 0)
                                         await CreateLimitOrder(client, bot,
-                                            qty.ToString($"F{basePrecision.ToString()}"),
-                                            overStepPrice.ToString($"F{quotePrecision.ToString()}"), OrderSide.BUY,
+                                            qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
+                                            overStepPrice.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.BUY,
                                             true);
                                 }
 
@@ -472,12 +477,13 @@ namespace mexcbot.Api.Jobs
 
                                     if (overStepPrice > 0)
                                         await CreateLimitOrder(client, bot,
-                                            qty.ToString($"F{basePrecision.ToString()}"),
-                                            overStepPrice.ToString($"F{quotePrecision.ToString()}"), OrderSide.SELL,
+                                            qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
+                                            overStepPrice.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.SELL,
                                             true);
                                 }
 
                                 #endregion
+                                
 
                                 #region BTC Spread
 
@@ -489,8 +495,8 @@ namespace mexcbot.Api.Jobs
                                         var buyPrice = minPrice * (1 + spreadFixPercent / 100);
                                         buyPrice = buyPrice.Truncate(quotePrecision);
                                         await CreateLimitOrder(client, bot,
-                                            qty.ToString($"F{basePrecision.ToString()}"),
-                                            buyPrice.ToString($"F{quotePrecision.ToString()}"), OrderSide.BUY);
+                                            qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
+                                            buyPrice.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.BUY);
                                     }
                                     //Sell more 
                                     else if (price <= minPrice)
@@ -498,8 +504,8 @@ namespace mexcbot.Api.Jobs
                                         var sellPrice = maxPrice * (1 - spreadFixPercent / 100);
                                         sellPrice = sellPrice.Truncate(quotePrecision);
                                         await CreateLimitOrder(client, bot,
-                                            qty.ToString($"F{basePrecision.ToString()}"),
-                                            sellPrice.ToString($"F{quotePrecision.ToString()}"), OrderSide.SELL);
+                                            qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
+                                            sellPrice.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.SELL);
                                     }
                                 }
 
@@ -526,9 +532,6 @@ namespace mexcbot.Api.Jobs
         private async Task<bool> CreateLimitOrder(ExchangeClient client, BotDto bot, string qty, string price,
             OrderSide side, bool isOverStepOrder = false)
         {
-            price = bot.ExchangeType == BotExchangeType.LBANK ? price.Replace(",", ".") : price;
-            qty = bot.ExchangeType == BotExchangeType.LBANK ? qty.Replace(",", ".") : qty;
-
             var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty,
                 price);
 

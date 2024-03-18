@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -141,7 +142,7 @@ namespace mexcbot.Api.Jobs
                 {
                     var baseBalance = balances.FirstOrDefault(x => x.Asset == bot.Base);
 
-                    if (baseBalance == null || decimal.Parse(baseBalance.Free) <= 0)
+                    if (baseBalance == null || decimal.Parse(baseBalance.Free, new NumberFormatInfo()) <= 0)
                     {
                         bot.Status = BotStatus.INACTIVE;
                         stopLog += $"Stop when your {bot.Base} balance below 0 or null\n";
@@ -149,7 +150,7 @@ namespace mexcbot.Api.Jobs
 
                     var quoteBalance = balances.FirstOrDefault(x => x.Asset == bot.Quote);
 
-                    if (quoteBalance == null || decimal.Parse(quoteBalance.Free) <= 0)
+                    if (quoteBalance == null || decimal.Parse(quoteBalance.Free, new NumberFormatInfo()) <= 0)
                     {
                         bot.Status = BotStatus.INACTIVE;
                         stopLog += $"Stop when your {bot.Quote} balance below 0 or null\n";
@@ -205,9 +206,10 @@ namespace mexcbot.Api.Jobs
                 {
                     var volumeOption = JsonConvert.DeserializeObject<BotVolumeOption>(bot.VolumeOption);
                     var botTicker24hr = (await client.GetTicker24hr(bot.Base, bot.Quote));
-                    var btcUsdVol24hr = decimal.Parse((await client.GetTicker24hr("BTC", "USDT"))?.QuoteVolume);
-                    var botUsdVol24hr = decimal.Parse(botTicker24hr.QuoteVolume);
-                    var botLastPrice = decimal.Parse(botTicker24hr.LastPrice);
+                    var btcUsdVol24hr = decimal.Parse((await client.GetTicker24hr("BTC", "USDT"))?.QuoteVolume,
+                        new NumberFormatInfo());
+                    var botUsdVol24hr = decimal.Parse(botTicker24hr.QuoteVolume, new NumberFormatInfo());
+                    var botLastPrice = decimal.Parse(botTicker24hr.LastPrice, new NumberFormatInfo());
                     var rateVol24hr = volumeOption.Volume24hr / btcUsdVol24hr;
 
                     Log.Warning($"btcUsdVol24hr {btcUsdVol24hr.ToString()} & rateVol24hr {rateVol24hr.ToString()}");
@@ -220,7 +222,7 @@ namespace mexcbot.Api.Jobs
 
                     if (botUsdVol24hr >= volumeOption.Volume24hr)
                     {
-                        Log.Warning("Volume enough");
+                        Log.Warning($"Volume enough {botUsdVol24hr.ToString()}");
                         return;
                     }
 
@@ -253,16 +255,18 @@ namespace mexcbot.Api.Jobs
                         return;
                     }
 
-                    var btcUsdVolumePredict = decimal.Parse(btcCandleStickPredict[5].Value<string>().Replace(".", ","))
-                                              * decimal.Parse(
-                                                  btcCandleStickPredict[4].Value<string>().Replace(".", ","));
+                    var btcUsdVolumePredict =
+                        decimal.Parse(btcCandleStickPredict[5].Value<string>(), new NumberFormatInfo())
+                        * decimal.Parse(
+                            btcCandleStickPredict[4].Value<string>(), new NumberFormatInfo());
 
                     Log.Warning($"btcUsdVolume5m 1day before {btcUsdVolumePredict.ToString()}");
 
                     var botUsdVolumeTarget = rateVol24hr * btcUsdVolumePredict;
 
-                    var botUsdVolumeReal = decimal.Parse(botCandleStickAtNow[5].Value<string>().Replace(".", ","))
-                                           * decimal.Parse(botCandleStickAtNow[4].Value<string>().Replace(".", ","));
+                    var botUsdVolumeReal = decimal.Parse(botCandleStickAtNow[5].Value<string>(), new NumberFormatInfo())
+                                           * decimal.Parse(botCandleStickAtNow[4].Value<string>(),
+                                               new NumberFormatInfo());
 
                     var botUsdOrderValue = botUsdVolumeTarget - botUsdVolumeReal;
 
@@ -300,7 +304,7 @@ namespace mexcbot.Api.Jobs
                     var maxTimeToMatch = volumeOption.MatchingDelayTo != 0
                         ? numOfOrder * (volumeOption.MatchingDelayTo * 1000)
                         : numOfOrder;
-                    
+
                     var timing = maxTimeToMatch > millisecond5m ? millisecond5m * 6 : millisecond5m;
                     var delayOrder = (int)timing / maxTimeToMatch;
 
@@ -382,24 +386,28 @@ namespace mexcbot.Api.Jobs
                             if (volumeOption.MatchingDelayFrom == 0 || volumeOption.MatchingDelayTo == 0)
                             {
                                 if (await CreateLimitOrder(client, bot,
-                                        orderQty.ToString($"F{basePrecision.ToString()}"),
-                                        askPrice.ToString($"F{quotePrecision.ToString()}"), OrderSide.SELL))
+                                        orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                        askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                        OrderSide.SELL))
                                 {
                                     await CreateLimitOrder(client, bot,
-                                        orderQty.ToString($"F{basePrecision.ToString()}"),
-                                        askPrice.ToString($"F{quotePrecision.ToString()}"), OrderSide.BUY);
+                                        orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                        askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                        OrderSide.BUY);
                                 }
                             }
                             else
                             {
                                 if (await CreateLimitOrder(client, bot,
-                                        orderQty.ToString($"F{basePrecision.ToString()}"),
-                                        askPrice.ToString($"F{quotePrecision.ToString()}"), OrderSide.SELL))
+                                        orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                        askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                        OrderSide.SELL))
                                 {
                                     await TradeDelay(bot);
                                     await CreateLimitOrder(client, bot,
-                                        orderQty.ToString($"F{basePrecision.ToString()}"),
-                                        askPrice.ToString($"F{quotePrecision.ToString()}"), OrderSide.BUY);
+                                        orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                        askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                        OrderSide.BUY);
                                 }
                             }
                         }
@@ -430,9 +438,6 @@ namespace mexcbot.Api.Jobs
         private async Task<bool> CreateLimitOrder(ExchangeClient client, BotDto bot, string qty, string price,
             OrderSide side)
         {
-            price = bot.ExchangeType == BotExchangeType.LBANK ? price.Replace(",", ".") : price;
-            qty = bot.ExchangeType == BotExchangeType.LBANK ? qty.Replace(",", ".") : qty;
-
             var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty,
                 price);
 

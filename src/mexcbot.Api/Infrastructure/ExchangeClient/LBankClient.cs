@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
@@ -117,8 +118,6 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 return new Ticker24hrView();
 
             var dataStr = data.ToString();
-            if (dataStr.Contains('.'))
-                dataStr = dataStr.Replace(".", ",");
 
             var lBankTicker24Hr = JsonConvert.DeserializeObject<LBankTicker24hr>(dataStr);
 
@@ -241,10 +240,10 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 return new List<AccBalance>();
 
             var balances = JsonConvert.DeserializeObject<List<AccBalance>>(data.ToString())
-                .Where(x => decimal.Parse(x.Free) > 0m).Select(x => new AccBalance()
+                .Where(x => decimal.Parse(x.Free, new NumberFormatInfo()) > 0m).Select(x => new AccBalance()
                 {
                     Asset = x.Asset,
-                    Free = x.Free.Replace(".", ",")
+                    Free = x.Free
                 }).ToList();
 
             return balances;
