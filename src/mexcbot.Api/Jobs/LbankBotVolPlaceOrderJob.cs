@@ -365,9 +365,10 @@ namespace mexcbot.Api.Jobs
                             var askPrice = 0m;
                             var sizePrediction = 1 / (decimal)Math.Pow(10, quotePrecision);
 
-                            askPrice = biggestBidPrice + sizePrediction == smallestAskPrice
+                            askPrice = smallestAskPrice - biggestBidPrice <= sizePrediction
                                 ? smallestAskPrice
-                                : RandomNumber(biggestBidPrice, smallestAskPrice, quotePrecision);
+                                : RandomNumber(biggestBidPrice + sizePrediction, smallestAskPrice - sizePrediction,
+                                    quotePrecision);
 
                             totalUsdVolume += orderQty * askPrice;
 

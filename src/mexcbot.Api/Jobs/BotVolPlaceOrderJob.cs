@@ -47,7 +47,7 @@ namespace mexcbot.Api.Jobs
                         {
                             Status = BotStatus.ACTIVE,
                             Type = BotType.VOLUME,
-                            ExchangeType = BotExchangeType.MEXC, 
+                            ExchangeType = BotExchangeType.MEXC,
                             Now = AppUtils.NowMilis()
                         })).ToList();
 
@@ -299,7 +299,7 @@ namespace mexcbot.Api.Jobs
                     {
                         delayOrder -= (int)(volumeOption.MatchingDelayTo * 1000);
                     }
-                    
+
                     if (delayOrder < 0)
                     {
                         Log.Error("Delay order can not below 0");
@@ -356,9 +356,10 @@ namespace mexcbot.Api.Jobs
                             var askPrice = 0m;
                             var sizePrediction = 1 / (decimal)Math.Pow(10, quotePrecision);
 
-                            askPrice = biggestBidPrice + sizePrediction == smallestAskPrice
+                            askPrice = smallestAskPrice - biggestBidPrice <= sizePrediction
                                 ? smallestAskPrice
-                                : RandomNumber(biggestBidPrice, smallestAskPrice, quotePrecision);
+                                : RandomNumber(biggestBidPrice + sizePrediction, smallestAskPrice - sizePrediction,
+                                    quotePrecision);
 
                             totalUsdVolume += orderQty * askPrice;
 
