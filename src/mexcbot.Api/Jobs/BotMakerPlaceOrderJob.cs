@@ -208,7 +208,6 @@ namespace mexcbot.Api.Jobs
                     }
                     else
                     {
-                        Log.Information("debug {@data}", balances);
                         if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.SELL)
                         {
                             var baseBalance = balances.FirstOrDefault(x => x.Asset == bot.Base);
@@ -220,7 +219,7 @@ namespace mexcbot.Api.Jobs
                             }
                             else
                             {
-                                if (decimal.TryParse(baseBalance.Free, new NumberFormatInfo(), out var value))
+                                if (decimal.TryParse(baseBalance.Free, out var value))
                                     baseBalanceValue = value;
 
                                 if (baseBalanceValue <= 0)
@@ -254,7 +253,7 @@ namespace mexcbot.Api.Jobs
                             }
                             else
                             {
-                                if (decimal.TryParse(quoteBalance.Free, new NumberFormatInfo(), out var value))
+                                if (decimal.TryParse(quoteBalance.Free, out var value))
                                     quoteBalanceValue = value;
 
                                 if (quoteBalanceValue <= 0)
