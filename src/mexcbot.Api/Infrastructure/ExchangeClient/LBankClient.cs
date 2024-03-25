@@ -228,7 +228,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
         public async Task<List<AccBalance>> GetAccInformation()
         {
             var (success, responseBody) =
-                await SendRequest<JObject>(HttpMethod.Post, "/v2/supplement/user_info_account.do", true);
+                await SendRequest<JObject>(HttpMethod.Post, "/v2/supplement/user_info_account.do", true,null,false,true);
 
             if (!success)
                 return new List<AccBalance>();
