@@ -4,7 +4,6 @@ using System.Globalization;
 using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json;
@@ -138,9 +137,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                         type = type,
                         price = price,
                         amount = quantity
-                    });
-
-            Log.Information("lbank response {@data}", response);
+                    }, false, true);
 
             if (!success)
                 return new OrderDto();
@@ -292,7 +289,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
         }
 
         private async Task<(bool, T)> SendRequest<T>(HttpMethod method, string endpoint, bool isAuth = false,
-            object body = null, bool ignored400 = false)
+            object body = null, bool ignored400 = false, bool logResponse = false)
         {
             try
             {
@@ -344,6 +341,9 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 }
 
                 var response = await _httpClient.SendAsync(requestMessage);
+
+                if (logResponse)
+                    Log.Information("Lbank response {0}", response);
 
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
