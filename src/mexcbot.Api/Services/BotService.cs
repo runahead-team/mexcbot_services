@@ -145,6 +145,8 @@ namespace mexcbot.Api.Services
         public async Task UpdateAsync(BotUpsertRequest request, AppUser appUser)
         {
             var bot = new BotDto(request, appUser);
+            bot.Base = bot.ExchangeType == BotExchangeType.LBANK ? bot.Base.ToLower() : bot.Base;
+            bot.Quote = bot.ExchangeType == BotExchangeType.LBANK ? bot.Quote.ToLower() : bot.Quote;
 
             await DbConnections.ExecAsync(async (dbConnection) =>
             {
