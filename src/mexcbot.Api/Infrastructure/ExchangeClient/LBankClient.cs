@@ -342,8 +342,6 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
                 var response = await _httpClient.SendAsync(requestMessage);
 
-                if (logResponse)
-                    Log.Information("Lbank response {0}", response);
 
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
@@ -358,6 +356,9 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 }
 
                 var responseBody = await response.Content.ReadAsStringAsync();
+
+                if (logResponse)
+                    Log.Information("Lbank response {0}", responseBody);
 
                 var responseObj = JsonConvert.DeserializeObject<JObject>(responseBody);
 
