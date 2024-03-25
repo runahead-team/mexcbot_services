@@ -140,6 +140,8 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                         amount = quantity
                     });
 
+            Log.Information("lbank response {@data}", response);
+
             if (!success)
                 return new OrderDto();
 

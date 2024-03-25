@@ -380,7 +380,7 @@ namespace mexcbot.Api.Jobs
 
                             if (askPrice < 0)
                             {
-                                Log.Warning("Price zero");
+                                Log.Warning("askPrice zero");
                                 return;
                             }
 

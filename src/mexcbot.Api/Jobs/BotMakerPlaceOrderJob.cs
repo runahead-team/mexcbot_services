@@ -484,7 +484,6 @@ namespace mexcbot.Api.Jobs
 
                                 #endregion
                                 
-
                                 #region BTC Spread
 
                                 if (makerOption.IsFollowBtc && spreadHigh)
@@ -510,6 +509,7 @@ namespace mexcbot.Api.Jobs
                                 }
 
                                 #endregion
+                                
                             }, CancellationToken.None));
                         }
 
