@@ -212,6 +212,8 @@ namespace mexcbot.Api.Jobs
                         {
                             var baseBalance = balances.FirstOrDefault(x => x.Asset == bot.Base);
 
+                            Log.Information("debug baseBalance {0}", baseBalance);
+
                             if (baseBalance == null)
                             {
                                 bot.Status = BotStatus.INACTIVE;
@@ -219,8 +221,9 @@ namespace mexcbot.Api.Jobs
                             }
                             else
                             {
-                                if (decimal.TryParse(baseBalance.Free, out var value))
-                                    baseBalanceValue = value;
+                                baseBalanceValue = decimal.Parse(baseBalance.Free);
+
+                                Log.Information("debug baseBalanceValue {0}", baseBalanceValue);
 
                                 if (baseBalanceValue <= 0)
                                 {
@@ -246,6 +249,7 @@ namespace mexcbot.Api.Jobs
                         {
                             var quoteBalance = balances.FirstOrDefault(x => x.Asset == bot.Quote);
 
+                            Log.Information("debug quoteBalance {0}", quoteBalance);
                             if (quoteBalance == null)
                             {
                                 bot.Status = BotStatus.INACTIVE;
@@ -253,8 +257,9 @@ namespace mexcbot.Api.Jobs
                             }
                             else
                             {
-                                if (decimal.TryParse(quoteBalance.Free, out var value))
-                                    quoteBalanceValue = value;
+                                quoteBalanceValue = decimal.Parse(quoteBalance.Free);
+
+                                Log.Information("debug quoteBalanceValue {0}", quoteBalance);
 
                                 if (quoteBalanceValue <= 0)
                                 {
