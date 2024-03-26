@@ -159,6 +159,8 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
         public async Task<CanceledOrderView> CancelOrder(string @base, string quote, string orderId)
         {
+            Log.Information("Bot cancel order {0} {1} {2}", @base, quote, orderId);
+
             var symbol = $"{@base}_{quote}";
             symbol = symbol.ToLower();
 
@@ -167,7 +169,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 {
                     symbol = symbol,
                     orderId = orderId
-                }, false, true);
+                });
 
             if (!success || response is null)
                 return new CanceledOrderView();
@@ -342,7 +344,6 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
                 var response = await _httpClient.SendAsync(requestMessage);
 
-
                 if (response.StatusCode != HttpStatusCode.OK)
                 {
                     if (ignored400)
@@ -361,6 +362,13 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                     Log.Information("Lbank response {0}", responseBody);
 
                 var responseObj = JsonConvert.DeserializeObject<JObject>(responseBody);
+
+                var errorCode = int.Parse(responseObj["error_code"].ToString());
+
+                if (errorCode > 0)
+                {
+                    Log.Error("{client} {endpoint} {request} {response}", GetType().Name, endpoint, body, responseBody);
+                }
 
                 var success = responseObj["result"];
 
