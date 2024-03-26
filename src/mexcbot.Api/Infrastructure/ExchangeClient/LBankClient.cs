@@ -229,25 +229,36 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
         public async Task<List<AccBalance>> GetAccInformation()
         {
-            var (success, responseBody) =
-                await SendRequest<JObject>(HttpMethod.Post, "/v2/supplement/user_info_account.do", true);
+            var retry = 3;
 
-            if (!success)
-                return new List<AccBalance>();
+            while (retry > 0)
+            {
+                var (success, responseBody) =
+                    await SendRequest<JObject>(HttpMethod.Post, "/v2/supplement/user_info_account.do", true);
 
-            var data = responseBody["balances"];
+                if (!success)
+                    return new List<AccBalance>();
 
-            if (data == null)
-                return new List<AccBalance>();
+                var data = responseBody["balances"];
 
-            var balances = JsonConvert.DeserializeObject<List<AccBalance>>(data.ToString())
-                .Where(x => decimal.Parse(x.Free, new NumberFormatInfo()) > 0m).Select(x => new AccBalance()
-                {
-                    Asset = x.Asset,
-                    Free = x.Free
-                }).ToList();
+                if (data == null)
+                    return new List<AccBalance>();
 
-            return balances;
+                var balances = JsonConvert.DeserializeObject<List<AccBalance>>(data.ToString())
+                    .Where(x => decimal.Parse(x.Free, new NumberFormatInfo()) > 0m).Select(x => new AccBalance()
+                    {
+                        Asset = x.Asset,
+                        Free = x.Free
+                    }).ToList();
+
+                if (balances.Count > 0)
+                    return balances;
+
+                retry++;
+                await Task.Delay(TimeSpan.FromSeconds(5));
+            }
+
+            return new List<AccBalance>();
         }
 
         public async Task<List<string>> GetSelfSymbols()
