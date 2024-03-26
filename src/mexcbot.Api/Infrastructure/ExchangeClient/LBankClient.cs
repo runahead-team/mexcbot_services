@@ -199,7 +199,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             symbol = symbol.ToLower();
 
             var (success, response) =
-                await SendRequest<JObject>(HttpMethod.Post, "/v2/supplement/orders_info_history.do", true, new
+                await SendRequest<JObject>(HttpMethod.Post, "/v2/supplement/orders_info_no_deal.do", true, new
                 {
                     symbol = symbol,
                     current_page = "1",
