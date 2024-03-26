@@ -365,7 +365,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
                 var errorCode = int.Parse(responseObj["error_code"].ToString());
 
-                if (errorCode > 0)
+                if (errorCode > 0 && errorCode != 10025)
                 {
                     Log.Error("{client} {endpoint} {request} {response}", GetType().Name, endpoint, body, responseBody);
                 }
