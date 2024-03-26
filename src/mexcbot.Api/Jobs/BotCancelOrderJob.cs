@@ -140,7 +140,8 @@ namespace mexcbot.Api.Jobs
                         "-1" => OrderStatus.CANCELED,
                         "2" => OrderStatus.PARTIALLY_FILLED,
                         "3" => OrderStatus.PARTIALLY_CANCELED,
-                        _ => OrderStatus.CANCELED
+                        "0" => OrderStatus.UNFILLED,
+                        _ => OrderStatus.UNKNOWN
                     };
                 else
                     order.Status = canceledOrder.Status;

@@ -167,7 +167,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 {
                     symbol = symbol,
                     orderId = orderId
-                });
+                }, false, true);
 
             if (!success || response is null)
                 return new CanceledOrderView();

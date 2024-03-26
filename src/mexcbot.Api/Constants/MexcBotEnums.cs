@@ -55,6 +55,10 @@ namespace mexcbot.Api.Constants
         [Description("CANCELED")]
         CANCELED = 3,
         [Description("PARTIALLY_CANCELED")]
-        PARTIALLY_CANCELED = 4
+        PARTIALLY_CANCELED = 4,
+        [Description("UNFILLED")]
+        UNFILLED = 5,
+        [Description("UNKNOWN")]
+        UNKNOWN = -2,
     }
 }
