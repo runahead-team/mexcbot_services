@@ -254,7 +254,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 if (balances.Count > 0)
                     return balances;
 
-                retry++;
+                retry--;
                 await Task.Delay(TimeSpan.FromSeconds(5));
             }
 
