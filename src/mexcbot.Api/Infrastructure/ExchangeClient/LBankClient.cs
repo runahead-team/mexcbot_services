@@ -241,18 +241,18 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
                 var data = responseBody["balances"];
 
-                if (data == null)
-                    return new List<AccBalance>();
+                if (data != null)
+                {
+                    var balances = JsonConvert.DeserializeObject<List<AccBalance>>(data.ToString())
+                        .Where(x => decimal.Parse(x.Free, new NumberFormatInfo()) > 0m).Select(x => new AccBalance()
+                        {
+                            Asset = x.Asset,
+                            Free = x.Free
+                        }).ToList();
 
-                var balances = JsonConvert.DeserializeObject<List<AccBalance>>(data.ToString())
-                    .Where(x => decimal.Parse(x.Free, new NumberFormatInfo()) > 0m).Select(x => new AccBalance()
-                    {
-                        Asset = x.Asset,
-                        Free = x.Free
-                    }).ToList();
-
-                if (balances.Count > 0)
-                    return balances;
+                    if (balances.Count > 0)
+                        return balances;
+                }
 
                 retry--;
                 await Task.Delay(TimeSpan.FromSeconds(5));
