@@ -236,22 +236,22 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 var (success, responseBody) =
                     await SendRequest<JObject>(HttpMethod.Post, "/v2/supplement/user_info_account.do", true);
 
-                if (!success)
-                    return new List<AccBalance>();
-
-                var data = responseBody["balances"];
-
-                if (data != null)
+                if (success)
                 {
-                    var balances = JsonConvert.DeserializeObject<List<AccBalance>>(data.ToString())
-                        .Where(x => decimal.Parse(x.Free, new NumberFormatInfo()) > 0m).Select(x => new AccBalance()
-                        {
-                            Asset = x.Asset,
-                            Free = x.Free
-                        }).ToList();
+                    var data = responseBody["balances"];
 
-                    if (balances.Count > 0)
-                        return balances;
+                    if (data != null)
+                    {
+                        var balances = JsonConvert.DeserializeObject<List<AccBalance>>(data.ToString())
+                            .Where(x => decimal.Parse(x.Free, new NumberFormatInfo()) > 0m).Select(x => new AccBalance()
+                            {
+                                Asset = x.Asset,
+                                Free = x.Free
+                            }).ToList();
+
+                        if (balances.Count > 0)
+                            return balances;
+                    }
                 }
 
                 retry--;
