@@ -131,19 +131,34 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
         public async Task<List<AccBalance>> GetAccInformation()
         {
-            var (success, responseBody) =
-                await SendRequest("GET", "/api/v3/account", string.Empty, true, false);
+            var retry = 3;
 
-            if (!success)
-                return new List<AccBalance>();
+            while (retry > 0)
+            {
+                var (success, responseBody) =
+                    await SendRequest("GET", "/api/v3/account", string.Empty, true, false);
 
-            var data = JObject.Parse(responseBody)["balances"];
 
-            return data == null
-                ? new List<AccBalance>()
-                : JsonConvert.DeserializeObject<List<AccBalance>>(data.ToString());
+                if (success)
+                {
+                    var data = JObject.Parse(responseBody)["balances"];
+
+                    if (data != null)
+                    {
+                        var balances = JsonConvert.DeserializeObject<List<AccBalance>>(data.ToString());
+
+                        if (balances.Count > 0)
+                            return balances;
+                    }
+                }
+
+                retry--;
+                await Task.Delay(TimeSpan.FromSeconds(5));
+            }
+
+            return new List<AccBalance>();
         }
-        
+
         public async Task<List<string>> GetSelfSymbols()
         {
             var (success, responseBody) =
@@ -230,10 +245,10 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
                     responseBody = await response.Content.ReadAsStringAsync();
-                    
+
                     if (logInfo)
                         Log.Information($"MexcClient:SendRequest response {endpoint} {payload} {responseBody}");
-                    
+
                     return (true, responseBody);
                 }
 
