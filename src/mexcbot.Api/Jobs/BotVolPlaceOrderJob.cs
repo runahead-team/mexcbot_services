@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -377,21 +378,27 @@ namespace mexcbot.Api.Jobs
 
                             if (volumeOption.MatchingDelayFrom == 0 || volumeOption.MatchingDelayTo == 0)
                             {
-                                if (await CreateLimitOrder(client, bot, orderQty.ToString($"F{basePrecision}"),
-                                        askPrice.ToString($"F{quotePrecision}"), OrderSide.SELL))
+                                if (await CreateLimitOrder(client, bot,
+                                        orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
+                                        askPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
+                                        OrderSide.SELL))
                                 {
-                                    await CreateLimitOrder(client, bot, orderQty.ToString($"F{basePrecision}"),
-                                        askPrice.ToString($"F{quotePrecision}"), OrderSide.BUY);
+                                    await CreateLimitOrder(client, bot,
+                                        orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
+                                        askPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()), OrderSide.BUY);
                                 }
                             }
                             else
                             {
-                                if (await CreateLimitOrder(client, bot, orderQty.ToString($"F{basePrecision}"),
-                                        askPrice.ToString($"F{quotePrecision}"), OrderSide.SELL))
+                                if (await CreateLimitOrder(client, bot,
+                                        orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
+                                        askPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
+                                        OrderSide.SELL))
                                 {
                                     await TradeDelay(bot);
-                                    await CreateLimitOrder(client, bot, orderQty.ToString($"F{basePrecision}"),
-                                        askPrice.ToString($"F{quotePrecision}"), OrderSide.BUY);
+                                    await CreateLimitOrder(client, bot,
+                                        orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
+                                        askPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()), OrderSide.BUY);
                                 }
                             }
                         }

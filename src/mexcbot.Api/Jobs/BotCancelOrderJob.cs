@@ -124,7 +124,7 @@ namespace mexcbot.Api.Jobs
                 _ => throw new ArgumentOutOfRangeException()
             };
 
-            // var openOrders = await client.GetOpenOrder(bot.Base, bot.Quote);
+            var openOrders = await client.GetOpenOrder(bot.Base, bot.Quote);
             //
             // if (openOrders.All(x => x.OrderId != order.OrderId))
             //     return;
