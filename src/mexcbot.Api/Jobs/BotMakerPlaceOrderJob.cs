@@ -321,7 +321,7 @@ namespace mexcbot.Api.Jobs
                         return;
                     }
 
-                    const decimal spreadHighPercent = 5;
+                    const decimal spreadHighPercent = 2;
                     const decimal spreadFixPercent = 0.5m;
 
                     if (orderbook.Asks.Count == 0 || orderbook.Bids.Count == 0)
@@ -394,6 +394,7 @@ namespace mexcbot.Api.Jobs
 
                                 price = price.Truncate(quotePrecision);
                                 qty = qty.Truncate(basePrecision);
+                                var overQty = (qty/2).Truncate(basePrecision);
 
                                 var total = Math.Round(price * qty, 8);
 
@@ -459,7 +460,7 @@ namespace mexcbot.Api.Jobs
 
                                     if (overStepPrice > 0)
                                         await CreateLimitOrder(client, bot,
-                                            qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
+                                            overQty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
                                             overStepPrice.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.BUY,
                                             true);
                                 }
@@ -477,7 +478,7 @@ namespace mexcbot.Api.Jobs
 
                                     if (overStepPrice > 0)
                                         await CreateLimitOrder(client, bot,
-                                            qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
+                                            overQty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
                                             overStepPrice.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.SELL,
                                             true);
                                 }
@@ -495,7 +496,7 @@ namespace mexcbot.Api.Jobs
                                         var buyPrice = minPrice * (1 + spreadFixPercent / 100);
                                         buyPrice = buyPrice.Truncate(quotePrecision);
                                         await CreateLimitOrder(client, bot,
-                                            qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
+                                            overQty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
                                             buyPrice.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.BUY);
                                     }
                                     //Sell more 
@@ -504,12 +505,13 @@ namespace mexcbot.Api.Jobs
                                         var sellPrice = maxPrice * (1 - spreadFixPercent / 100);
                                         sellPrice = sellPrice.Truncate(quotePrecision);
                                         await CreateLimitOrder(client, bot,
-                                            qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
+                                            overQty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
                                             sellPrice.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.SELL);
                                     }
                                 }
 
                                 #endregion
+                                
                             }, CancellationToken.None));
                         }
 
