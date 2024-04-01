@@ -359,8 +359,7 @@ namespace mexcbot.Api.Jobs
 
                             askPrice = smallestAskPrice - biggestBidPrice <= sizePrediction
                                 ? smallestAskPrice
-                                : RandomNumber(biggestBidPrice + sizePrediction, smallestAskPrice - sizePrediction,
-                                    quotePrecision);
+                                : smallestAskPrice - sizePrediction * 2;
 
                             totalUsdVolume += orderQty * askPrice;
 
