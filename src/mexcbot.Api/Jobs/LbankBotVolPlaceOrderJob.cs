@@ -387,10 +387,21 @@ namespace mexcbot.Api.Jobs
                             }
                             else
                             {
-                                askPrice = smallestAskPrice - biggestBidPrice <= priceStep
-                                    ? smallestAskPrice
-                                    : RandomNumber(biggestBidPrice + priceStep, smallestAskPrice - priceStep,
+                                if (smallestAskPrice - biggestBidPrice <= priceStep)
+                                {
+                                    if (!volumeOption.AlwaysRun)
+                                        return;
+
+                                    askPrice = smallestAskPrice;
+                                }
+                                else
+                                {
+                                    if (volumeOption.SafeRun)
+                                        return;
+
+                                    askPrice = RandomNumber(biggestBidPrice + priceStep, smallestAskPrice - priceStep,
                                         quotePrecision);
+                                }
                             }
 
                             totalUsdVolume += orderQty * askPrice;

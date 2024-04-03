@@ -16,5 +16,9 @@ namespace mexcbot.Api.Models.Bot
         public int MinInterval { get; set; }
 
         public int MaxInterval { get; set; }
+        
+        public bool AlwaysRun { get; set; }
+        
+        public bool SafeRun { get; set; }
     }
 }
