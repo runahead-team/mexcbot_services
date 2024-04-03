@@ -492,7 +492,7 @@ namespace mexcbot.Api.Jobs
                         #region Fill Orderbook
 
                         var fillOrderBookPriceStep = 10 / (decimal)Math.Pow(10, quotePrecision);
-                        var fillOrderBookQty = RandomNumber(10 * price, 15 * price, basePrecision);
+                        var fillOrderBookQty = RandomNumber(10 / price, 15 / price, basePrecision);
 
                         for (var sellPrice = (maxPrice + fillOrderBookPriceStep);
                              sellPrice <= price;
