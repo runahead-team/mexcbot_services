@@ -299,14 +299,12 @@ namespace mexcbot.Api.Jobs
                     await UpdateBot(bot);
                     return;
                 }
-                else
-                {
-                    await UpdateBot(bot, false);
-                }
+
+                await UpdateBot(bot, false);
 
                 #endregion
 
-                if (!string.IsNullOrEmpty(bot.MakerOption))
+                if (exchangeInfo != null && !string.IsNullOrEmpty(bot.MakerOption))
                 {
                     var price = 0m;
 
@@ -321,9 +319,6 @@ namespace mexcbot.Api.Jobs
                         return;
                     }
 
-                    const decimal spreadHighPercent = 2;
-                    const decimal spreadFixPercent = 0.5m;
-
                     if (orderbook.Asks.Count == 0 || orderbook.Bids.Count == 0)
                     {
                         Log.Error("Order not found");
@@ -332,7 +327,6 @@ namespace mexcbot.Api.Jobs
 
                     var maxPrice = orderbook.Asks.Min(x => x[0]);
                     var minPrice = orderbook.Bids.Max(x => x[0]);
-                    var spreadHigh = Math.Abs((minPrice - maxPrice) * 100 / minPrice) > spreadHighPercent;
 
                     try
                     {
@@ -353,7 +347,7 @@ namespace mexcbot.Api.Jobs
                                                  makerOption.FollowBtcBtcPrice;
 
                                     if (makerOption.FollowBtcRate > 0)
-                                        change = change * makerOption.FollowBtcRate;
+                                        change *= makerOption.FollowBtcRate;
 
                                     price = RandomNumber(
                                         makerOption.FollowBtcBasePrice + makerOption.FollowBtcBasePrice *
@@ -394,22 +388,22 @@ namespace mexcbot.Api.Jobs
 
                                 price = price.Truncate(quotePrecision);
                                 qty = qty.Truncate(basePrecision);
-                                var overQty = (qty/2).Truncate(basePrecision);
+
 
                                 var total = Math.Round(price * qty, 8);
 
                                 if (makerOption.Side == OrderSide.BUY && quoteBalanceValue > total)
                                 {
                                     await CreateLimitOrder(client, bot,
-                                        qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
-                                        price.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()),
+                                        qty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                        price.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
                                         OrderSide.BUY, false);
                                 }
                                 else if (makerOption.Side == OrderSide.SELL && baseBalanceValue > qty)
                                 {
                                     await CreateLimitOrder(client, bot,
-                                        qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
-                                        price.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()),
+                                        qty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                        price.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
                                         OrderSide.SELL);
                                 }
                                 else if (makerOption.Side == OrderSide.BOTH && baseBalanceValue > qty &&
@@ -419,25 +413,29 @@ namespace mexcbot.Api.Jobs
                                         makerOption.MaxMatchingTime == 0)
                                     {
                                         if (await CreateLimitOrder(client, bot,
-                                                qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
-                                                price.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.SELL))
+                                                qty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                                price.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                                OrderSide.SELL))
                                         {
                                             await CreateLimitOrder(client, bot,
-                                                qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
-                                                price.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.BUY);
+                                                qty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                                price.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                                OrderSide.BUY);
                                         }
                                     }
                                     else
                                     {
                                         if (await CreateLimitOrder(client, bot,
-                                                qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
-                                                price.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.SELL))
+                                                qty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                                price.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                                OrderSide.SELL))
                                         {
                                             await TradeDelay(bot);
 
                                             await CreateLimitOrder(client, bot,
-                                                qty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
-                                                price.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.BUY);
+                                                qty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                                price.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                                OrderSide.BUY);
                                         }
                                     }
                                 }
@@ -446,72 +444,76 @@ namespace mexcbot.Api.Jobs
 
                                 #region Order Over Step
 
-                                var overStepPrice = 0m;
-
-                                if (makerOption.MinPriceOverStep < 0)
+                                if (makerOption.MinPriceOverStep < 0 && price > 0)
                                 {
-                                    if (price > 0)
-                                    {
-                                        overStepPrice = RandomNumber(
-                                            price + (makerOption.MinPriceStep + makerOption.MinPriceOverStep) * price /
-                                            100,
-                                            price + makerOption.MinPriceStep * price / 100, quotePrecision);
-                                    }
+                                    var overStepQty = (qty / 2).Truncate(basePrecision);
+
+                                    var overStepPrice = RandomNumber(
+                                        price + (makerOption.MinPriceStep + makerOption.MinPriceOverStep) * price /
+                                        100,
+                                        price + makerOption.MinPriceStep * price / 100, quotePrecision);
 
                                     if (overStepPrice > 0)
                                         await CreateLimitOrder(client, bot,
-                                            overQty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
-                                            overStepPrice.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.BUY,
+                                            overStepQty.ToString($"F{basePrecision.ToString()}",
+                                                new NumberFormatInfo()),
+                                            overStepPrice.ToString($"F{quotePrecision.ToString()}",
+                                                new NumberFormatInfo()), OrderSide.BUY,
                                             true);
                                 }
 
-                                if (makerOption.MaxPriceOverStep > 0)
+                                if (makerOption.MaxPriceOverStep > 0 && price > 0)
                                 {
-                                    if (price > 0)
-                                    {
-                                        overStepPrice = RandomNumber(
-                                            price + makerOption.MaxPriceOverStep *
-                                            price / 100,
-                                            price + (makerOption.MaxPriceStep + makerOption.MaxPriceOverStep) *
-                                            price / 100, quotePrecision);
-                                    }
+                                    var overStepQty = (qty / 2).Truncate(basePrecision);
+
+                                    var overStepPrice = RandomNumber(
+                                        price + makerOption.MaxPriceOverStep *
+                                        price / 100,
+                                        price + (makerOption.MaxPriceStep + makerOption.MaxPriceOverStep) *
+                                        price / 100, quotePrecision);
 
                                     if (overStepPrice > 0)
                                         await CreateLimitOrder(client, bot,
-                                            overQty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
-                                            overStepPrice.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.SELL,
+                                            overStepQty.ToString($"F{basePrecision.ToString()}",
+                                                new NumberFormatInfo()),
+                                            overStepPrice.ToString($"F{quotePrecision.ToString()}",
+                                                new NumberFormatInfo()), OrderSide.SELL,
                                             true);
                                 }
 
                                 #endregion
-                                
 
-                                #region BTC Spread
+                                #region Fill Orderbook
 
-                                if (makerOption.IsFollowBtc && spreadHigh)
+                                var fillOrderBookPriceStep = 10 / (decimal)Math.Pow(10, quotePrecision);
+                                var fillOrderBookQty = RandomNumber(10, 15, basePrecision);
+
+                                for (var sellPrice = (maxPrice + fillOrderBookPriceStep);
+                                     sellPrice <= price;
+                                     sellPrice += fillOrderBookPriceStep)
                                 {
-                                    //Buy more 
-                                    if (price >= maxPrice)
-                                    {
-                                        var buyPrice = minPrice * (1 + spreadFixPercent / 100);
-                                        buyPrice = buyPrice.Truncate(quotePrecision);
-                                        await CreateLimitOrder(client, bot,
-                                            overQty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
-                                            buyPrice.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.BUY);
-                                    }
-                                    //Sell more 
-                                    else if (price <= minPrice)
-                                    {
-                                        var sellPrice = maxPrice * (1 - spreadFixPercent / 100);
-                                        sellPrice = sellPrice.Truncate(quotePrecision);
-                                        await CreateLimitOrder(client, bot,
-                                            overQty.ToString($"F{basePrecision.ToString()}",new NumberFormatInfo()),
-                                            sellPrice.ToString($"F{quotePrecision.ToString()}",new NumberFormatInfo()), OrderSide.SELL);
-                                    }
+                                    sellPrice -= RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
+
+                                    await CreateLimitOrder(client, bot,
+                                        fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
+                                            new NumberFormatInfo()),
+                                        sellPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                        OrderSide.SELL, true);
+                                }
+
+                                for (var buyPrice = (minPrice + fillOrderBookPriceStep);
+                                     buyPrice >= price;
+                                     buyPrice += fillOrderBookPriceStep)
+                                {
+                                    buyPrice += RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
+                                    await CreateLimitOrder(client, bot,
+                                        fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
+                                            new NumberFormatInfo()),
+                                        buyPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                        OrderSide.BUY, true);
                                 }
 
                                 #endregion
-                                
                             }, CancellationToken.None));
                         }
 

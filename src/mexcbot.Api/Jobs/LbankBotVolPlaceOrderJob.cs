@@ -367,7 +367,8 @@ namespace mexcbot.Api.Jobs
 
                             askPrice = smallestAskPrice - biggestBidPrice <= sizePrediction
                                 ? smallestAskPrice
-                                : smallestAskPrice - sizePrediction * 2;
+                                :  RandomNumber(biggestBidPrice + sizePrediction, smallestAskPrice - sizePrediction,
+                                    quotePrecision);
 
                             totalUsdVolume += orderQty * askPrice;
 
@@ -456,7 +457,7 @@ namespace mexcbot.Api.Jobs
             order.BotType = bot.Type;
             order.BotExchangeType = bot.ExchangeType;
             order.UserId = bot.UserId;
-            order.ExpiredTime = order.TransactTime + MexcBotConstants.ExpiredOrderTime;
+            order.ExpiredTime = order.TransactTime;
 
             var exec = await sqlConnection.ExecuteAsync(
                 @"INSERT INTO BotOrders(BotId,BotType,BotExchangeType,UserId,OrderId,Symbol,OrderListId,Price,OrigQty,Type,Side,ExpiredTime,Status,`TransactTime`)

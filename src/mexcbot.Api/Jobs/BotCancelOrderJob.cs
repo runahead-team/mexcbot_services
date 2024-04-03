@@ -41,7 +41,6 @@ namespace mexcbot.Api.Jobs
                 try
                 {
                     await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
-                    await dbConnection.OpenAsync();
 
                     var orders = (await dbConnection.QueryAsync<OrderDto>(
                         "SELECT * FROM BotOrders WHERE IsRunCancellation = @IsRunCancellation AND ExpiredTime <= @Now",
@@ -64,7 +63,7 @@ namespace mexcbot.Api.Jobs
                         await Execute(order, bots, dbConnection);
                     }
 
-                    await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
                 }
                 catch (Exception e)
                 {

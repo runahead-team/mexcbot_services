@@ -355,11 +355,12 @@ namespace mexcbot.Api.Jobs
                             var smallestAskPrice = asks[0][0];
                             var biggestBidPrice = bids[0][0];
                             var askPrice = 0m;
-                            var sizePrediction = 1 / (decimal)Math.Pow(10, quotePrecision);
+                            var priceStep = 1 / (decimal)Math.Pow(10, quotePrecision);
 
-                            askPrice = smallestAskPrice - biggestBidPrice <= sizePrediction
+                            askPrice = smallestAskPrice - biggestBidPrice <= priceStep
                                 ? smallestAskPrice
-                                : smallestAskPrice - sizePrediction * 2;
+                                : RandomNumber(biggestBidPrice + priceStep, smallestAskPrice - priceStep,
+                                    quotePrecision);
 
                             totalUsdVolume += orderQty * askPrice;
 
@@ -377,28 +378,27 @@ namespace mexcbot.Api.Jobs
 
                             if (volumeOption.MatchingDelayFrom == 0 || volumeOption.MatchingDelayTo == 0)
                             {
-                                if (await CreateLimitOrder(client, bot,
-                                        orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
-                                        askPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
-                                        OrderSide.SELL))
-                                {
-                                    await CreateLimitOrder(client, bot,
-                                        orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
-                                        askPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()), OrderSide.BUY);
-                                }
+                                await CreateLimitOrder(client, bot,
+                                    orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
+                                    askPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
+                                    OrderSide.SELL);
+
+                                await CreateLimitOrder(client, bot,
+                                    orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
+                                    askPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()), OrderSide.BUY);
                             }
                             else
                             {
-                                if (await CreateLimitOrder(client, bot,
-                                        orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
-                                        askPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
-                                        OrderSide.SELL))
-                                {
-                                    await TradeDelay(bot);
-                                    await CreateLimitOrder(client, bot,
-                                        orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
-                                        askPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()), OrderSide.BUY);
-                                }
+                                await CreateLimitOrder(client, bot,
+                                    orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
+                                    askPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
+                                    OrderSide.SELL);
+
+                                await TradeDelay(bot);
+
+                                await CreateLimitOrder(client, bot,
+                                    orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
+                                    askPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()), OrderSide.BUY);
                             }
                         }
                         catch (Exception e)
@@ -446,7 +446,7 @@ namespace mexcbot.Api.Jobs
             order.BotType = bot.Type;
             order.BotExchangeType = bot.ExchangeType;
             order.UserId = bot.UserId;
-            order.ExpiredTime = order.TransactTime + MexcBotConstants.ExpiredOrderTime;
+            order.ExpiredTime = order.TransactTime;
 
             var exec = await sqlConnection.ExecuteAsync(
                 @"INSERT INTO BotOrders(BotId,BotType,BotExchangeType,UserId,OrderId,Symbol,OrderListId,Price,OrigQty,Type,Side,ExpiredTime,Status,`TransactTime`)
