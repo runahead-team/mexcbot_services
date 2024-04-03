@@ -494,29 +494,29 @@ namespace mexcbot.Api.Jobs
                         var fillOrderBookQty = RandomNumber(10 / price, 15 / price, basePrecision);
 
                         for (var sellPrice = (maxPrice + fillOrderBookPriceStep);
-                             sellPrice <= price;
+                             sellPrice > price;
                              sellPrice -= fillOrderBookPriceStep)
                         {
                             sellPrice -= RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
                             Log.Information("SellPrice {0}", sellPrice);
-                            // await CreateLimitOrder(client, bot,
-                            //     fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
-                            //         new NumberFormatInfo()),
-                            //     sellPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                            //     OrderSide.SELL, true);
+                            await CreateLimitOrder(client, bot,
+                                fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
+                                    new NumberFormatInfo()),
+                                sellPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                OrderSide.SELL, true);
                         }
 
                         for (var buyPrice = (minPrice + fillOrderBookPriceStep);
-                             buyPrice >= price;
+                             buyPrice < price;
                              buyPrice += fillOrderBookPriceStep)
                         {
                             buyPrice += RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
                             Log.Information("BuyPrice {0}", buyPrice);
-                            // await CreateLimitOrder(client, bot,
-                            //     fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
-                            //         new NumberFormatInfo()),
-                            //     buyPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                            //     OrderSide.BUY, true);
+                            await CreateLimitOrder(client, bot,
+                                fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
+                                    new NumberFormatInfo()),
+                                buyPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                OrderSide.BUY, true);
                         }
 
                         #endregion
