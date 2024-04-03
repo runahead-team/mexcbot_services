@@ -362,10 +362,9 @@ namespace mexcbot.Api.Jobs
 
                             var smallestAskPrice = asks[0][0];
                             var biggestBidPrice = bids[0][0];
-
                             var priceStep = 1 / (decimal)Math.Pow(10, quotePrecision);
-
                             var askPrice = 0m;
+                            var noBuy = false;
 
                             if (smallestAskPrice - biggestBidPrice > priceStep * 50)
                             {
@@ -387,20 +386,29 @@ namespace mexcbot.Api.Jobs
                             }
                             else
                             {
-                                if (smallestAskPrice - biggestBidPrice <= priceStep)
+                                if (smallestAskPrice - biggestBidPrice <= priceStep * 1)
                                 {
                                     if (!volumeOption.AlwaysRun)
                                         return;
 
                                     askPrice = biggestBidPrice;
+                                    noBuy = true;
                                 }
                                 else
                                 {
-                                    if (volumeOption.SafeRun)
-                                        return;
-
-                                    askPrice = RandomNumber(biggestBidPrice + priceStep, smallestAskPrice - priceStep,
-                                        quotePrecision);
+                                    if (!volumeOption.SafeRun)
+                                    {
+                                        askPrice = RandomNumber(biggestBidPrice + priceStep,
+                                            smallestAskPrice - priceStep,
+                                            quotePrecision);
+                                    }
+                                    else
+                                    {
+                                        askPrice = RandomNumber(biggestBidPrice + priceStep,
+                                            smallestAskPrice - priceStep,
+                                            quotePrecision);
+                                        noBuy = true;
+                                    }
                                 }
                             }
 
@@ -420,23 +428,33 @@ namespace mexcbot.Api.Jobs
 
                             if (volumeOption.MatchingDelayFrom == 0 || volumeOption.MatchingDelayTo == 0)
                             {
-                                if (await CreateLimitOrder(client, bot,
-                                        orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
-                                        askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                        OrderSide.SELL))
+                                var t1 = CreateLimitOrder(client, bot,
+                                    orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                    askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                    OrderSide.SELL);
+
+                                if (!noBuy)
                                 {
-                                    await CreateLimitOrder(client, bot,
+                                    var t2 = CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
                                         askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
                                         OrderSide.BUY);
+                                    
+                                    await Task.WhenAll(t1, t2);
+                                }
+                                else
+                                {
+                                    await t1;
                                 }
                             }
                             else
                             {
-                                if (await CreateLimitOrder(client, bot,
-                                        orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
-                                        askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                        OrderSide.SELL))
+                                await CreateLimitOrder(client, bot,
+                                    orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                    askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                    OrderSide.SELL);
+
+                                if (!noBuy)
                                 {
                                     await TradeDelay(bot);
                                     await CreateLimitOrder(client, bot,
