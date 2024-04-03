@@ -500,7 +500,6 @@ namespace mexcbot.Api.Jobs
                                  sellPrice -= fillOrderBookPriceStep)
                             {
                                 sellPrice -= RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
-                                Log.Information("SellPrice {0}", sellPrice);
                                 await CreateLimitOrder(client, bot,
                                     fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
                                         new NumberFormatInfo()),
@@ -513,7 +512,6 @@ namespace mexcbot.Api.Jobs
                                  buyPrice += fillOrderBookPriceStep)
                             {
                                 buyPrice += RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
-                                Log.Information("BuyPrice {0}", buyPrice);
                                 await CreateLimitOrder(client, bot,
                                     fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
                                         new NumberFormatInfo()),
@@ -552,7 +550,7 @@ namespace mexcbot.Api.Jobs
             if (string.IsNullOrEmpty(order.OrderId))
                 return false;
 
-            var msg = side.ToString() + " " + qty + " " + bot.Symbol + " at price " + " " + price + " " + order.OrderId;
+            var msg = side + " " + qty + " " + bot.Symbol + " at price " + " " + price + " " + order.OrderId;
             Log.Information("Bot create order {0}", msg);
 
             await using var sqlConnection = new MySqlConnection(Configurations.DbConnectionString);
