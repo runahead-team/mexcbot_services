@@ -369,7 +369,7 @@ namespace mexcbot.Api.Jobs
 
                             if (smallestAskPrice - biggestBidPrice > priceStep * 10)
                             {
-                                RandomNumber(biggestBidPrice + priceStep * 5, smallestAskPrice - priceStep * 5,
+                                askPrice = RandomNumber(biggestBidPrice + priceStep * 5, smallestAskPrice - priceStep * 5,
                                     quotePrecision);
                             }
                             else
