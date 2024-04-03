@@ -392,7 +392,7 @@ namespace mexcbot.Api.Jobs
                                     if (!volumeOption.AlwaysRun)
                                         return;
 
-                                    askPrice = smallestAskPrice;
+                                    askPrice = biggestBidPrice;
                                 }
                                 else
                                 {
@@ -482,7 +482,7 @@ namespace mexcbot.Api.Jobs
             if (string.IsNullOrEmpty(order.OrderId))
                 return false;
 
-            var msg = side.ToString() + " " + qty + " " + bot.Symbol + " at price " + " " + price + " " + order.OrderId;
+            var msg = side + " " + qty + " " + bot.Symbol + " at price " + " " + price + " " + order.OrderId;
             Log.Information("Bot create order {0}", msg);
 
             await using var sqlConnection = new MySqlConnection(Configurations.DbConnectionString);

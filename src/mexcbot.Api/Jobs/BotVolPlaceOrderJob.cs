@@ -382,7 +382,7 @@ namespace mexcbot.Api.Jobs
                                     if (!volumeOption.AlwaysRun)
                                         return;
 
-                                    askPrice = smallestAskPrice;
+                                    askPrice = biggestBidPrice;
                                 }
                                 else
                                 {
