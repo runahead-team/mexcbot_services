@@ -357,7 +357,19 @@ namespace mexcbot.Api.Jobs
                             var priceStep = 1 / (decimal)Math.Pow(10, quotePrecision);
                             var askPrice = 0m;
 
-                            if (smallestAskPrice - biggestBidPrice > priceStep * 10)
+                            if (smallestAskPrice - biggestBidPrice > priceStep * 50)
+                            {
+                                askPrice = RandomNumber(biggestBidPrice + priceStep * 20,
+                                    smallestAskPrice - priceStep * 20,
+                                    quotePrecision);
+                            }
+                            else if (smallestAskPrice - biggestBidPrice > priceStep * 20)
+                            {
+                                askPrice = RandomNumber(biggestBidPrice + priceStep * 10,
+                                    smallestAskPrice - priceStep * 10,
+                                    quotePrecision);
+                            }
+                            else if (smallestAskPrice - biggestBidPrice > priceStep * 10)
                             {
                                 askPrice = RandomNumber(biggestBidPrice + priceStep * 5,
                                     smallestAskPrice - priceStep * 5,
