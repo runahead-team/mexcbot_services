@@ -485,7 +485,6 @@ namespace mexcbot.Api.Jobs
                                 }
 
                                 #endregion
-                                
                             }, CancellationToken.None));
                         }
 
@@ -496,10 +495,10 @@ namespace mexcbot.Api.Jobs
 
                         for (var sellPrice = (maxPrice + fillOrderBookPriceStep);
                              sellPrice <= price;
-                             sellPrice += fillOrderBookPriceStep)
+                             sellPrice -= fillOrderBookPriceStep)
                         {
                             sellPrice -= RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
-                            Console.Write(sellPrice);
+                            Log.Information("SellPrice {0}", sellPrice);
                             // await CreateLimitOrder(client, bot,
                             //     fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
                             //         new NumberFormatInfo()),
@@ -512,7 +511,7 @@ namespace mexcbot.Api.Jobs
                              buyPrice += fillOrderBookPriceStep)
                         {
                             buyPrice += RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
-                            Console.Write(buyPrice);
+                            Log.Information("BuyPrice {0}", buyPrice);
                             // await CreateLimitOrder(client, bot,
                             //     fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
                             //         new NumberFormatInfo()),
