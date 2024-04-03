@@ -388,7 +388,7 @@ namespace mexcbot.Api.Jobs
                             {
                                 if (smallestAskPrice - biggestBidPrice <= priceStep * 1)
                                 {
-                                    if (!volumeOption.AlwaysRun)
+                                    if (volumeOption.SafeRun)
                                         return;
 
                                     askPrice = biggestBidPrice;
@@ -396,19 +396,12 @@ namespace mexcbot.Api.Jobs
                                 }
                                 else
                                 {
-                                    if (!volumeOption.SafeRun)
-                                    {
-                                        askPrice = RandomNumber(biggestBidPrice + priceStep,
-                                            smallestAskPrice - priceStep,
-                                            quotePrecision);
-                                    }
-                                    else
-                                    {
-                                        askPrice = RandomNumber(biggestBidPrice + priceStep,
-                                            smallestAskPrice - priceStep,
-                                            quotePrecision);
+                                    if (volumeOption.SafeRun)
                                         noBuy = true;
-                                    }
+
+                                    askPrice = RandomNumber(biggestBidPrice + priceStep,
+                                        smallestAskPrice - priceStep,
+                                        quotePrecision);
                                 }
                             }
 
@@ -439,7 +432,7 @@ namespace mexcbot.Api.Jobs
                                         orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
                                         askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
                                         OrderSide.BUY);
-                                    
+
                                     await Task.WhenAll(t1, t2);
                                 }
                                 else
