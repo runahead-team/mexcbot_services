@@ -354,13 +354,21 @@ namespace mexcbot.Api.Jobs
 
                             var smallestAskPrice = asks[0][0];
                             var biggestBidPrice = bids[0][0];
-                            var askPrice = 0m;
                             var priceStep = 1 / (decimal)Math.Pow(10, quotePrecision);
+                            var askPrice = 0m;
 
-                            askPrice = smallestAskPrice - biggestBidPrice <= priceStep
-                                ? smallestAskPrice
-                                : RandomNumber(biggestBidPrice + priceStep, smallestAskPrice - priceStep,
+                            if (smallestAskPrice - biggestBidPrice > priceStep * 10)
+                            {
+                                RandomNumber(biggestBidPrice + priceStep * 5, smallestAskPrice - priceStep * 5,
                                     quotePrecision);
+                            }
+                            else
+                            {
+                                askPrice = smallestAskPrice - biggestBidPrice <= priceStep
+                                    ? smallestAskPrice
+                                    : RandomNumber(biggestBidPrice + priceStep, smallestAskPrice - priceStep,
+                                        quotePrecision);
+                            }
 
                             totalUsdVolume += orderQty * askPrice;
 
