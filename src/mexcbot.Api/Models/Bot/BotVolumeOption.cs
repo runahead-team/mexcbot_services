@@ -1,7 +1,11 @@
+using mexcbot.Api.Constants;
+
 namespace mexcbot.Api.Models.Bot
 {
     public class BotVolumeOption
     {
+        public OrderSide Side { get; set; }
+        
         public decimal Volume24hr { get; set; }
         
         public long MatchingDelayFrom { get; set; }

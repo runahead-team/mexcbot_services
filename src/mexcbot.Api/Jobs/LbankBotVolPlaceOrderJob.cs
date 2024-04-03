@@ -427,39 +427,43 @@ namespace mexcbot.Api.Jobs
 
                             if (volumeOption.MatchingDelayFrom == 0 || volumeOption.MatchingDelayTo == 0)
                             {
-                                var t1 = CreateLimitOrder(client, bot,
-                                    orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
-                                    askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                    OrderSide.SELL);
+                                var tasks = new List<Task>();
 
-                                if (!noBuy)
+                                if (volumeOption.Side is OrderSide.SELL or OrderSide.BOTH)
                                 {
-                                    var t2 = CreateLimitOrder(client, bot,
+                                    tasks.Add(CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
                                         askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                        OrderSide.BUY);
+                                        OrderSide.SELL));
+                                }
 
-                                    await Task.WhenAll(t1, t2);
-                                }
-                                else
+                                if (!noBuy && volumeOption.Side is OrderSide.BUY or OrderSide.BOTH)
                                 {
-                                    await t1;
+                                    tasks.Add(CreateLimitOrder(client, bot,
+                                        orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                        askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                        OrderSide.BUY));
                                 }
+
+                                await Task.WhenAll(tasks);
                             }
                             else
                             {
-                                await CreateLimitOrder(client, bot,
-                                    orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
-                                    askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                    OrderSide.SELL);
+                                if (volumeOption.Side is OrderSide.SELL or OrderSide.BOTH)
+                                {
+                                    await CreateLimitOrder(client, bot,
+                                        orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
+                                        askPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
+                                        OrderSide.SELL);
+                                }
 
-                                if (!noBuy)
+                                if (!noBuy && volumeOption.Side is OrderSide.BUY or OrderSide.BOTH)
                                 {
                                     await TradeDelay(bot);
+
                                     await CreateLimitOrder(client, bot,
-                                        orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
-                                        askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                        OrderSide.BUY);
+                                        orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
+                                        askPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()), OrderSide.BUY);
                                 }
                             }
                         }
