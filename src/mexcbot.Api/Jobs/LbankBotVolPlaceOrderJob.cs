@@ -384,6 +384,12 @@ namespace mexcbot.Api.Jobs
                                     smallestAskPrice - priceStep * 5,
                                     quotePrecision);
                             }
+                            else if (smallestAskPrice - biggestBidPrice > priceStep * 5)
+                            {
+                                askPrice = RandomNumber(biggestBidPrice + priceStep * 1,
+                                    smallestAskPrice - priceStep * 1,
+                                    quotePrecision);
+                            }
                             else
                             {
                                 if (smallestAskPrice - biggestBidPrice <= priceStep * 1)

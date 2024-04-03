@@ -376,11 +376,17 @@ namespace mexcbot.Api.Jobs
                                     smallestAskPrice - priceStep * 5,
                                     quotePrecision);
                             }
+                            else if (smallestAskPrice - biggestBidPrice > priceStep * 5)
+                            {
+                                askPrice = RandomNumber(biggestBidPrice + priceStep * 1,
+                                    smallestAskPrice - priceStep * 1,
+                                    quotePrecision);
+                            }
                             else
                             {
                                 if (smallestAskPrice - biggestBidPrice <= priceStep * 1)
                                 {
-                                    if (!volumeOption.AlwaysRun)
+                                    if (volumeOption.SafeRun)
                                         return;
 
                                     askPrice = biggestBidPrice;
@@ -388,23 +394,12 @@ namespace mexcbot.Api.Jobs
                                 }
                                 else
                                 {
-                                    if (smallestAskPrice - biggestBidPrice <= priceStep * 1)
-                                    {
-                                        if (volumeOption.SafeRun)
-                                            return;
-
-                                        askPrice = biggestBidPrice;
+                                    if (volumeOption.SafeRun)
                                         noBuy = true;
-                                    }
-                                    else
-                                    {
-                                        if (volumeOption.SafeRun)
-                                            noBuy = true;
 
-                                        askPrice = RandomNumber(biggestBidPrice + priceStep,
-                                            smallestAskPrice - priceStep,
-                                            quotePrecision);
-                                    }
+                                    askPrice = RandomNumber(biggestBidPrice + priceStep,
+                                        smallestAskPrice - priceStep,
+                                        quotePrecision);
                                 }
                             }
 
