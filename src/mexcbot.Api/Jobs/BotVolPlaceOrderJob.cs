@@ -180,7 +180,7 @@ namespace mexcbot.Api.Jobs
                 if (bot.Status == BotStatus.INACTIVE)
                 {
                     bot.Logs = stopLog;
-                    await UpdateBot(bot);
+                    await UpdateBot(bot,false);
                     return;
                 }
                 else
