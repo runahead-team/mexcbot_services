@@ -69,14 +69,13 @@ namespace mexcbot.Api.Jobs
 
         private async Task Run(BotDto bot)
         {
-            var stopLog = "";
             var now = AppUtils.NowMilis();
 
             try
             {
                 Log.Information("BOT {0} run", bot.Symbol);
 
-                var client = new UzxClient(bot.ApiKey);
+                var client = new UzxClient(bot.ApiSecret);
 
                 await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
 

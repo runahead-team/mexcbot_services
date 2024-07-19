@@ -1,9 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Net;
 using System.Net.Http;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using mexcbot.Api.Constants;
@@ -15,18 +13,11 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient;
 
 public class UzxClient
 {
-    private readonly string _apiKey;
-
     private readonly HttpClient _httpClient = new();
-
-    public UzxClient()
-    {
-    }
 
     public UzxClient(string apiKey)
     {
         _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("x-uzx-pro-api-key", apiKey);
-        _apiKey = apiKey;
     }
 
     public async Task<List<UzxSymbolThumb>> GetSymbolThumb()
@@ -38,7 +29,6 @@ public class UzxClient
             return null;
 
         return JsonConvert.DeserializeObject<List<UzxSymbolThumb>>(responseBody);
-
     }
 
     public async Task<UzxOrder> CreateOrder(string @base, string quote, decimal price, decimal qty, OrderSide side)
