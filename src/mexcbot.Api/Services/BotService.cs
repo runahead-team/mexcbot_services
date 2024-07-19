@@ -295,10 +295,6 @@ namespace mexcbot.Api.Services
             });
         }
 
-        #region Sys
-
-        #endregion
-
         #region Prv
 
         private async Task MapOrderAsync(params BotDto[] bots)

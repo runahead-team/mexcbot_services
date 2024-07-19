@@ -17,7 +17,8 @@ namespace mexcbot.Api.Constants
     public enum BotExchangeType
     {
         MEXC = 0,
-        LBANK = 1
+        LBANK = 1,
+        UZX = 2
     }
     
     public enum OrderSide

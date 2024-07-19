@@ -1,7 +1,6 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
-using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
@@ -11,30 +10,27 @@ using mexcbot.Api.Infrastructure;
 using mexcbot.Api.Infrastructure.ExchangeClient;
 using mexcbot.Api.Models.Bot;
 using mexcbot.Api.ResponseModels.Order;
-using mexcbot.Api.Services.Interface;
 using Microsoft.Extensions.Hosting;
 using MySqlConnector;
-using Newtonsoft.Json.Linq;
 using Serilog;
-using sp.Core.Extensions;
 using sp.Core.Utils;
 
 namespace mexcbot.Api.Jobs
 {
-    public class BotCancelOrderJob : BackgroundService
+    public class CancelOrderJob : BackgroundService
     {
-        public BotCancelOrderJob()
+        public CancelOrderJob()
         {
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var task = CancelOrderJob(stoppingToken);
+            var task = Worker(stoppingToken);
 
             await Task.WhenAll(task);
         }
 
-        private async Task CancelOrderJob(CancellationToken stoppingToken)
+        private async Task Worker(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -52,7 +48,7 @@ namespace mexcbot.Api.Jobs
 
                     var botIds = orders.Select(x => x.BotId).ToList();
                     var bots = (await dbConnection.QueryAsync<BotDto>(
-                        "SELECT * FROM Bots WHERE Id IN @Ids",
+                        "SELECT * FROM Bots WHERE `Id` IN @Ids",
                         new
                         {
                             Ids = botIds
@@ -63,12 +59,26 @@ namespace mexcbot.Api.Jobs
                         await Execute(order, bots, dbConnection);
                     }
 
+                    #region Delete orders 7 days ago
+
+                    var ago7Days = AppUtils.NowMilis() - TimeSpan.FromDays(7).TotalMilliseconds;
+                    await dbConnection.QueryAsync<OrderDto>(
+                        "DELETE FROM BotOrders WHERE `IsRunCancellation` = @IsRunCancellation AND `ExpiredTime` <= @Ago7Days",
+                        new
+                        {
+                            IsRunCancellation = true,
+                            Ago7Days = ago7Days
+                        });
+
+                    #endregion
+
+
                     await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
                 }
                 catch (Exception e)
                 {
                     if (!(e is TaskCanceledException))
-                        Log.Error(e, "BotCancelOrderJob:CancelOrderJob");
+                        Log.Error(e, "CancelOrderJob:CancelOrderJob");
                 }
             }
         }
@@ -120,13 +130,11 @@ namespace mexcbot.Api.Jobs
                 BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
                 BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey,
                     bot.ApiSecret),
-                _ => throw new ArgumentOutOfRangeException()
+                _ => null
             };
 
-            var openOrders = await client.GetOpenOrder(bot.Base, bot.Quote);
-            //
-            // if (openOrders.All(x => x.OrderId != order.OrderId))
-            //     return;
+            if (client == null)
+                return;
 
             var canceledOrder = await client.CancelOrder(bot.Base, bot.Quote, order.OrderId);
 

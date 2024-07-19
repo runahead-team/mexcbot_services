@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Globalization;
 using System.Linq;
 using System.Threading;
@@ -14,16 +13,15 @@ using mexcbot.Api.Models.Mexc;
 using Microsoft.Extensions.Hosting;
 using MySqlConnector;
 using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Serilog;
 using sp.Core.Extensions;
 using sp.Core.Utils;
 
 namespace mexcbot.Api.Jobs
 {
-    public class BotMakerPlaceOrderJob : BackgroundService
+    public class MarketMarkerJob : BackgroundService
     {
-        public BotMakerPlaceOrderJob()
+        public MarketMarkerJob()
         {
         }
 
@@ -41,7 +39,6 @@ namespace mexcbot.Api.Jobs
                 try
                 {
                     await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
-                    await dbConnection.OpenAsync();
 
                     var bots = (await dbConnection.QueryAsync<BotDto>(
                         "SELECT * FROM Bots WHERE Status = @Status AND Type = @Type AND (NextRunMakerTime < @Now OR NextRunMakerTime IS NULL)",
@@ -49,6 +46,7 @@ namespace mexcbot.Api.Jobs
                         {
                             Status = BotStatus.ACTIVE,
                             Type = BotType.MAKER,
+                            ExchangeTypes = new[] { BotExchangeType.MEXC, BotExchangeType.LBANK },
                             Now = AppUtils.NowMilis()
                         })).ToList();
 
@@ -62,7 +60,7 @@ namespace mexcbot.Api.Jobs
                 catch (Exception e)
                 {
                     if (!(e is TaskCanceledException))
-                        Log.Error(e, "BotMakerPlaceOrderJob:CreateOrderJob");
+                        Log.Error(e, "MarketMarkerJob:CreateOrderJob");
                 }
                 finally
                 {
@@ -85,8 +83,11 @@ namespace mexcbot.Api.Jobs
                     BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
                     BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey,
                         bot.ApiSecret),
-                    _ => throw new ArgumentOutOfRangeException()
+                    _ => null
                 };
+
+                if (client == null)
+                    return;
 
                 var exchangeInfo = await client.GetExchangeInfo(bot.Base, bot.Quote);
                 var selfSymbols = await client.GetSelfSymbols();
@@ -117,7 +118,7 @@ namespace mexcbot.Api.Jobs
                 }
                 catch (Exception e)
                 {
-                    Log.Error(e, "BotMakerPlaceOrderJob: Update Bots {Id} {@data1} {@data2}", bot.Id, bot.ExchangeInfo,
+                    Log.Error(e, "MarketMarkerJob: Update Bots {Id} {@data1} {@data2}", bot.Id, bot.ExchangeInfo,
                         bot.AccountInfo);
                 }
 

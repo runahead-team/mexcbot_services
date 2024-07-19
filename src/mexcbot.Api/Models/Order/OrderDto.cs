@@ -4,6 +4,8 @@ namespace mexcbot.Api.ResponseModels.Order
 {
     public class OrderDto
     {
+        public long Id { get; set; }
+        
         public long BotId { get; set; }
         
         public BotType BotType { get; set; }
