@@ -108,23 +108,26 @@ namespace mexcbot.Api.Services
                 BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
                 BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey,
                     bot.ApiSecret),
-                _ => throw new ArgumentOutOfRangeException()
+                _ => null
             };
 
-            var exchangeInfo = await client.GetExchangeInfo(bot.Base, bot.Quote);
-            var accBalances = await client.GetAccInformation();
-
-            var accInfo = new AccInfo
+            if (client != null)
             {
-                Balances = accBalances
-            };
+                var exchangeInfo = await client.GetExchangeInfo(bot.Base, bot.Quote);
+                var accBalances = await client.GetAccInformation();
 
-            bot.ExchangeInfo = (exchangeInfo == null || string.IsNullOrEmpty(exchangeInfo.Symbol))
-                ? string.Empty
-                : JsonConvert.SerializeObject(exchangeInfo);
-            bot.AccountInfo = (!accBalances.Any())
-                ? string.Empty
-                : JsonConvert.SerializeObject(accInfo);
+                var accInfo = new AccInfo
+                {
+                    Balances = accBalances
+                };
+
+                bot.ExchangeInfo = (exchangeInfo == null || string.IsNullOrEmpty(exchangeInfo.Symbol))
+                    ? string.Empty
+                    : JsonConvert.SerializeObject(exchangeInfo);
+                bot.AccountInfo = (!accBalances.Any())
+                    ? string.Empty
+                    : JsonConvert.SerializeObject(accInfo);
+            }
 
             await DbConnections.ExecAsync(async (dbConnection) =>
             {

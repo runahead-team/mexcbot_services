@@ -2,12 +2,6 @@
   "Users": [
     {
       "id": 1,
-      "username": "dannnguyen",
-      "email": "danh.uzumaki.sasuke@gmail.com",
-      "password": "D9E6762DD1C8EAF6D61B3C6192FC408D4D6D5F1176D0C29169BC24E71C3F274AD27FCD5811B313D681F7E55EC02D73D499C95455B6B5BB503ACF574FBA8FFE85"
-    },
-    {
-      "id": 2,
       "username": "botxyz",
       "email": "botxyz@gmail.com",
       "password": "D9E6762DD1C8EAF6D61B3C6192FC408D4D6D5F1176D0C29169BC24E71C3F274AD27FCD5811B313D681F7E55EC02D73D499C95455B6B5BB503ACF574FBA8FFE85"

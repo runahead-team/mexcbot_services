@@ -30,7 +30,7 @@ namespace mexcbot.Api.Controllers
 
             var orders=await client.GetOpenOrder("lbk","usdt");
 
-            return new OkResponse();
+            return new OkResponse(orders);
         }
 
         [HttpPost("list")]

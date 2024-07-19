@@ -23,7 +23,7 @@ public class UzxClient
     public async Task<List<UzxSymbolThumb>> GetSymbolThumb()
     {
         var (success, responseBody) =
-            await SendRequest("GET", "https://api.uzx.com/market/symbol-thumb", null, true);
+            await SendRequest("GET", "https://api.uzx.com/market/symbol-thumb", null);
 
         if (!success)
             return null;
