@@ -356,52 +356,19 @@ namespace mexcbot.Api.Jobs
                             var smallestAskPrice = asks[0][0];
                             var biggestBidPrice = bids[0][0];
                             var priceStep = 1 / (decimal)Math.Pow(10, quotePrecision);
-                            var askPrice = 0m;
+                            var askPrice = decimal.Parse(botTicker24hr.LastPrice);
                             var noBuy = false;
 
-                            if (smallestAskPrice - biggestBidPrice > priceStep * 50)
+                            if (smallestAskPrice - biggestBidPrice <= priceStep * 1)
                             {
-                                askPrice = RandomNumber(biggestBidPrice + priceStep * 20,
-                                    smallestAskPrice - priceStep * 20,
-                                    quotePrecision);
-                            }
-                            else if (smallestAskPrice - biggestBidPrice > priceStep * 20)
-                            {
-                                askPrice = RandomNumber(biggestBidPrice + priceStep * 10,
-                                    smallestAskPrice - priceStep * 10,
-                                    quotePrecision);
-                            }
-                            else if (smallestAskPrice - biggestBidPrice > priceStep * 10)
-                            {
-                                askPrice = RandomNumber(biggestBidPrice + priceStep * 5,
-                                    smallestAskPrice - priceStep * 5,
-                                    quotePrecision);
-                            }
-                            else if (smallestAskPrice - biggestBidPrice > priceStep * 5)
-                            {
-                                askPrice = RandomNumber(biggestBidPrice + priceStep * 1,
-                                    smallestAskPrice - priceStep * 1,
-                                    quotePrecision);
+                                if (volumeOption.SafeRun)
+                                    return;
+                                noBuy = true;
                             }
                             else
                             {
-                                if (smallestAskPrice - biggestBidPrice <= priceStep * 1)
-                                {
-                                    if (volumeOption.SafeRun)
-                                        return;
-
-                                    askPrice = biggestBidPrice;
+                                if (volumeOption.SafeRun)
                                     noBuy = true;
-                                }
-                                else
-                                {
-                                    if (volumeOption.SafeRun)
-                                        noBuy = true;
-
-                                    askPrice = RandomNumber(biggestBidPrice + priceStep,
-                                        smallestAskPrice - priceStep,
-                                        quotePrecision);
-                                }
                             }
 
                             totalUsdVolume += orderQty * askPrice;
