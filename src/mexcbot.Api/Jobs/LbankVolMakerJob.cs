@@ -347,6 +347,7 @@ namespace mexcbot.Api.Jobs
 
                             totalQty += orderQty;
 
+                            botTicker24hr = (await client.GetTicker24hr(bot.Base, bot.Quote));
                             var askPrice = decimal.Parse(botTicker24hr.LastPrice);
 
                             totalUsdVolume += orderQty * askPrice;
