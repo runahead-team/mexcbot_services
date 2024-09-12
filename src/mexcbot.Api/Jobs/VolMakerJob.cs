@@ -335,41 +335,13 @@ namespace mexcbot.Api.Jobs
 
                             Log.Information("order #{0}", i + 1);
 
-                            var orderbook = await client.GetOrderbook(bot.Base, bot.Quote);
-
-                            if (orderbook.Asks.Count == 0 || orderbook.Asks.Count == 0)
-                            {
-                                Log.Warning("Orderbook empty");
-                                return;
-                            }
-
                             var orderQty = Math.Round(
                                 RandomNumber(volumeOption.MinOrderQty, volumeOption.MaxOrderQty, basePrecision),
                                 basePrecision);
 
                             totalQty += orderQty;
 
-                            //Ask [Price, Quantity ]
-                            var asks = orderbook.Asks;
-                            var bids = orderbook.Bids;
-
-                            var smallestAskPrice = asks[0][0];
-                            var biggestBidPrice = bids[0][0];
-                            var priceStep = 1 / (decimal)Math.Pow(10, quotePrecision);
                             var askPrice = decimal.Parse(botTicker24hr.LastPrice);
-                            var noBuy = false;
-
-                            if (smallestAskPrice - biggestBidPrice <= priceStep * 1)
-                            {
-                                if (volumeOption.SafeRun)
-                                    return;
-                                noBuy = true;
-                            }
-                            else
-                            {
-                                if (volumeOption.SafeRun)
-                                    noBuy = true;
-                            }
 
                             totalUsdVolume += orderQty * askPrice;
 
@@ -397,7 +369,7 @@ namespace mexcbot.Api.Jobs
                                         OrderSide.SELL));
                                 }
 
-                                if (!noBuy && volumeOption.Side is OrderSide.BUY or OrderSide.BOTH)
+                                if (volumeOption.Side is OrderSide.BUY or OrderSide.BOTH)
                                 {
                                     tasks.Add(CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
@@ -417,7 +389,7 @@ namespace mexcbot.Api.Jobs
                                         OrderSide.SELL);
                                 }
 
-                                if (!noBuy && volumeOption.Side is OrderSide.BUY or OrderSide.BOTH)
+                                if (volumeOption.Side is OrderSide.BUY or OrderSide.BOTH)
                                 {
                                     await TradeDelay(bot);
 
