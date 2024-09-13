@@ -159,7 +159,7 @@ namespace mexcbot.Api.Services
                     throw new AppException("Bot is not exist");
 
                 var exec = await dbConnection.ExecuteAsync(
-                    @"UPDATE Bots SET VolumeOption = @VolumeOption, MakerOption = @MakerOption, NextRunMakerTime = 0
+                    @"UPDATE Bots SET `Base` = @Base, `Quote` = @Quote, VolumeOption = @VolumeOption, MakerOption = @MakerOption, NextRunMakerTime = 0
                     WHERE UserId = @UserId AND Id = @Id AND Type = @Type",
                     bot);
 
