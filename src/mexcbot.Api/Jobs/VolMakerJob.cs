@@ -344,6 +344,25 @@ namespace mexcbot.Api.Jobs
                             botTicker24hr = (await client.GetTicker24hr(bot.Base, bot.Quote));
                             var askPrice = decimal.Parse(botTicker24hr.LastPrice);
 
+                            var orderbook = await client.GetOrderbook(bot.Base, bot.Quote);
+                            var asks = orderbook.Asks;
+                            var bids = orderbook.Bids;
+                            
+                            if (orderbook.Asks.Count == 0 || orderbook.Bids.Count == 0)
+                                return;
+
+                            var smallestAskPrice = asks[0][0];
+                            var biggestBidPrice = bids[0][0];
+
+
+                            if (volumeOption.SafeRun)
+                            {
+                                if (askPrice >= smallestAskPrice)
+                                    return;
+                                if (askPrice <= biggestBidPrice)
+                                    return;
+                            }
+
                             totalUsdVolume += orderQty * askPrice;
 
                             if (orderQty < 0)
