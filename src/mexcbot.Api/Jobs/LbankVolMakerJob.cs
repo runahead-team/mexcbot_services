@@ -348,8 +348,14 @@ namespace mexcbot.Api.Jobs
                             totalQty += orderQty;
 
                             botTicker24hr = (await client.GetTicker24hr(bot.Base, bot.Quote));
-                            var askPrice = decimal.Parse(botTicker24hr.LastPrice);
+                            var orderPrice = decimal.Parse(botTicker24hr.LastPrice);
 
+                            if (orderPrice < 0)
+                            {
+                                Log.Warning("askPrice zero");
+                                return;
+                            }
+                            
                             var orderbook = await client.GetOrderbook(bot.Base, bot.Quote);
                             var asks = orderbook.Asks;
                             var bids = orderbook.Bids;
@@ -362,23 +368,17 @@ namespace mexcbot.Api.Jobs
 
                             if (volumeOption.SafeRun)
                             {
-                                if (askPrice >= smallestAskPrice)
+                                if (orderPrice >= smallestAskPrice)
                                     return;
-                                if (askPrice <= biggestBidPrice)
+                                if (orderPrice <= biggestBidPrice)
                                     return;
                             }
 
-                            totalUsdVolume += orderQty * askPrice;
+                            totalUsdVolume += orderQty * orderPrice;
 
                             if (orderQty < 0)
                             {
                                 Log.Warning("orderQty zero");
-                                return;
-                            }
-
-                            if (askPrice < 0)
-                            {
-                                Log.Warning("askPrice zero");
                                 return;
                             }
 
@@ -390,7 +390,7 @@ namespace mexcbot.Api.Jobs
                                 {
                                     tasks.Add(CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
-                                        askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                        orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
                                         OrderSide.SELL));
                                 }
 
@@ -398,7 +398,7 @@ namespace mexcbot.Api.Jobs
                                 {
                                     tasks.Add(CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
-                                        askPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                        orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
                                         OrderSide.BUY));
                                 }
 
@@ -410,7 +410,7 @@ namespace mexcbot.Api.Jobs
                                 {
                                     await CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
-                                        askPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
+                                        orderPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
                                         OrderSide.SELL);
                                 }
 
@@ -420,7 +420,7 @@ namespace mexcbot.Api.Jobs
 
                                     await CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
-                                        askPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()), OrderSide.BUY);
+                                        orderPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()), OrderSide.BUY);
                                 }
                             }
                         }
