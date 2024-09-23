@@ -450,7 +450,9 @@ namespace mexcbot.Api.Jobs
 
                                 if (makerOption.MinPriceOverStep < 0 && price > 0)
                                 {
-                                    var overStepQty = (qty / 2).Truncate(basePrecision);
+                                    var overStepQty = qty =
+                                        RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
+                                            .Truncate(basePrecision);
 
                                     var overStepPrice = RandomNumber(
                                         price + (makerOption.MinPriceStep + makerOption.MinPriceOverStep) * price /
@@ -468,7 +470,9 @@ namespace mexcbot.Api.Jobs
 
                                 if (makerOption.MaxPriceOverStep > 0 && price > 0)
                                 {
-                                    var overStepQty = (qty / 2).Truncate(basePrecision);
+                                    var overStepQty = qty =
+                                        RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
+                                            .Truncate(basePrecision);
 
                                     var overStepPrice = RandomNumber(
                                         price + makerOption.MaxPriceOverStep *
