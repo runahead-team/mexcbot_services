@@ -373,20 +373,9 @@ namespace mexcbot.Api.Jobs
 
                                 #endregion
 
-                                #region Qty
-
-                                decimal qty;
-
-                                if (makerOption.IsRandomQty)
-                                {
-                                    qty = RandomNumber(makerOption.MinQty, makerOption.MinQty * 2, basePrecision);
-                                }
-                                else
-                                {
-                                    qty = RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision);
-                                }
-
-                                #endregion
+                                var qty = makerOption.IsRandomQty
+                                    ? RandomNumber(makerOption.MinQty, makerOption.MinQty * 2, basePrecision)
+                                    : RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision);
 
                                 #region Trade
 
@@ -450,7 +439,7 @@ namespace mexcbot.Api.Jobs
 
                                 if (makerOption.MinPriceOverStep < 0 && price > 0)
                                 {
-                                    var overStepQty = qty =
+                                    var overStepQty =
                                         RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
                                             .Truncate(basePrecision);
 
@@ -470,7 +459,7 @@ namespace mexcbot.Api.Jobs
 
                                 if (makerOption.MaxPriceOverStep > 0 && price > 0)
                                 {
-                                    var overStepQty = qty =
+                                    var overStepQty =
                                         RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
                                             .Truncate(basePrecision);
 
