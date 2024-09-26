@@ -492,30 +492,32 @@ namespace mexcbot.Api.Jobs
                                  sellPrice > price;
                                  sellPrice -= fillOrderBookPriceStep)
                             {
-                                var fillOrderBookQty =  RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
-                                    .Truncate(basePrecision);
+                                var fillOrderBookQty =
+                                    RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
+                                        .Truncate(basePrecision);
 
                                 sellPrice -= RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
                                 await CreateLimitOrder(client, bot,
                                     fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
                                         new NumberFormatInfo()),
                                     sellPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                    OrderSide.SELL, true);
+                                    OrderSide.SELL, isFillOrder: true);
                             }
 
                             for (var buyPrice = (minPrice + fillOrderBookPriceStep);
                                  buyPrice < price;
                                  buyPrice += fillOrderBookPriceStep)
                             {
-                                var fillOrderBookQty =  RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
-                                    .Truncate(basePrecision);
+                                var fillOrderBookQty =
+                                    RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
+                                        .Truncate(basePrecision);
 
                                 buyPrice += RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
                                 await CreateLimitOrder(client, bot,
                                     fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
                                         new NumberFormatInfo()),
                                     buyPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                    OrderSide.BUY, true);
+                                    OrderSide.BUY, isFillOrder: true);
                             }
                         }
 
@@ -538,7 +540,7 @@ namespace mexcbot.Api.Jobs
         #region Private
 
         private async Task<bool> CreateLimitOrder(ExchangeClient client, BotDto bot, string qty, string price,
-            OrderSide side, bool isOverStepOrder = false)
+            OrderSide side, bool isOverStepOrder = false, bool isFillOrder = false)
         {
             var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty,
                 price);
@@ -560,7 +562,15 @@ namespace mexcbot.Api.Jobs
             order.UserId = bot.UserId;
 
             if (isOverStepOrder && bot.MakerOptionObj != null && bot.MakerOptionObj.OrderExp > 0)
-                order.ExpiredTime = order.TransactTime + (bot.MakerOptionObj.OrderExp * 1000);
+            {
+                order.ExpiredTime =
+                    order.TransactTime + (long)bot.MakerOptionObj.OrderExp * 1000;
+            }
+            else if (isFillOrder)
+            {
+                order.ExpiredTime = order.TransactTime + (long)TimeSpan
+                    .FromHours(new Random().Next(1, 4)).TotalMilliseconds;
+            }
             else
                 order.ExpiredTime = order.TransactTime + MexcBotConstants.ExpiredOrderTime;
 
