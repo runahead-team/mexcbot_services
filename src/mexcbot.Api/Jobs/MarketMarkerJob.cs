@@ -492,7 +492,8 @@ namespace mexcbot.Api.Jobs
                                  sellPrice > price;
                                  sellPrice -= fillOrderBookPriceStep)
                             {
-                                var fillOrderBookQty = RandomNumber(10 / price, 15 / price, basePrecision);
+                                var fillOrderBookQty =  RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
+                                    .Truncate(basePrecision);
 
                                 sellPrice -= RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
                                 await CreateLimitOrder(client, bot,
@@ -506,7 +507,8 @@ namespace mexcbot.Api.Jobs
                                  buyPrice < price;
                                  buyPrice += fillOrderBookPriceStep)
                             {
-                                var fillOrderBookQty = RandomNumber(10 / price, 15 / price, basePrecision);
+                                var fillOrderBookQty =  RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
+                                    .Truncate(basePrecision);
 
                                 buyPrice += RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
                                 await CreateLimitOrder(client, bot,
