@@ -186,7 +186,7 @@ namespace mexcbot.Api.Jobs
                 #region Update Bot
 
                 await dbConnection.ExecuteAsync(
-                    @"UPDATE Bots SET `Status` = @Status, `NextRunMakerTime` = @NextRunMakerTime WHERE Id = @Id",
+                    @"UPDATE Bots SET `NextRunMakerTime` = @NextRunMakerTime WHERE Id = @Id",
                     bot);
 
                 #endregion

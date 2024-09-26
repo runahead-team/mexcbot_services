@@ -577,22 +577,10 @@ namespace mexcbot.Api.Jobs
                 await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
                 await dbConnection.OpenAsync();
 
-                if (isInactive)
-                {
-                    bot.NextRunMakerTime = AppUtils.NowMilis() + (long)TimeSpan.FromMinutes(1).TotalMilliseconds;
-
-                    await dbConnection.ExecuteAsync(
-                        @"UPDATE Bots SET Logs = @Logs, Status = @Status, NextRunMakerTime = @NextRunMakerTime
+                await dbConnection.ExecuteAsync(
+                    @"UPDATE Bots SET Logs = @Logs, NextRunMakerTime = @NextRunMakerTime
                     WHERE Id = @Id",
-                        bot);
-                }
-                else
-                {
-                    await dbConnection.ExecuteAsync(
-                        @"UPDATE Bots SET NextRunMakerTime = @NextRunMakerTime
-                    WHERE Id = @Id",
-                        bot);
-                }
+                    bot);
             }
             catch (Exception e)
             {
