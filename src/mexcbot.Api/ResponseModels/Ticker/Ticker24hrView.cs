@@ -24,6 +24,14 @@ namespace mexcbot.Api.ResponseModels.Ticker
             // if (volAsDecimal > 0)
             //     QuoteVolume = (volAsDecimal * lastPriceAsDecimal).ToString(CultureInfo.InvariantCulture);
         }
+        
+        public Ticker24hrView(DeepCoinTicker24hr deepCoinTicker24Hr)
+        {
+            Symbol = deepCoinTicker24Hr.Symbol;
+            Volume = deepCoinTicker24Hr.Vol;
+            LastPrice = deepCoinTicker24Hr.Latest;
+            QuoteVolume = deepCoinTicker24Hr.Turnover;
+        }
 
         public string Symbol { get; set; }
 

@@ -234,6 +234,21 @@ namespace sp.Core.Extensions
                 return value;
             }
         }
+        
+        public static int CountPrecision(this string strValue)
+        {
+            // Check if there is a decimal point
+            if (!strValue.Contains(".")) 
+                return 0; // No decimal part, so precision is 0
+            
+            // Split the number at the decimal point
+            var parts = strValue.Split('.');
+            
+            // Get the fractional part and count the non-zero digits
+            string fractionalPart = parts.Length > 1 ? parts[1] : string.Empty;
+            return fractionalPart.Length; // Return the length of the fractional part
+
+        }
 
         #endregion
 

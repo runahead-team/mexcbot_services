@@ -1,4 +1,5 @@
 using mexcbot.Api.Models.LBank;
+using sp.Core.Extensions;
 
 namespace mexcbot.Api.ResponseModels.ExchangeInfo
 {
@@ -18,6 +19,15 @@ namespace mexcbot.Api.ResponseModels.ExchangeInfo
             BaseAssetPrecision = int.TryParse(lBankExchangeInfo.QuantityAccuracy, out var qtyAccuracyValue)
                 ? qtyAccuracyValue
                 : 0;
+        }
+        
+        public ExchangeInfoView(DeepCoinExchangeInfo deepCoinExchangeInfo)
+        {
+            Symbol = deepCoinExchangeInfo.Symbol;
+            QuoteAmountPrecision = deepCoinExchangeInfo.MinSz;
+            
+            QuoteAssetPrecision = deepCoinExchangeInfo.TickSz.CountPrecision();
+            BaseAssetPrecision = deepCoinExchangeInfo.LotSz.CountPrecision();
         }
 
         public string Symbol { get; set; }

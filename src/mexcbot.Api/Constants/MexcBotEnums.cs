@@ -18,7 +18,8 @@ namespace mexcbot.Api.Constants
     {
         MEXC = 0,
         LBANK = 1,
-        UZX = 2
+        UZX = 2,
+        DEEPCOIN = 3
     }
     
     public enum OrderSide

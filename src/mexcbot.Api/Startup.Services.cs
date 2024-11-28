@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using mexcbot.Api.Infrastructure;
 using mexcbot.Api.Infrastructure.Authentication;
 using mexcbot.Api.Jobs;
+using mexcbot.Api.Jobs.DeepCoin;
 using mexcbot.Api.Services;
 using mexcbot.Api.Services.Interface;
 using mexcbot.Api.Services.SubService;
@@ -23,12 +24,14 @@ namespace mexcbot.Api
             services.AddSingleton<IUserService, UserService>();
             services.AddSingleton<IBotService, BotService>();
 
-            //Job
-            services.AddHostedService<MolMarkerJob>();
-            services.AddHostedService<LbankVolMakerJob>();
-            services.AddHostedService<MarketMarkerJob>();
-            services.AddHostedService<CancelOrderJob>();
-            services.AddHostedService<UzxMarketMarkerJob>();
+            // //Job
+            // services.AddHostedService<MolMarkerJob>();
+            // services.AddHostedService<LbankVolMakerJob>();
+            // services.AddHostedService<MarketMarkerJob>();
+            // services.AddHostedService<CancelOrderJob>();
+            // services.AddHostedService<UzxMarketMarkerJob>();
+            
+            services.AddHostedService<DeepCoinVolMakerJob>();
         }
     }
 }

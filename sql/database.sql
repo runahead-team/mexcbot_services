@@ -62,6 +62,7 @@ CREATE TABLE `Bots` (
   `MakerOption` text COLLATE utf8_unicode_ci,
   `ApiKey` varchar(128) COLLATE utf8_unicode_ci NOT NULL,
   `ApiSecret` varchar(128) COLLATE utf8_unicode_ci NOT NULL,
+  `Passphrase` varchar(128) COLLATE utf8_unicode_ci NULL,
   `Logs` text COLLATE utf8_unicode_ci,
   `Status` tinyint(4) NOT NULL,
   `LastRunTime` bigint(20) DEFAULT NULL,

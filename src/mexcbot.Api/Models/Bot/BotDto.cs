@@ -34,6 +34,7 @@ namespace mexcbot.Api.Models.Bot
             MakerOption = request.MakerOption == null ? string.Empty : JsonConvert.SerializeObject(request.MakerOption);
             ApiKey = request.ApiKey;
             ApiSecret = request.ApiSecret;
+            Passphrase = request.Passphrase;
             Logs = request.Logs;
             Status = request.Status;
 
@@ -144,6 +145,8 @@ namespace mexcbot.Api.Models.Bot
         public string ApiKey { get; set; }
 
         public string ApiSecret { get; set; }
+        
+        public string Passphrase { get; set; }
 
         public string Logs { get; set; }
 

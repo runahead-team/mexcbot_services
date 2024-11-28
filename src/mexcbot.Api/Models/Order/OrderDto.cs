@@ -1,9 +1,20 @@
 using mexcbot.Api.Constants;
+using mexcbot.Api.Models.DeepCoin;
 
 namespace mexcbot.Api.ResponseModels.Order
 {
     public class OrderDto
     {
+        public OrderDto(){}
+        public OrderDto(DeepCoinOrder deepCoinOrder)
+        {
+            Symbol = deepCoinOrder.Symbol;
+            OrderId = deepCoinOrder.OrderId;
+            Price = deepCoinOrder.Price;
+            OrigQty = deepCoinOrder.OrigQty;
+            Side = deepCoinOrder.Side;
+        }
+        
         public long Id { get; set; }
         
         public long BotId { get; set; }

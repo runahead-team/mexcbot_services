@@ -4,6 +4,16 @@ namespace mexcbot.Api.ResponseModels.Order
 {
     public class CanceledOrderView
     {
+        public CanceledOrderView(){}
+
+        public CanceledOrderView(DeepCoinCanceledOrderView deepCoinCanceledOrderView)
+        {
+            Symbol = deepCoinCanceledOrderView.Symbol;
+            OrigClientOrderId = deepCoinCanceledOrderView.OrigClientOrderId;
+            OrderId = deepCoinCanceledOrderView.OrderId;
+            ClientOrderId = deepCoinCanceledOrderView.ClientOrderId;
+        }
+        
         public string Symbol { get; set; }
         
         public string OrigClientOrderId { get; set; }

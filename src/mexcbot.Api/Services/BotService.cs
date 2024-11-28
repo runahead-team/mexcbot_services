@@ -106,8 +106,8 @@ namespace mexcbot.Api.Services
             ExchangeClient client = bot.ExchangeType switch
             {
                 BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
-                BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey,
-                    bot.ApiSecret),
+                BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey, bot.ApiSecret),
+                BotExchangeType.DEEPCOIN => new DeepCoinClient(Configurations.DeepCoinUrl, bot.ApiKey, bot.ApiSecret, bot.Passphrase),
                 _ => null
             };
 
@@ -132,8 +132,8 @@ namespace mexcbot.Api.Services
             await DbConnections.ExecAsync(async (dbConnection) =>
             {
                 var exec = await dbConnection.ExecuteAsync(
-                    @"INSERT INTO Bots(UserId,Base,Quote,Type,ExchangeType,ApiKey,ApiSecret,Logs,Status,VolumeOption,MakerOption,ExchangeInfo,AccountInfo,CreatedTime)
-                    VALUES(@UserId,@Base,@Quote,@Type,@ExchangeType,@ApiKey,@ApiSecret,@Logs,@Status,@VolumeOption,@MakerOption,@ExchangeInfo,@AccountInfo,@CreatedTime)",
+                    @"INSERT INTO Bots(UserId,Base,Quote,Type,ExchangeType,ApiKey,ApiSecret,Passphrase,Logs,Status,VolumeOption,MakerOption,ExchangeInfo,AccountInfo,CreatedTime)
+                    VALUES(@UserId,@Base,@Quote,@Type,@ExchangeType,@ApiKey,@ApiSecret,@Passphrase,@Logs,@Status,@VolumeOption,@MakerOption,@ExchangeInfo,@AccountInfo,@CreatedTime)",
                     bot);
 
                 if (exec != 1)
@@ -305,6 +305,7 @@ namespace mexcbot.Api.Services
             foreach (var bot in bots)
             {
                 bot.ApiSecret = "**********************";
+                bot.Passphrase = "***********";
             }
 
             await Task.CompletedTask;
