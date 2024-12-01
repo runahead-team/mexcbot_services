@@ -123,66 +123,75 @@ namespace mexcbot.Api.Jobs.DeepCoin
 
                 #endregion
 
-                // #region Validate
-                //
-                // if (!balances.Any())
-                // {
-                //     bot.Status = BotStatus.INACTIVE;
-                //     stopLog += "Stop when your balances Zero\n";
-                // }
-                // else
-                // {
-                //     var baseBalance = balances.FirstOrDefault(x => x.Asset == bot.Base);
-                //
-                //     if (baseBalance == null || decimal.Parse(baseBalance.Free, new NumberFormatInfo()) <= 0)
-                //     {
-                //         bot.Status = BotStatus.INACTIVE;
-                //         stopLog += $"Stop when your {bot.Base} balance below 0 or null\n";
-                //     }
-                //
-                //     var quoteBalance = balances.FirstOrDefault(x => x.Asset == bot.Quote);
-                //
-                //     if (quoteBalance == null || decimal.Parse(quoteBalance.Free, new NumberFormatInfo()) <= 0)
-                //     {
-                //         bot.Status = BotStatus.INACTIVE;
-                //         stopLog += $"Stop when your {bot.Quote} balance below 0 or null\n";
-                //     }
-                // }
-                //
-                // if (exchangeInfo == null)
-                // {
-                //     bot.Status = BotStatus.INACTIVE;
-                //     stopLog += $"Stop when exchange info not found\n";
-                // }
-                //
-                // //default
-                // bot.NextRunVolTime = now;
-                //
-                // if (string.IsNullOrEmpty(bot.VolumeOption))
-                // {
-                //     bot.Status = BotStatus.INACTIVE;
-                //     stopLog += $"Stop when volume option is null\n";
-                // }
-                // else
-                // {
-                //     bot.NextRunVolTime =
-                //         now + (int)RandomNumber(bot.VolumeOptionObj.MinInterval, bot.VolumeOptionObj.MaxInterval, 0) *
-                //         1000;
-                // }
-                //
-                // //Stop
-                // if (bot.Status == BotStatus.INACTIVE)
-                // {
-                //     bot.Logs = stopLog;
-                //     await UpdateBot(bot);
-                //     return;
-                // }
-                // else
-                // {
-                //     await UpdateBot(bot, false);
-                // }
-                //
-                // #endregion
+                #region Validate
+                
+                if (!balances.Any())
+                {
+                    bot.Status = BotStatus.INACTIVE;
+                    stopLog += "Stop when your balances Zero\n";
+                }
+                else
+                {
+                    var baseBalance = balances.FirstOrDefault(x => x.Asset == bot.Base);
+                
+                    if (baseBalance == null || decimal.Parse(baseBalance.Free, new NumberFormatInfo()) <= 0)
+                    {
+                        bot.Status = BotStatus.INACTIVE;
+                        stopLog += $"Stop when your {bot.Base} balance below 0 or null\n";
+                    }
+                
+                    var quoteBalance = balances.FirstOrDefault(x => x.Asset == bot.Quote);
+                
+                    if (quoteBalance == null || decimal.Parse(quoteBalance.Free, new NumberFormatInfo()) <= 0)
+                    {
+                        bot.Status = BotStatus.INACTIVE;
+                        stopLog += $"Stop when your {bot.Quote} balance below 0 or null\n";
+                    }
+                }
+                
+                if (exchangeInfo == null)
+                {
+                    bot.Status = BotStatus.INACTIVE;
+                    stopLog += $"Stop when exchange info not found\n";
+                }
+                else
+                {
+                    //MinOrder
+                    var minOrder = decimal.Parse(exchangeInfo.QuoteAmountPrecision, new NumberFormatInfo());
+                    if (bot.VolumeOptionObj.MinOrderQty > minOrder)
+                    {
+                        stopLog += $"Stop when min order is {minOrder}\n";
+                    }
+                }
+                
+                //default
+                bot.NextRunVolTime = now;
+                
+                if (string.IsNullOrEmpty(bot.VolumeOption))
+                {
+                    bot.Status = BotStatus.INACTIVE;
+                    stopLog += $"Stop when volume option is null\n";
+                }
+                else
+                {
+                    bot.NextRunVolTime =
+                        now + (int)RandomNumber(bot.VolumeOptionObj.MinInterval, bot.VolumeOptionObj.MaxInterval, 0) *
+                        1000;
+                }
+                
+                //Stop
+                if (bot.Status == BotStatus.INACTIVE)
+                {
+                    bot.Logs = stopLog;
+                    await UpdateBot(bot);
+                    return;
+                }
+                else
+                {
+                    await UpdateBot(bot, false);
+                }
+                
+                #endregion
 
                 #region Follow btc candle 60m => bot's volume 60m
 
@@ -339,7 +348,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
                             totalQty += orderQty;
 
                             botTicker24hr = (await client.GetTicker24hr(bot.Base, bot.Quote));
-                            var orderPrice = decimal.Parse(botTicker24hr.LastPrice);
+                            var orderPrice = decimal.Parse(botTicker24hr.LastPrice,new NumberFormatInfo());
 
                             if (orderPrice < 0)
                             {

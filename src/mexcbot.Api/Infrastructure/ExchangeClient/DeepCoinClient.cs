@@ -118,7 +118,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 $"instId={@base}-{quote}";
             payload = payload + $"&tdMode={tdMode}";
             payload = payload + $"&side={sideStr}";
-            payload = payload + $"&type={typeStr}";
+            payload = payload + $"&ordType={typeStr}";
             payload = payload + $"&sz={quantity}";
             payload = payload + $"&px={price}";
 
@@ -142,7 +142,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var payload = $"instId={@base}-{quote}&ordId={orderId}";
 
             var (success, responseBody) =
-                await SendRequest("DELETE", "/deepcoin/trade/cancel-order", payload, true, true);
+                await SendRequest("POST", "/deepcoin/trade/cancel-order", payload, true, true);
 
             if (!success)
                 return null;
@@ -251,6 +251,8 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 preHashStr = preHashStr + $"?{payload}";
 
                 var sign = GetHmacSha256Signature(preHashStr, _secretKey);
+                
+                _httpClient.DefaultRequestHeaders.Clear();
 
                 _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("DC-ACCESS-KEY", _apiKey);
                 _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("DC-ACCESS-SIGN", sign);

@@ -10,15 +10,15 @@ public class DeepCoinOrder
     public long BotId { get; set; }
         
     public BotType BotType { get; set; }
-        
-    public BotExchangeType BotExchangeType { get; set; }
+
+    public BotExchangeType BotExchangeType { get; set; } = BotExchangeType.DEEPCOIN;
         
     public long UserId { get; set; }
         
     [JsonProperty("instId")]
     public string Symbol { get; set; }
         
-    [JsonProperty("clOrdId")]
+    [JsonProperty("ordId")]
     public string OrderId { get; set; }
         
     public long OrderListId { get; set; }
