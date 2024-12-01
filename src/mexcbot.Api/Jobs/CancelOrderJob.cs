@@ -130,6 +130,8 @@ namespace mexcbot.Api.Jobs
                 BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
                 BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey,
                     bot.ApiSecret),
+                BotExchangeType.DEEPCOIN => new DeepCoinClient(Configurations.DeepCoinUrl, bot.ApiKey,
+                    bot.ApiSecret, bot.Passphrase),
                 _ => null
             };
 
@@ -138,7 +140,8 @@ namespace mexcbot.Api.Jobs
 
             var canceledOrder = await client.CancelOrder(bot.Base, bot.Quote, order.OrderId);
 
-            if (canceledOrder != null && !string.IsNullOrEmpty(canceledOrder.Symbol))
+            if (canceledOrder != null && (!string.IsNullOrEmpty(canceledOrder.Symbol) ||
+                                          !string.IsNullOrEmpty(canceledOrder.OrderId)))
             {
                 //-1: Cancelled 0: Unfilled 1: Partially filled 2: Completely filled 3: Partially filled has been cancelled 4: Cancellation is being processed
                 if (bot.ExchangeType == BotExchangeType.LBANK)
@@ -151,7 +154,9 @@ namespace mexcbot.Api.Jobs
                         _ => OrderStatus.UNKNOWN
                     };
                 else
-                    order.Status = canceledOrder.Status;
+                    order.Status = bot.ExchangeType == BotExchangeType.DEEPCOIN
+                        ? OrderStatus.CANCELED
+                        : canceledOrder.Status;
 
                 await UpdateStatus(order, dbConnection);
             }

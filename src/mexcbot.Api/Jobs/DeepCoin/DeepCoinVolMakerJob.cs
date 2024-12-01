@@ -124,7 +124,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
                 #endregion
 
                 #region Validate
-                
+
                 if (!balances.Any())
                 {
                     bot.Status = BotStatus.INACTIVE;
@@ -133,22 +133,22 @@ namespace mexcbot.Api.Jobs.DeepCoin
                 else
                 {
                     var baseBalance = balances.FirstOrDefault(x => x.Asset == bot.Base);
-                
+
                     if (baseBalance == null || decimal.Parse(baseBalance.Free, new NumberFormatInfo()) <= 0)
                     {
                         bot.Status = BotStatus.INACTIVE;
                         stopLog += $"Stop when your {bot.Base} balance below 0 or null\n";
                     }
-                
+
                     var quoteBalance = balances.FirstOrDefault(x => x.Asset == bot.Quote);
-                
+
                     if (quoteBalance == null || decimal.Parse(quoteBalance.Free, new NumberFormatInfo()) <= 0)
                     {
                         bot.Status = BotStatus.INACTIVE;
                         stopLog += $"Stop when your {bot.Quote} balance below 0 or null\n";
                     }
                 }
-                
+
                 if (exchangeInfo == null)
                 {
                     bot.Status = BotStatus.INACTIVE;
@@ -157,16 +157,26 @@ namespace mexcbot.Api.Jobs.DeepCoin
                 else
                 {
                     //MinOrder
-                    var minOrder = decimal.Parse(exchangeInfo.QuoteAmountPrecision, new NumberFormatInfo());
+                    var minOrder = decimal.Parse(exchangeInfo.MinQty, new NumberFormatInfo());
                     if (bot.VolumeOptionObj.MinOrderQty > minOrder)
                     {
-                        stopLog += $"Stop when min order is {minOrder}\n";
+                        stopLog +=
+                            $"Min quantity must be bigger than required quantity {minOrder}; \n";
+                    }
+
+                    var maxLimitQty = decimal.Parse(exchangeInfo.MaxLimitQty, new NumberFormatInfo());
+
+                    if (bot.VolumeOptionObj.MaxOrderQty > maxLimitQty)
+                    {
+                        bot.Status = BotStatus.INACTIVE;
+                        stopLog +=
+                            $"Min quantity must be less than required quantity {maxLimitQty}; \n";
                     }
                 }
-                
+
                 //default
                 bot.NextRunVolTime = now;
-                
+
                 if (string.IsNullOrEmpty(bot.VolumeOption))
                 {
                     bot.Status = BotStatus.INACTIVE;
@@ -178,7 +188,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
                         now + (int)RandomNumber(bot.VolumeOptionObj.MinInterval, bot.VolumeOptionObj.MaxInterval, 0) *
                         1000;
                 }
-                
+
                 //Stop
                 if (bot.Status == BotStatus.INACTIVE)
                 {
@@ -190,7 +200,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
                 {
                     await UpdateBot(bot, false);
                 }
-                
+
                 #endregion
 
                 #region Follow btc candle 60m => bot's volume 60m
@@ -348,18 +358,18 @@ namespace mexcbot.Api.Jobs.DeepCoin
                             totalQty += orderQty;
 
                             botTicker24hr = (await client.GetTicker24hr(bot.Base, bot.Quote));
-                            var orderPrice = decimal.Parse(botTicker24hr.LastPrice,new NumberFormatInfo());
+                            var orderPrice = decimal.Parse(botTicker24hr.LastPrice, new NumberFormatInfo());
 
                             if (orderPrice < 0)
                             {
                                 Log.Warning("askPrice zero");
                                 return;
                             }
-                            
+
                             var orderbook = await client.GetOrderbook(bot.Base, bot.Quote);
                             var asks = orderbook.Asks;
                             var bids = orderbook.Bids;
-                            
+
                             if (orderbook.Asks.Count == 0 || orderbook.Bids.Count == 0)
                                 return;
 
@@ -419,8 +429,9 @@ namespace mexcbot.Api.Jobs.DeepCoin
                                     await TradeDelay(bot);
 
                                     await CreateLimitOrder(client, bot,
-                                        orderQty.ToString("F8", new NumberFormatInfo()),
-                                        orderPrice.ToString("F2", new NumberFormatInfo()), OrderSide.BUY);
+                                        orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
+                                        orderPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
+                                        OrderSide.BUY);
                                 }
                             }
                         }
@@ -465,6 +476,10 @@ namespace mexcbot.Api.Jobs.DeepCoin
 
             await using var sqlConnection = new MySqlConnection(Configurations.DbConnectionString);
 
+            order.Symbol = bot.Symbol;
+            order.Price = price;
+            order.OrigQty = qty;
+            order.Type = bot.ExchangeType == BotExchangeType.DEEPCOIN ? "limit" : order.Type;
             order.BotId = bot.Id;
             order.BotType = bot.Type;
             order.BotExchangeType = bot.ExchangeType;

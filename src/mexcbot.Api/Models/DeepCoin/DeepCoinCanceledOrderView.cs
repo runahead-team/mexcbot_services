@@ -13,8 +13,7 @@ namespace mexcbot.Api.ResponseModels.Order
         
         [JsonProperty("ordId")]
         public string OrderId { get; set; }
-        
-        [JsonProperty("clOrdId")]
-        public string ClientOrderId { get; set; }
+
+        public string ClientOrderId => OrigClientOrderId;
     }
 }

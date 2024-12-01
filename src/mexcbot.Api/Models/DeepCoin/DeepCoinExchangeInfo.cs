@@ -18,5 +18,12 @@ namespace mexcbot.Api.Models.LBank
         //"0.01" => Precision = 2 (QuotePrecision)
         [JsonProperty("tickSz")]
         public string TickSz { get; set; }
+        
+        //live, suspend, preopen
+        [JsonProperty("state")]
+        public string State { get; set; }
+        
+        [JsonProperty("MaxLmtSz")]
+        public string MaxLimitSz { get; set; }
     }
 }

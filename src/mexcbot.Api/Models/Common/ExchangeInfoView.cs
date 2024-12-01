@@ -24,10 +24,12 @@ namespace mexcbot.Api.ResponseModels.ExchangeInfo
         public ExchangeInfoView(DeepCoinExchangeInfo deepCoinExchangeInfo)
         {
             Symbol = deepCoinExchangeInfo.Symbol;
-            QuoteAmountPrecision = deepCoinExchangeInfo.MinSz;
+            MinQty = deepCoinExchangeInfo.MinSz;
             
             QuoteAssetPrecision = deepCoinExchangeInfo.TickSz.CountPrecision();
             BaseAssetPrecision = deepCoinExchangeInfo.LotSz.CountPrecision();
+            MaxLimitQty = deepCoinExchangeInfo.MaxLimitSz;
+            Status = deepCoinExchangeInfo.State;
         }
 
         public string Symbol { get; set; }
@@ -41,6 +43,9 @@ namespace mexcbot.Api.ResponseModels.ExchangeInfo
         public decimal BaseSizePrecision { get; set; }
 
         public string QuoteAmountPrecision { get; set; }
+        
+        public string MinQty { get; set; }
+        public string MaxLimitQty { get; set; }
 
         public string[] OrderTypes { get; set; }
 
