@@ -57,7 +57,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             if (!success)
                 return new ExchangeInfoView();
 
-            var data = JObject.Parse(responseBody)["data"][0];
+            var data = JToken.Parse(responseBody)["data"][0];
 
             if (data == null)
                 return new ExchangeInfoView();
