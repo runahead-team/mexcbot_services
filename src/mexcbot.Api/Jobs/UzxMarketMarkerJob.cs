@@ -39,12 +39,12 @@ namespace mexcbot.Api.Jobs
                     await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
 
                     var bots = (await dbConnection.QueryAsync<BotDto>(
-                        "SELECT * FROM Bots WHERE Status = @Status AND Type = @Type AND ExchangeType = @ExchangeType AND (NextRunMakerTime < @Now OR NextRunMakerTime IS NULL)",
+                        "SELECT * FROM Bots WHERE Status = @Status AND Type = @Type AND ExchangeType = @ExchangeTypes AND (NextRunMakerTime < @Now OR NextRunMakerTime IS NULL)",
                         new
                         {
                             Status = BotStatus.ACTIVE,
                             Type = BotType.MAKER,
-                            ExchangeType = BotExchangeType.UZX,
+                            ExchangeTypes = new[] { BotExchangeType.UZX },
                             Now = AppUtils.NowMilis()
                         })).ToList();
 
@@ -287,7 +287,7 @@ namespace mexcbot.Api.Jobs
 
                         if (makerOption.MinPriceOverStep < 0 && price > 0)
                         {
-                            var overStepQty =  RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
+                            var overStepQty = RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
                                 .Truncate(basePrecision);
 
                             var overStepPrice = RandomNumber(

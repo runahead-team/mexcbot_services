@@ -41,7 +41,7 @@ namespace mexcbot.Api.Jobs
                     await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
 
                     var bots = (await dbConnection.QueryAsync<BotDto>(
-                        "SELECT * FROM Bots WHERE Status = @Status AND Type = @Type AND (NextRunMakerTime < @Now OR NextRunMakerTime IS NULL)",
+                        "SELECT * FROM Bots WHERE Status = @Status AND Type = @Type AND ExchangeType IN @ExchangeTypes AND (NextRunMakerTime < @Now OR NextRunMakerTime IS NULL)",
                         new
                         {
                             Status = BotStatus.ACTIVE,
