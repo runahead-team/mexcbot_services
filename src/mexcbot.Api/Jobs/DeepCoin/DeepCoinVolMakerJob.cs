@@ -484,7 +484,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
             order.BotType = bot.Type;
             order.BotExchangeType = bot.ExchangeType;
             order.UserId = bot.UserId;
-            order.ExpiredTime = order.TransactTime;
+            order.ExpiredTime = bot.ExchangeType == BotExchangeType.DEEPCOIN ? AppUtils.NowMilis(): order.TransactTime;
 
             var exec = await sqlConnection.ExecuteAsync(
                 @"INSERT INTO BotOrders(BotId,BotType,BotExchangeType,UserId,OrderId,Symbol,OrderListId,Price,OrigQty,Type,Side,ExpiredTime,Status,`TransactTime`)
