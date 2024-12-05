@@ -572,6 +572,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
             order.BotType = bot.Type;
             order.BotExchangeType = bot.ExchangeType;
             order.UserId = bot.UserId;
+            order.TransactTime = AppUtils.NowMilis();
 
             if (isOverStepOrder && bot.MakerOptionObj != null && bot.MakerOptionObj.OrderExp > 0)
             {

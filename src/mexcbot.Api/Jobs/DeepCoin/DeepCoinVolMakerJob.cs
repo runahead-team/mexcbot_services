@@ -484,6 +484,8 @@ namespace mexcbot.Api.Jobs.DeepCoin
             order.BotType = bot.Type;
             order.BotExchangeType = bot.ExchangeType;
             order.UserId = bot.UserId;
+            order.TransactTime = AppUtils.NowMilis();
+            
             order.ExpiredTime = bot.ExchangeType == BotExchangeType.DEEPCOIN ? AppUtils.NowMilis(): order.TransactTime;
 
             var exec = await sqlConnection.ExecuteAsync(
