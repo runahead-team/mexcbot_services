@@ -151,6 +151,32 @@ namespace mexcbot.Api.Services
             bot.Base = bot.ExchangeType == BotExchangeType.LBANK ? bot.Base.ToLower() : bot.Base;
             bot.Quote = bot.ExchangeType == BotExchangeType.LBANK ? bot.Quote.ToLower() : bot.Quote;
 
+            ExchangeClient client = bot.ExchangeType switch
+            {
+                BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
+                BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey, bot.ApiSecret),
+                BotExchangeType.DEEPCOIN => new DeepCoinClient(Configurations.DeepCoinUrl, bot.ApiKey, bot.ApiSecret, bot.Passphrase),
+                _ => null
+            };
+
+            if (client != null)
+            {
+                var exchangeInfo = await client.GetExchangeInfo(bot.Base, bot.Quote);
+                var accBalances = await client.GetAccInformation();
+
+                var accInfo = new AccInfo
+                {
+                    Balances = accBalances
+                };
+
+                bot.ExchangeInfo = (exchangeInfo == null || string.IsNullOrEmpty(exchangeInfo.Symbol))
+                    ? string.Empty
+                    : JsonConvert.SerializeObject(exchangeInfo);
+                bot.AccountInfo = (!accBalances.Any())
+                    ? string.Empty
+                    : JsonConvert.SerializeObject(accInfo);
+            }
+            
             await DbConnections.ExecAsync(async (dbConnection) =>
             {
                 if ((await dbConnection.ExecuteScalarAsync<int>(
