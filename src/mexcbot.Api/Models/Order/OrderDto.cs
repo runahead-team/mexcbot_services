@@ -13,6 +13,7 @@ namespace mexcbot.Api.ResponseModels.Order
             Price = deepCoinOrder.Price;
             OrigQty = deepCoinOrder.OrigQty;
             Side = deepCoinOrder.Side;
+            TransactTime = deepCoinOrder.TransactTime;
         }
         
         public long Id { get; set; }
