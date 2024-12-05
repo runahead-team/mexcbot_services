@@ -627,6 +627,9 @@ namespace mexcbot.Api.Jobs.DeepCoin
         {
             try
             {
+                if (from > 1 && precision > 4)
+                    precision = 4;
+
                 if (from >= to)
                     return from;
 
