@@ -625,13 +625,21 @@ namespace mexcbot.Api.Jobs.DeepCoin
 
         private decimal RandomNumber(decimal from, decimal to, int precision)
         {
-            if (from >= to)
-                return from;
+            try
+            {
+                if (from >= to)
+                    return from;
 
-            var roundPrecision = (int)Math.Pow(10, precision);
+                var roundPrecision = (int)Math.Pow(10, precision);
 
-            return (decimal)new Random().Next((int)(from * roundPrecision), (int)(to * roundPrecision)) /
-                   roundPrecision;
+                return (decimal)new Random().Next((int)(from * roundPrecision), (int)(to * roundPrecision)) /
+                       roundPrecision;
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "from {0} to {1} precision {2}", from, to, precision);
+                throw;
+            }
         }
 
         #endregion
