@@ -46,7 +46,7 @@ namespace mexcbot.Api.Jobs
                         {
                             Status = BotStatus.ACTIVE,
                             Type = BotType.MAKER,
-                            ExchangeTypes = new[] { BotExchangeType.MEXC, BotExchangeType.LBANK },
+                            ExchangeTypes = new[] { BotExchangeType.MEXC, BotExchangeType.LBANK, BotExchangeType.COINSTORE },
                             Now = AppUtils.NowMilis()
                         })).ToList();
 
@@ -81,8 +81,8 @@ namespace mexcbot.Api.Jobs
                 ExchangeClient client = bot.ExchangeType switch
                 {
                     BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
-                    BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey,
-                        bot.ApiSecret),
+                    BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey, bot.ApiSecret),
+                    BotExchangeType.COINSTORE => new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey, bot.ApiSecret),
                     _ => null
                 };
 
@@ -90,7 +90,6 @@ namespace mexcbot.Api.Jobs
                     return;
 
                 var exchangeInfo = await client.GetExchangeInfo(bot.Base, bot.Quote);
-                var selfSymbols = await client.GetSelfSymbols();
                 var bot24hr = (await client.GetTicker24hr(bot.Base, bot.Quote));
                 var balances = await client.GetAccInformation();
 
@@ -132,10 +131,14 @@ namespace mexcbot.Api.Jobs
                 var baseBalanceValue = 0m;
                 var quoteBalanceValue = 0m;
 
-                if (!selfSymbols.Contains(bot.Symbol))
+                if (bot.ExchangeType != BotExchangeType.COINSTORE)
                 {
-                    bot.Status = BotStatus.INACTIVE;
-                    stopLog += $"{bot.Symbol} is not support; \n";
+                    var selfSymbols = await client.GetSelfSymbols();
+                    if (!selfSymbols.Contains(bot.Symbol))
+                    {
+                        bot.Status = BotStatus.INACTIVE;
+                        stopLog += $"{bot.Symbol} is not support; \n";
+                    }
                 }
 
                 if (exchangeInfo == null || string.IsNullOrEmpty(exchangeInfo.Symbol))
@@ -282,8 +285,17 @@ namespace mexcbot.Api.Jobs
                 if (exchangeInfo != null && bot24hr != null && !string.IsNullOrEmpty(exchangeInfo.Symbol) &&
                     !string.IsNullOrEmpty(bot24hr.Symbol))
                 {
-                    var minQty = (decimal.Parse(exchangeInfo.QuoteAmountPrecision, new NumberFormatInfo()) /
-                                  decimal.Parse(bot24hr.LastPrice, new NumberFormatInfo()));
+                    var minQty = 0m;
+
+                    if (bot.ExchangeType != BotExchangeType.COINSTORE)
+                    {
+                        minQty = (decimal.Parse(exchangeInfo.QuoteAmountPrecision, new NumberFormatInfo()) /
+                                      decimal.Parse(bot24hr.LastPrice, new NumberFormatInfo()));
+                    }
+                    else
+                    {
+                        minQty = decimal.Parse(exchangeInfo.MinQty, new NumberFormatInfo());   
+                    }
 
                     if (makerOption.MinQty < minQty)
                     {
@@ -482,6 +494,8 @@ namespace mexcbot.Api.Jobs
                             }, CancellationToken.None));
                         }
 
+                        await Task.WhenAll(tasks);
+                        
                         #region Fill Orderbook
 
                         if (makerOption.Side == OrderSide.SELL)
@@ -537,8 +551,6 @@ namespace mexcbot.Api.Jobs
                         }
 
                         #endregion
-
-                        await Task.WhenAll(tasks);
                     }
                     catch (Exception e)
                     {
@@ -575,6 +587,10 @@ namespace mexcbot.Api.Jobs
             order.BotType = bot.Type;
             order.BotExchangeType = bot.ExchangeType;
             order.UserId = bot.UserId;
+            
+            order.Side = side.ToString();
+            order.Type = bot.ExchangeType == BotExchangeType.COINSTORE ? "LIMIT" : order.Type;
+            order.TransactTime = AppUtils.NowMilis();
 
             if (isOverStepOrder && bot.MakerOptionObj != null && bot.MakerOptionObj.OrderExp > 0)
             {

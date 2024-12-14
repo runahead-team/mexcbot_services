@@ -29,7 +29,6 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
         private readonly string _apiKey;
         private readonly string _secretKey;
         private readonly string _ordType = "LIMIT";
-        private readonly string _v2Url = "https://api.coinstore.com";
 
         private readonly HttpClient _httpClient = new HttpClient();
 
@@ -57,7 +56,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             };
 
             var (success, responseBody) =
-                await SendRequest("POST", $"/v2/public/config/spot/symbols", string.Empty, payload, false, false);
+                await SendRequest("POST", $"/api/v2/public/config/spot/symbols", string.Empty, payload, false, false);
 
             if (!success)
                 return new ExchangeInfoView();
@@ -77,9 +76,9 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             //1min, 5min, 15min, 30min, 60min, 4hour, 12hour, 1day, 1week
             var symbol = $"{@base}{quote}";
             var @param = $"period={interval}";
-            
+
             var (success, responseBody) =
-                await SendRequest("GET", $"/v1/market/kline/{symbol}", @param, null, false, false);
+                await SendRequest("GET", $"/api/v1/market/kline/{symbol}", @param, null, false, false);
 
             if (!success)
                 return [];
@@ -113,7 +112,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var symbol = $"{@base}{quote}";
 
             var (success, responseBody) =
-                await SendRequest("GET", "/v1/market/tickers", string.Empty, false, false);
+                await SendRequest("GET", "/api/v1/market/tickers", string.Empty, false, false);
 
             if (!success)
                 return new Ticker24hrView();
@@ -133,19 +132,25 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             string quantity, string price)
         {
             var symbol = $"{@base}{quote}";
+            var atQty = 0m;
+            var atPrice = 0m;
+            if (decimal.TryParse(quantity, new NumberFormatInfo(), out var parsedQty))
+                atQty = parsedQty;
+            if (decimal.TryParse(price, new NumberFormatInfo(), out var parsedPrice))
+                atPrice = parsedPrice;
 
             var payload = new
             {
                 symbol = symbol,
                 side = side.ToString(),
                 ordType = _ordType,
-                ordPrice = price,
-                ordQty = quantity,
+                ordPrice = atPrice,
+                ordQty = atQty,
                 timestamp = AppUtils.NowMilis()
             };
 
             var (success, responseBody) =
-                await SendRequest("POST", "/trade/order/place", string.Empty, payload, true, true);
+                await SendRequest("POST", "/api/trade/order/place", string.Empty, payload, true, true);
 
             if (!success)
                 return new OrderDto();
@@ -180,7 +185,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             };
 
             var (success, responseBody) =
-                await SendRequest("POST", "/trade/order/cancel", string.Empty, payload, true, true);
+                await SendRequest("POST", "/api/trade/order/cancel", string.Empty, payload, true, true);
 
             if (!success)
                 return null;
@@ -197,8 +202,6 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
         public async Task<List<OpenOrderView>> GetOpenOrder(string @base, string quote)
         {
-            _baseUri = new Uri(_v2Url);
-
             var @params = $"symbol={@base}{quote}";
 
             var (success, responseBody) =
@@ -226,7 +229,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             {
                 //instType=SPOT,SWAP
                 var (success, responseBody) =
-                    await SendRequest("POST", "/spot/accountList", string.Empty,null, true, false);
+                    await SendRequest("POST", "/api/spot/accountList", string.Empty, null, true, false);
 
 
                 if (success)
@@ -237,6 +240,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                         return [];
 
                     var balances = JsonConvert.DeserializeObject<List<CoinStoreAccBalance>>(data.ToString())
+                        .Where(x=>x.Type == 1)
                         .Where(x => decimal.Parse(x.Free, new NumberFormatInfo()) > 0m)
                         .Select(x => new AccBalance()
                         {
@@ -265,7 +269,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var @params = $"depth={100}";
 
             var (success, responseBody) =
-                await SendRequest("GET", $"/v1/market/depth/{symbol}", @params, null,false, false);
+                await SendRequest("GET", $"api/v1/market/depth/{symbol}", @params, null, false, false);
 
             if (!success)
                 return new OrderbookView();
@@ -290,57 +294,71 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             if (logInfo)
                 Log.Information($"CoinStoreClient:SendRequest request {endpoint} {@params}");
 
-            var payloadStr = "";
-            if (payload != null)
-                payloadStr = JsonConvert.SerializeObject(payload);
-
-            if (useSignature)
-            {
-                var timestamp = AppUtils.NowMilis();
-                var timestampStr = timestamp.ToString(CultureInfo.InvariantCulture);
-                var expiresKey = Math.Floor((decimal)timestamp / 3000).ToString(CultureInfo.InvariantCulture);
-                var key = GetHmacSha256Signature(expiresKey, _secretKey);
-
-                var preHashStr = $"{@params}";
-
-                if (!string.IsNullOrEmpty(payloadStr))
-                    preHashStr = preHashStr + $"{payloadStr}";
-
-                var sign = GetHmacSha256Signature(preHashStr, key);
-
-                _httpClient.DefaultRequestHeaders.Clear();
-
-                _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("X-CS-APIKEY", _apiKey);
-                _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("X-CS-EXPIRES", timestampStr);
-                _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("X-CS-SIGN", sign);
-            }
+            payload ??= new { };
+            var payloadStr = JsonConvert.SerializeObject(payload);
 
             string responseBody = null;
 
             try
             {
-                HttpResponseMessage response;
-                var requestUri = uri + $"?{@params}";
-                var stringContent = new StringContent(payloadStr, Encoding.UTF8, "application/json");
+                var requestUri = uri;
+                if (!string.IsNullOrEmpty(@params))
+                    requestUri = new Uri(_baseUri, $"{endpoint}?{@params}");
 
+                HttpMethod httpMethod;
+                
                 switch (method)
                 {
                     case "GET":
-                        response = await _httpClient.GetAsync(requestUri);
+                        httpMethod = HttpMethod.Get;
                         break;
                     case "POST":
-                        response = await _httpClient.PostAsync(requestUri, stringContent);
+                        httpMethod = HttpMethod.Post;
                         break;
                     case "PUT":
-                        response = await _httpClient.PutAsync(requestUri, stringContent);
+                        httpMethod = HttpMethod.Put;
                         break;
                     case "DELETE":
-                        response = await _httpClient.DeleteAsync(requestUri);
+                        httpMethod = HttpMethod.Delete;
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
+                
+                var requestMessage = new HttpRequestMessage(httpMethod, requestUri)
+                {
+                    Content = new StringContent(payloadStr, Encoding.UTF8, "application/json")
+                };
+                
+                if (useSignature)
+                {
+                    var timestamp = AppUtils.NowMilis();
+                    var timestampStr = timestamp.ToString();
+                    var expiresKey = (Math.Floor(timestamp / 30000.0)).ToString("0");
+                    var expiresKeyBytes = Encoding.UTF8.GetBytes(expiresKey);
 
+                    // Step 1: Generate the HMAC key
+                    var key = GenerateHmacSha256(_secretKey, expiresKeyBytes);
+
+                    var preHashStr = "";
+
+                    if (!string.IsNullOrEmpty(@params))
+                        preHashStr = $"{@params}";
+
+                    if (!string.IsNullOrEmpty(payloadStr))
+                        preHashStr = preHashStr + $"{payloadStr}";
+
+                    var payloadBytes = Encoding.UTF8.GetBytes(preHashStr);
+                    
+                    var sign = GenerateHmacSha256(key,payloadBytes);
+
+                    requestMessage.Headers.Add("X-CS-APIKEY", _apiKey);
+                    requestMessage.Headers.Add("X-CS-SIGN", sign);
+                    requestMessage.Headers.Add("X-CS-EXPIRES", timestampStr);
+                }
+
+                var response = await _httpClient.SendAsync(requestMessage);
+                
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
                     responseBody = await response.Content.ReadAsStringAsync();
@@ -373,20 +391,11 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             }
         }
 
-        private static string GetHmacSha256Signature(string preHash, string secretKey)
+        private static string GenerateHmacSha256(string key, byte[] data)
         {
-            // Convert the data and secret key to byte arrays
-            byte[] keyBytes = Encoding.UTF8.GetBytes(secretKey);
-            byte[] dataBytes = Encoding.UTF8.GetBytes(preHash);
-
-            // Create the HMACSHA256 instance and compute the hash
-            using (HMACSHA256 hmac = new HMACSHA256(keyBytes))
-            {
-                byte[] hashBytes = hmac.ComputeHash(dataBytes);
-
-                // Convert the hash to a Base64 string
-                return Convert.ToBase64String(hashBytes);
-            }
+            using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(key));
+            var hashBytes = hmac.ComputeHash(data);
+            return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();  // Convert to hex string
         }
     }
 }

@@ -1,6 +1,7 @@
 using mexcbot.Api.Constants;
 using mexcbot.Api.Models.CoinStore;
 using mexcbot.Api.Models.DeepCoin;
+using sp.Core.Utils;
 
 namespace mexcbot.Api.ResponseModels.Order
 {
@@ -20,10 +21,11 @@ namespace mexcbot.Api.ResponseModels.Order
         public OrderDto(CoinStoreOrder coinStoreOrder)
         {
             Symbol = coinStoreOrder.Symbol;
-            OrderId = coinStoreOrder.OrderId;
+            OrderId = coinStoreOrder.OrderId.ToString();
             Price = coinStoreOrder.Price;
             OrigQty = coinStoreOrder.OrigQty;
             Side = coinStoreOrder.Side;
+            TransactTime = AppUtils.NowMilis();
         }
         
         public long Id { get; set; }

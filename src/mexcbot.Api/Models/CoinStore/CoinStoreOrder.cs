@@ -17,8 +17,8 @@ public class CoinStoreOrder
         
     public string Symbol { get; set; }
         
-    [JsonProperty("order_id")]
-    public string OrderId { get; set; }
+    [JsonProperty("ordId")]
+    public long OrderId { get; set; }
         
     public long OrderListId { get; set; }
         

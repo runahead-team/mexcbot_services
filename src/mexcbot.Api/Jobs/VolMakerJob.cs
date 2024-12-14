@@ -48,7 +48,7 @@ namespace mexcbot.Api.Jobs
                         {
                             Status = BotStatus.ACTIVE,
                             Type = BotType.VOLUME,
-                            ExchangeTypes = new[] { BotExchangeType.MEXC },
+                            ExchangeTypes = new[] { BotExchangeType.MEXC, BotExchangeType.COINSTORE},
                             Now = AppUtils.NowMilis()
                         })).ToList();
 
@@ -85,11 +85,11 @@ namespace mexcbot.Api.Jobs
                 ExchangeClient client = bot.ExchangeType switch
                 {
                     BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
+                    BotExchangeType.COINSTORE => new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey, bot.ApiSecret),
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
                 var exchangeInfo = await client.GetExchangeInfo(bot.Base, bot.Quote);
-                var selfSymbols = await client.GetSelfSymbols();
                 var balances = await client.GetAccInformation();
 
                 #region Update info bot
@@ -124,10 +124,14 @@ namespace mexcbot.Api.Jobs
 
                 #region Validate
 
-                if (!selfSymbols.Contains(bot.Symbol))
+                if (bot.ExchangeType != BotExchangeType.COINSTORE)
                 {
-                    bot.Status = BotStatus.INACTIVE;
-                    stopLog += $"{bot.Symbol} is not support\n";
+                    var selfSymbols = await client.GetSelfSymbols();
+                    if (!selfSymbols.Contains(bot.Symbol))
+                    {
+                        bot.Status = BotStatus.INACTIVE;
+                        stopLog += $"{bot.Symbol} is not support\n";
+                    }
                 }
 
                 if (!balances.Any())
@@ -465,6 +469,10 @@ namespace mexcbot.Api.Jobs
             order.BotExchangeType = bot.ExchangeType;
             order.UserId = bot.UserId;
             order.ExpiredTime = order.TransactTime;
+            
+            order.Side = side.ToString();
+            order.Type = bot.ExchangeType == BotExchangeType.COINSTORE ? "LIMIT" : order.Type;
+            order.TransactTime = AppUtils.NowMilis();
 
             var exec = await sqlConnection.ExecuteAsync(
                 @"INSERT INTO BotOrders(BotId,BotType,BotExchangeType,UserId,OrderId,Symbol,OrderListId,Price,OrigQty,Type,Side,ExpiredTime,Status,`TransactTime`)

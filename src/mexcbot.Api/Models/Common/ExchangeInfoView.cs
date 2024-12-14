@@ -36,9 +36,17 @@ namespace mexcbot.Api.ResponseModels.ExchangeInfo
         {
             Symbol = deepCoinExchangeInfo.Symbol;
             MinQty = deepCoinExchangeInfo.MinLimitSize;
+
+            var quoteAssetPrecision = 0;
+            if (int.TryParse(deepCoinExchangeInfo.TickSz, out var parsedTickSz) && parsedTickSz > 0)
+                quoteAssetPrecision = parsedTickSz;
             
-            QuoteAssetPrecision = deepCoinExchangeInfo.TickSz.CountPrecision();
-            BaseAssetPrecision = deepCoinExchangeInfo.LotSz.CountPrecision();
+            var baseAssetPrecision = 0;
+            if (int.TryParse(deepCoinExchangeInfo.LotSz, out var parsedLotSz) && parsedLotSz > 0)
+                baseAssetPrecision = parsedLotSz;
+            
+            QuoteAssetPrecision = quoteAssetPrecision;
+            BaseAssetPrecision = baseAssetPrecision;
             Status = deepCoinExchangeInfo.State;
         }
 
