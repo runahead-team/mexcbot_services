@@ -6,7 +6,6 @@ using mexcbot.Api.Jobs.DeepCoin;
 using mexcbot.Api.Services;
 using mexcbot.Api.Services.Interface;
 using mexcbot.Api.Services.SubService;
-using sp.Core.Exchange;
 
 namespace mexcbot.Api
 {
@@ -29,7 +28,6 @@ namespace mexcbot.Api
             services.AddHostedService<LbankVolMakerJob>();
             services.AddHostedService<MarketMarkerJob>();
             services.AddHostedService<CancelOrderJob>();
-            services.AddHostedService<UzxMarketMarkerJob>();
 
             services.AddHostedService<DeepCoinVolMakerJob>();
             services.AddHostedService<DeepCoinMarketMarkerJob>();

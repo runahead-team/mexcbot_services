@@ -14,6 +14,7 @@ namespace mexcbot.Api.ResponseModels.Order
             Price = deepCoinOrder.Price;
             OrigQty = deepCoinOrder.OrigQty;
             Side = deepCoinOrder.Side;
+            TransactTime = deepCoinOrder.TransactTime;
         }
         
         public OrderDto(CoinStoreOrder coinStoreOrder)

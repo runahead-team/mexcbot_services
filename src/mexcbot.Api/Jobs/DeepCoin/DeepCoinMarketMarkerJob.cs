@@ -493,40 +493,55 @@ namespace mexcbot.Api.Jobs.DeepCoin
 
                         #region Fill Orderbook
 
+                        if (makerOption.Side == OrderSide.SELL)
+                        {
+                            price = minPrice;
+                        }
+                        else if (makerOption.Side == OrderSide.BUY)
+                        {
+                            price = maxPrice;
+                        }
+
                         if (price > 0)
                         {
                             var fillOrderBookPriceStep = 10 / (decimal)Math.Pow(10, quotePrecision);
 
-                            for (var sellPrice = (maxPrice + fillOrderBookPriceStep);
-                                 sellPrice > price;
-                                 sellPrice -= fillOrderBookPriceStep)
+                            if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.SELL)
                             {
-                                var fillOrderBookQty =
-                                    RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
-                                        .Truncate(basePrecision);
+                                for (var sellPrice = (maxPrice + fillOrderBookPriceStep);
+                                     sellPrice > price;
+                                     sellPrice -= fillOrderBookPriceStep)
+                                {
+                                    var fillOrderBookQty =
+                                        RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
+                                            .Truncate(basePrecision);
 
-                                sellPrice -= RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
-                                await CreateLimitOrder(client, bot,
-                                    fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
-                                        new NumberFormatInfo()),
-                                    sellPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                    OrderSide.SELL, isFillOrder: true);
+                                    sellPrice -= RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
+                                    await CreateLimitOrder(client, bot,
+                                        fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
+                                            new NumberFormatInfo()),
+                                        sellPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                        OrderSide.SELL, isFillOrder: true);
+                                }
                             }
 
-                            for (var buyPrice = (minPrice + fillOrderBookPriceStep);
-                                 buyPrice < price;
-                                 buyPrice += fillOrderBookPriceStep)
+                            if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.BUY)
                             {
-                                var fillOrderBookQty =
-                                    RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
-                                        .Truncate(basePrecision);
+                                for (var buyPrice = (minPrice + fillOrderBookPriceStep);
+                                     buyPrice < price;
+                                     buyPrice += fillOrderBookPriceStep)
+                                {
+                                    var fillOrderBookQty =
+                                        RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
+                                            .Truncate(basePrecision);
 
-                                buyPrice += RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
-                                await CreateLimitOrder(client, bot,
-                                    fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
-                                        new NumberFormatInfo()),
-                                    buyPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                    OrderSide.BUY, isFillOrder: true);
+                                    buyPrice += RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
+                                    await CreateLimitOrder(client, bot,
+                                        fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
+                                            new NumberFormatInfo()),
+                                        buyPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                        OrderSide.BUY, isFillOrder: true);
+                                }
                             }
                         }
 
@@ -572,6 +587,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
             order.BotType = bot.Type;
             order.BotExchangeType = bot.ExchangeType;
             order.UserId = bot.UserId;
+            order.TransactTime = AppUtils.NowMilis();
 
             if (isOverStepOrder && bot.MakerOptionObj != null && bot.MakerOptionObj.OrderExp > 0)
             {
@@ -625,13 +641,24 @@ namespace mexcbot.Api.Jobs.DeepCoin
 
         private decimal RandomNumber(decimal from, decimal to, int precision)
         {
-            if (from >= to)
-                return from;
+            try
+            {
+                if (from > 1 && precision > 4)
+                    precision = 4;
 
-            var roundPrecision = (int)Math.Pow(10, precision);
+                if (from >= to)
+                    return from;
 
-            return (decimal)new Random().Next((int)(from * roundPrecision), (int)(to * roundPrecision)) /
-                   roundPrecision;
+                var roundPrecision = (int)Math.Pow(10, precision);
+
+                return (decimal)new Random().Next((int)(from * roundPrecision), (int)(to * roundPrecision)) /
+                       roundPrecision;
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "from {0} to {1} precision {2}", from, to, precision);
+                throw;
+            }
         }
 
         #endregion

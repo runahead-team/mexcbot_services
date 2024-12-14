@@ -30,7 +30,9 @@ namespace mexcbot.Api.Constants
         [Description("SELL")]
         SELL = 1,
         [Description("BOTH")]
-        BOTH = 2
+        BOTH = 2,
+        [Description("OB")]
+        OB = 3
     }
     
     public enum OrderType

@@ -65,7 +65,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
                 catch (Exception e)
                 {
                     if (!(e is TaskCanceledException))
-                        Log.Error(e, "LbankVolMakerJob:CreateOrderJob");
+                        Log.Error(e, "DeepCoinVolMakerJob:CreateOrderJob");
                 }
                 finally
                 {
@@ -484,6 +484,8 @@ namespace mexcbot.Api.Jobs.DeepCoin
             order.BotType = bot.Type;
             order.BotExchangeType = bot.ExchangeType;
             order.UserId = bot.UserId;
+            order.TransactTime = AppUtils.NowMilis();
+            order.Side = side.ToString();
             order.ExpiredTime = bot.ExchangeType == BotExchangeType.DEEPCOIN ? AppUtils.NowMilis(): order.TransactTime;
 
             var exec = await sqlConnection.ExecuteAsync(
