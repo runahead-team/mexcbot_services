@@ -31,6 +31,16 @@ namespace mexcbot.Api.ResponseModels.ExchangeInfo
             MaxLimitQty = deepCoinExchangeInfo.MaxLimitSz;
             Status = deepCoinExchangeInfo.State;
         }
+        
+        public ExchangeInfoView(CoinStoreExchangeInfo deepCoinExchangeInfo)
+        {
+            Symbol = deepCoinExchangeInfo.Symbol;
+            MinQty = deepCoinExchangeInfo.MinLimitSize;
+            
+            QuoteAssetPrecision = deepCoinExchangeInfo.TickSz.CountPrecision();
+            BaseAssetPrecision = deepCoinExchangeInfo.LotSz.CountPrecision();
+            Status = deepCoinExchangeInfo.State;
+        }
 
         public string Symbol { get; set; }
 

@@ -22,6 +22,8 @@ namespace mexcbot.Api.Infrastructure
         
         public static string DeepCoinUrl { get; set; }
         
+        public static string CoinStoreUrl { get; set; }
+        
         public static Dictionary<string, List<object>> Enums { get; set; }
     }
 }

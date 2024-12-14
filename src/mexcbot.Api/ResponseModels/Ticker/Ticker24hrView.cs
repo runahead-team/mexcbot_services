@@ -32,6 +32,14 @@ namespace mexcbot.Api.ResponseModels.Ticker
             LastPrice = deepCoinTicker24Hr.Latest;
             QuoteVolume = deepCoinTicker24Hr.Turnover;
         }
+        
+        public Ticker24hrView(CoinStoreTicker24hr coinStoreTicker24Hr)
+        {
+            Symbol = coinStoreTicker24Hr.Symbol;
+            Volume = coinStoreTicker24Hr.Vol;
+            LastPrice = coinStoreTicker24Hr.Latest;
+            QuoteVolume = coinStoreTicker24Hr.Turnover;
+        }
 
         public string Symbol { get; set; }
 
