@@ -75,7 +75,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
         {
             //1min, 5min, 15min, 30min, 60min, 4hour, 12hour, 1day, 1week
             var symbol = $"{@base}{quote}";
-            var @param = $"period={interval}";
+            var @param = $"period={interval}&size=2000";
 
             var (success, responseBody) =
                 await SendRequest("GET", $"/api/v1/market/kline/{symbol}", @param, null, false, false);
@@ -92,14 +92,17 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
             foreach (var candleTick in candleTicks)
             {
+                var startTimeMilis = (long.Parse(candleTick.StartTime) * 1000).ToString();
+                var endTimeMilis = (long.Parse(candleTick.EndTime) * 1000).ToString();
+                
                 result.Add([
-                    candleTick.StartTime,
+                    startTimeMilis,
                     candleTick.Open,
                     candleTick.High,
                     candleTick.Low,
                     candleTick.Close,
                     candleTick.Volume,
-                    candleTick.EndTime,
+                    endTimeMilis,
                     candleTick.Amount
                 ]);
             }

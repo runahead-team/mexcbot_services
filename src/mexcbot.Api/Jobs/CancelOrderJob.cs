@@ -132,6 +132,7 @@ namespace mexcbot.Api.Jobs
                     bot.ApiSecret),
                 BotExchangeType.DEEPCOIN => new DeepCoinClient(Configurations.DeepCoinUrl, bot.ApiKey,
                     bot.ApiSecret, bot.Passphrase),
+                BotExchangeType.COINSTORE => new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey,bot.ApiSecret),
                 _ => null
             };
 
