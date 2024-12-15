@@ -223,6 +223,9 @@ namespace mexcbot.Api.Jobs.DeepCoin
                     var botLastPrice = decimal.Parse(botTicker24hr.LastPrice, new NumberFormatInfo());
                     var rateVol24hr = volumeOption.Volume24hr / btcUsdVol24hr;
 
+                    //todo random vol
+                    rateVol24hr = rateVol24hr * (1 + (decimal)DateTime.UtcNow.Date.Day % 15 / 100);
+                    
                     Log.Warning($"btcUsdVol24hr {btcUsdVol24hr.ToString()} & rateVol24hr {rateVol24hr.ToString()}");
 
                     if (botLastPrice <= 0)

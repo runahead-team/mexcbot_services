@@ -358,6 +358,23 @@ namespace mexcbot.Api.Jobs.DeepCoin
                                     var change = 100 * (lastBtcPrice - makerOption.FollowBtcBtcPrice) /
                                                  makerOption.FollowBtcBtcPrice;
 
+                                    //OWL
+                                    if (bot.Base == "OWL" && change < 2)
+                                    {
+                                        var makerOption = bot.MakerOptionObj;
+                                        makerOption.FollowBtcBtcPrice = lastBtcPrice;
+                                        bot.MakerOption = JsonConvert.SerializeObject(makerOption);
+
+                                        await DbConnections.ExecAsync(async (dbConnection) =>
+                                        {
+                                            await dbConnection.ExecuteAsync(
+                                                @"UPDATE Bots SET MakerOption = @MakerOption WHERE Id = @Id",
+                                                bot);
+                                        });
+
+                                        return;
+                                    }
+
                                     if (makerOption.FollowBtcRate > 0)
                                         change *= makerOption.FollowBtcRate;
 
