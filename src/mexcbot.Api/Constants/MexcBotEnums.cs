@@ -65,5 +65,13 @@ namespace mexcbot.Api.Constants
         UNFILLED = 5,
         [Description("UNKNOWN")]
         UNKNOWN = -2,
+        
+        //CoinStore
+        [Description("NOT_FOUND")]
+        NOT_FOUND = -3,
+        [Description("SUBMITTING")]
+        SUBMITTING = 6,
+        [Description("SUBMITTED")]
+        SUBMITTED = 7,
     }
 }

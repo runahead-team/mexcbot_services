@@ -155,7 +155,7 @@ namespace mexcbot.Api.Jobs
                         _ => OrderStatus.UNKNOWN
                     };
                 else
-                    order.Status = bot.ExchangeType == BotExchangeType.DEEPCOIN
+                    order.Status = bot.ExchangeType is BotExchangeType.DEEPCOIN
                         ? OrderStatus.CANCELED
                         : canceledOrder.Status;
 

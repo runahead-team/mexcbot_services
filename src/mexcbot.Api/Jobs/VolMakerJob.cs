@@ -19,9 +19,9 @@ using sp.Core.Utils;
 
 namespace mexcbot.Api.Jobs
 {
-    public class MolMarkerJob : BackgroundService
+    public class VolMarkerJob : BackgroundService
     {
-        public MolMarkerJob()
+        public VolMarkerJob()
         {
         }
 
