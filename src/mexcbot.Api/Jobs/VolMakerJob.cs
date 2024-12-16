@@ -80,7 +80,7 @@ namespace mexcbot.Api.Jobs
 
             try
             {
-                Log.Information("BOT {0} run", bot.Symbol);
+                Log.Information("VOLBOT {0} run", bot.Symbol);
 
                 ExchangeClient client = bot.ExchangeType switch
                 {
