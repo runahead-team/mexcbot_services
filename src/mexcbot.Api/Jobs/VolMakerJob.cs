@@ -48,8 +48,8 @@ namespace mexcbot.Api.Jobs
                         {
                             Status = BotStatus.ACTIVE,
                             Type = BotType.VOLUME,
-                            ExchangeTypes = new[] { BotExchangeType.MEXC, BotExchangeType.COINSTORE },
-                            Now = AppUtils.NowMilis()
+                            ExchangeTypes = new[] { BotExchangeType.COINSTORE },
+                            Now = AppUtils.NowMilis() + TimeSpan.FromDays(365).TotalMilliseconds
                         })).ToList();
 
                     if (!bots.Any())
@@ -142,7 +142,8 @@ namespace mexcbot.Api.Jobs
                 }
                 else
                 {
-                    var baseBalance = balances.FirstOrDefault(x => x.Asset == bot.Base);
+                    var baseBalance = balances.FirstOrDefault(x =>
+                        string.Equals(x.Asset, bot.Base, StringComparison.InvariantCultureIgnoreCase));
 
                     if (baseBalance == null || decimal.Parse(baseBalance.Free, new NumberFormatInfo()) <= 0)
                     {
@@ -150,7 +151,8 @@ namespace mexcbot.Api.Jobs
                         stopLog += $"Stop when your {bot.Base} balance below 0 or null\n";
                     }
 
-                    var quoteBalance = balances.FirstOrDefault(x => x.Asset == bot.Quote);
+                    var quoteBalance = balances.FirstOrDefault(x =>
+                        string.Equals(x.Asset, bot.Quote, StringComparison.InvariantCultureIgnoreCase));
 
                     if (quoteBalance == null || decimal.Parse(quoteBalance.Free, new NumberFormatInfo()) <= 0)
                     {
