@@ -48,8 +48,8 @@ namespace mexcbot.Api.Jobs
                         {
                             Status = BotStatus.ACTIVE,
                             Type = BotType.VOLUME,
-                            ExchangeTypes = new[] { BotExchangeType.COINSTORE },
-                            Now = AppUtils.NowMilis() + TimeSpan.FromDays(365).TotalMilliseconds
+                            ExchangeTypes = new[] { BotExchangeType.MEXC, BotExchangeType.COINSTORE },
+                            Now = AppUtils.NowMilis()
                         })).ToList();
 
                     if (!bots.Any())
@@ -211,14 +211,15 @@ namespace mexcbot.Api.Jobs
                 {
                     var volumeOption = JsonConvert.DeserializeObject<BotVolumeOption>(bot.VolumeOption);
                     var botTicker24hr = (await client.GetTicker24hr(bot.Base, bot.Quote));
-                    var btcUsdVol24hr = decimal.Parse((await client.GetTicker24hr("BTC", "USDT"))?.QuoteVolume,new NumberFormatInfo());
+                    var btcUsdVol24hr = decimal.Parse((await client.GetTicker24hr("BTC", "USDT"))?.QuoteVolume,
+                        new NumberFormatInfo());
                     var botUsdVol24hr = decimal.Parse(botTicker24hr.QuoteVolume, new NumberFormatInfo());
                     var botLastPrice = decimal.Parse(botTicker24hr.LastPrice, new NumberFormatInfo());
                     var rateVol24hr = volumeOption.Volume24hr / btcUsdVol24hr;
 
                     //todo random vol
                     rateVol24hr = rateVol24hr * (1 + (decimal)DateTime.UtcNow.Date.Day % 15 / 100);
-                    
+
                     Log.Warning($"btcUsdVol24hr {btcUsdVol24hr.ToString()} & rateVol24hr {rateVol24hr.ToString()}");
 
                     if (botLastPrice <= 0)

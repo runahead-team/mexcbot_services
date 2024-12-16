@@ -25,12 +25,12 @@ namespace mexcbot.Api
 
             //Job
             services.AddHostedService<VolMarkerJob>();
-            // services.AddHostedService<LbankVolMakerJob>();
-            // services.AddHostedService<MarketMarkerJob>();
-            // services.AddHostedService<CancelOrderJob>();
-            //
-            // services.AddHostedService<DeepCoinVolMakerJob>();
-            // services.AddHostedService<DeepCoinMarketMarkerJob>();
+            services.AddHostedService<LbankVolMakerJob>();
+            services.AddHostedService<MarketMarkerJob>();
+            services.AddHostedService<CancelOrderJob>();
+
+            services.AddHostedService<DeepCoinVolMakerJob>();
+            services.AddHostedService<DeepCoinMarketMarkerJob>();
         }
     }
 }
