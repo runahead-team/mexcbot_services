@@ -609,7 +609,7 @@ namespace mexcbot.Api.Jobs
             else if (isFillOrder)
             {
                 order.ExpiredTime = order.TransactTime + (long)TimeSpan
-                    .FromHours(new Random().Next(1, 4)).TotalMilliseconds;
+                    .FromMinutes(new Random().Next(120, 180)).TotalMilliseconds;
             }
             else
                 order.ExpiredTime = order.TransactTime + MexcBotConstants.ExpiredOrderTime;
