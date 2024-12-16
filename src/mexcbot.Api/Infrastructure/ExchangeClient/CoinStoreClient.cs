@@ -169,7 +169,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
             var coinStoreOrder = JsonConvert.DeserializeObject<CoinStoreOrder>(data.ToString());
             coinStoreOrder.Symbol = symbol;
-            coinStoreOrder.Price = symbol;
+            coinStoreOrder.Price = price;
             coinStoreOrder.Side = side.ToString();
             coinStoreOrder.OrigQty = quantity;
 
