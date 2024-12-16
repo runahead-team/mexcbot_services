@@ -130,7 +130,8 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 return new Ticker24hrView();
 
             var tickers = JsonConvert.DeserializeObject<List<CoinStoreTicker24hr>>(data.ToString());
-            var ticker = tickers.FirstOrDefault(x => x.Symbol == symbol);
+            var ticker = tickers.FirstOrDefault(x =>
+                string.Equals(x.Symbol, symbol, StringComparison.InvariantCultureIgnoreCase));
 
             return ticker == null ? new Ticker24hrView() : new Ticker24hrView(ticker);
         }

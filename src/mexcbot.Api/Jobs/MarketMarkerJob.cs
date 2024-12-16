@@ -46,7 +46,8 @@ namespace mexcbot.Api.Jobs
                         {
                             Status = BotStatus.ACTIVE,
                             Type = BotType.MAKER,
-                            ExchangeTypes = new[] { BotExchangeType.MEXC, BotExchangeType.LBANK, BotExchangeType.COINSTORE },
+                            ExchangeTypes = new[]
+                                { BotExchangeType.MEXC, BotExchangeType.LBANK, BotExchangeType.COINSTORE },
                             Now = AppUtils.NowMilis()
                         })).ToList();
 
@@ -82,7 +83,8 @@ namespace mexcbot.Api.Jobs
                 {
                     BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
                     BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey, bot.ApiSecret),
-                    BotExchangeType.COINSTORE => new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey, bot.ApiSecret),
+                    BotExchangeType.COINSTORE => new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey,
+                        bot.ApiSecret),
                     _ => null
                 };
 
@@ -214,7 +216,8 @@ namespace mexcbot.Api.Jobs
                     {
                         if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.SELL)
                         {
-                            var baseBalance = balances.FirstOrDefault(x => x.Asset == bot.Base);
+                            var baseBalance = balances.FirstOrDefault(x =>
+                                string.Equals(x.Asset, bot.Base, StringComparison.InvariantCultureIgnoreCase));
 
                             if (baseBalance == null)
                             {
@@ -248,7 +251,8 @@ namespace mexcbot.Api.Jobs
 
                         if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.BUY)
                         {
-                            var quoteBalance = balances.FirstOrDefault(x => x.Asset == bot.Quote);
+                            var quoteBalance = balances.FirstOrDefault(x =>
+                                string.Equals(x.Asset, bot.Quote, StringComparison.InvariantCultureIgnoreCase));
 
                             if (quoteBalance == null)
                             {
@@ -290,11 +294,11 @@ namespace mexcbot.Api.Jobs
                     if (bot.ExchangeType != BotExchangeType.COINSTORE)
                     {
                         minQty = (decimal.Parse(exchangeInfo.QuoteAmountPrecision, new NumberFormatInfo()) /
-                                      decimal.Parse(bot24hr.LastPrice, new NumberFormatInfo()));
+                                  decimal.Parse(bot24hr.LastPrice, new NumberFormatInfo()));
                     }
                     else
                     {
-                        minQty = decimal.Parse(exchangeInfo.MinQty, new NumberFormatInfo());   
+                        minQty = decimal.Parse(exchangeInfo.MinQty, new NumberFormatInfo());
                     }
 
                     if (makerOption.MinQty < minQty)
@@ -495,7 +499,7 @@ namespace mexcbot.Api.Jobs
                         }
 
                         await Task.WhenAll(tasks);
-                        
+
                         #region Fill Orderbook
 
                         if (makerOption.Side == OrderSide.SELL)
@@ -587,7 +591,7 @@ namespace mexcbot.Api.Jobs
             order.BotType = bot.Type;
             order.BotExchangeType = bot.ExchangeType;
             order.UserId = bot.UserId;
-            
+
             order.Side = side.ToString();
             order.Type = bot.ExchangeType == BotExchangeType.COINSTORE ? "LIMIT" : order.Type;
             order.TransactTime = AppUtils.NowMilis();
