@@ -27,12 +27,17 @@ namespace mexcbot.Api.Jobs
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            var task = CreateOrderJob(stoppingToken);
+            var tasks = new List<Task>
+            {
+                CreateOrderJob(stoppingToken, BotExchangeType.MEXC),
+                CreateOrderJob(stoppingToken, BotExchangeType.LBANK),
+                CreateOrderJob(stoppingToken, BotExchangeType.COINSTORE)
+            };
 
-            await Task.WhenAll(task);
+            await Task.WhenAll(tasks);
         }
 
-        private async Task CreateOrderJob(CancellationToken stoppingToken)
+        private async Task CreateOrderJob(CancellationToken stoppingToken, BotExchangeType exchangeType)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
@@ -47,7 +52,7 @@ namespace mexcbot.Api.Jobs
                             Status = BotStatus.ACTIVE,
                             Type = BotType.MAKER,
                             ExchangeTypes = new[]
-                                { BotExchangeType.MEXC, BotExchangeType.LBANK, BotExchangeType.COINSTORE },
+                                { exchangeType },
                             Now = AppUtils.NowMilis()
                         })).ToList();
 
