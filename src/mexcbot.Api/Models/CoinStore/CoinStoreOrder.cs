@@ -22,6 +22,7 @@ public class CoinStoreOrder
         
     public long OrderListId { get; set; }
         
+    [JsonProperty("ordPrice")]
     public string Price { get; set; }
         
     public string OrigQty { get; set; }
