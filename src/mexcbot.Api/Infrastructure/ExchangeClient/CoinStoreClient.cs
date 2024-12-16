@@ -81,11 +81,15 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 await SendRequest("GET", $"/api/v1/market/kline/{symbol}", @param, null, false, false);
 
             if (!success)
-                return [];
+                return
+            []
+            ;
 
             var data = JObject.Parse(responseBody)["data"]["item"];
             if (data == null)
-                return [];
+                return
+            []
+            ;
 
             var candleTicks = JsonConvert.DeserializeObject<List<CoinStoreCandleTick>>(data.ToString());
             var result = new List<JArray>();
@@ -94,7 +98,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             {
                 var startTimeMilis = (long.Parse(candleTick.StartTime) * 1000).ToString();
                 var endTimeMilis = (long.Parse(candleTick.EndTime) * 1000).ToString();
-                
+
                 result.Add([
                     startTimeMilis,
                     candleTick.Open,
@@ -115,7 +119,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var symbol = $"{@base}{quote}";
 
             var (success, responseBody) =
-                await SendRequest("GET", "/api/v1/market/tickers", string.Empty, false, false);
+                await SendRequest("GET", "/api/v1/market/tickers", string.Empty, false, logInfo: false);
 
             if (!success)
                 return new Ticker24hrView();
@@ -221,7 +225,8 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
             var result = coinStoreOpenOrders.Select(x => new OpenOrderView(x)).ToList();
 
-            return result.Count > 0 ? result : [];
+            return result.Count > 0 ? result : []
+            ;
         }
 
         public async Task<List<AccBalance>> GetAccInformation()
@@ -240,10 +245,12 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                     var data = JObject.Parse(responseBody)["data"];
 
                     if (data == null)
-                        return [];
+                        return
+                    []
+                    ;
 
                     var balances = JsonConvert.DeserializeObject<List<CoinStoreAccBalance>>(data.ToString())
-                        .Where(x=>x.Type == 1)
+                        .Where(x => x.Type == 1)
                         .Where(x => decimal.Parse(x.Free, new NumberFormatInfo()) > 0m)
                         .Select(x => new AccBalance()
                         {
@@ -309,7 +316,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                     requestUri = new Uri(_baseUri, $"{endpoint}?{@params}");
 
                 HttpMethod httpMethod;
-                
+
                 switch (method)
                 {
                     case "GET":
@@ -327,12 +334,12 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                     default:
                         throw new ArgumentOutOfRangeException();
                 }
-                
+
                 var requestMessage = new HttpRequestMessage(httpMethod, requestUri)
                 {
                     Content = new StringContent(payloadStr, Encoding.UTF8, "application/json")
                 };
-                
+
                 if (useSignature)
                 {
                     var timestamp = AppUtils.NowMilis();
@@ -352,8 +359,8 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                         preHashStr = preHashStr + $"{payloadStr}";
 
                     var payloadBytes = Encoding.UTF8.GetBytes(preHashStr);
-                    
-                    var sign = GenerateHmacSha256(key,payloadBytes);
+
+                    var sign = GenerateHmacSha256(key, payloadBytes);
 
                     requestMessage.Headers.Add("X-CS-APIKEY", _apiKey);
                     requestMessage.Headers.Add("X-CS-SIGN", sign);
@@ -361,7 +368,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 }
 
                 var response = await _httpClient.SendAsync(requestMessage);
-                
+
                 if (response.StatusCode == HttpStatusCode.OK)
                 {
                     responseBody = await response.Content.ReadAsStringAsync();
@@ -398,7 +405,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
         {
             using var hmac = new HMACSHA256(Encoding.UTF8.GetBytes(key));
             var hashBytes = hmac.ComputeHash(data);
-            return BitConverter.ToString(hashBytes).Replace("-", "").ToLower();  // Convert to hex string
+            return BitConverter.ToString(hashBytes).Replace("-", "").ToLower(); // Convert to hex string
         }
     }
 }
