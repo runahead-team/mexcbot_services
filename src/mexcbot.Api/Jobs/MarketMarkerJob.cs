@@ -169,11 +169,10 @@ namespace mexcbot.Api.Jobs
                         now + (int)RandomNumber(makerOption.MinInterval, makerOption.MaxInterval, 0) * 1000;
 
                     //todo ANON
-                    // if (bot.Base == "ANON")
-                    // {
-                    // }
-                    // else 
-                    if (makerOption.IsFollowBtc)
+                    if (bot.Base == "ANON")
+                    {
+                    }
+                    else if (makerOption.IsFollowBtc)
                     {
                         if (makerOption.FollowBtcBasePrice <= 0
                             || makerOption.FollowBtcBtcPrice <= 0)
@@ -374,23 +373,23 @@ namespace mexcbot.Api.Jobs
                                 #region Price
 
                                 //todo ANON
-                                // if (bot.Base == "ANON")
-                                // {
-                                //     var httpClient = new HttpClient();
-                                //
-                                //     var response =
-                                //         await httpClient.GetAsync(
-                                //             "https://api.huobi.pro/market/detail?symbol=anonusdt");
-                                //
-                                //     var responseJson = JObject.Parse(await response.Content.ReadAsStringAsync());
-                                //
-                                //     if (!decimal.TryParse(responseJson["tick"]?["close"]?.ToString(), out price))
-                                //     {
-                                //         Log.Error("ANON price error", bot.Symbol);
-                                //         return;
-                                //     }
-                                // }
-                                // else 
+                                if (bot.Base == "ANON")
+                                {
+                                    var httpClient = new HttpClient();
+
+                                    var response =
+                                        await httpClient.GetAsync(
+                                            "https://api.huobi.pro/market/detail?symbol=anonusdt");
+
+                                    var responseJson = JObject.Parse(await response.Content.ReadAsStringAsync());
+
+                                    if (!decimal.TryParse(responseJson["tick"]?["close"]?.ToString(), out price))
+                                    {
+                                        Log.Error("ANON price error", bot.Symbol);
+                                        return;
+                                    }
+                                }
+                                else 
                                 if (makerOption.IsFollowBtc)
                                 {
                                     var change = 100 * (lastBtcPrice - makerOption.FollowBtcBtcPrice) /

@@ -382,6 +382,13 @@ namespace mexcbot.Api.Jobs.DeepCoin
                             // if (volumeOption.SafeRun)
                             // {
                             //     if (orderPrice >= smallestAskPrice)
+                            //         orderPrice = smallestAskPrice -
+                            //                      1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
+                            //     if (orderPrice <= biggestBidPrice)
+                            //         orderPrice = smallestAskPrice +
+                            //                      1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
+                            //     
+                            //     if (orderPrice >= smallestAskPrice)
                             //         return;
                             //     if (orderPrice <= biggestBidPrice)
                             //         return;
