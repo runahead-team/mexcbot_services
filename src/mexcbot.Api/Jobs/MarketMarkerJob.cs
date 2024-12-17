@@ -168,7 +168,11 @@ namespace mexcbot.Api.Jobs
                     bot.NextRunMakerTime =
                         now + (int)RandomNumber(makerOption.MinInterval, makerOption.MaxInterval, 0) * 1000;
 
-                    if (makerOption.IsFollowBtc)
+                    //todo ANON
+                    if (bot.Base == "ANON")
+                    {
+                    }
+                    else if (makerOption.IsFollowBtc)
                     {
                         if (makerOption.FollowBtcBasePrice <= 0
                             || makerOption.FollowBtcBtcPrice <= 0)
@@ -368,6 +372,7 @@ namespace mexcbot.Api.Jobs
                             {
                                 #region Price
 
+                                //todo ANON
                                 if (bot.Base == "ANON")
                                 {
                                     var httpClient = new HttpClient();
