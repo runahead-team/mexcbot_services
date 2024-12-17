@@ -387,7 +387,7 @@ namespace mexcbot.Api.Jobs
                                 orderPrice = smallestAskPrice -
                                              1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
                             if (orderPrice <= biggestBidPrice)
-                                orderPrice = smallestAskPrice +
+                                orderPrice = biggestBidPrice +
                                              1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
 
                             if (volumeOption.SafeRun)

@@ -225,7 +225,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
 
                     //todo random vol
                     rateVol24hr = rateVol24hr * (1 + (decimal)DateTime.UtcNow.Date.Day % 15 / 100);
-                    
+
                     Log.Warning($"btcUsdVol24hr {btcUsdVol24hr.ToString()} & rateVol24hr {rateVol24hr.ToString()}");
 
                     if (botLastPrice <= 0)
@@ -379,19 +379,26 @@ namespace mexcbot.Api.Jobs.DeepCoin
                             var smallestAskPrice = asks[0][0];
                             var biggestBidPrice = bids[0][0];
 
+                            // if (orderPrice >= smallestAskPrice)
+                            //     orderPrice = smallestAskPrice -
+                            //                  1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
+                            // if (orderPrice <= biggestBidPrice)
+                            //     orderPrice = biggestBidPrice +
+                            //                  1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
+                            //
                             // if (volumeOption.SafeRun)
                             // {
                             //     if (orderPrice >= smallestAskPrice)
-                            //         orderPrice = smallestAskPrice -
-                            //                      1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
-                            //     if (orderPrice <= biggestBidPrice)
-                            //         orderPrice = smallestAskPrice +
-                            //                      1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
-                            //     
-                            //     if (orderPrice >= smallestAskPrice)
+                            //     {
+                            //         Log.Information("VolBot {0} safe run (ask)", bot.Base);
                             //         return;
+                            //     }
+                            //
                             //     if (orderPrice <= biggestBidPrice)
+                            //     {
+                            //         Log.Information("VolBot {0} safe run (bid)", bot.Base);
                             //         return;
+                            //     }
                             // }
 
                             totalUsdVolume += orderQty * orderPrice;
@@ -496,7 +503,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
             order.UserId = bot.UserId;
             order.TransactTime = AppUtils.NowMilis();
             order.Side = side.ToString();
-            order.ExpiredTime = bot.ExchangeType == BotExchangeType.DEEPCOIN ? AppUtils.NowMilis(): order.TransactTime;
+            order.ExpiredTime = bot.ExchangeType == BotExchangeType.DEEPCOIN ? AppUtils.NowMilis() : order.TransactTime;
 
             var exec = await sqlConnection.ExecuteAsync(
                 @"INSERT INTO BotOrders(BotId,BotType,BotExchangeType,UserId,OrderId,Symbol,OrderListId,Price,OrigQty,Type,Side,ExpiredTime,Status,`TransactTime`)
