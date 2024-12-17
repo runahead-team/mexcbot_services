@@ -394,13 +394,15 @@ namespace mexcbot.Api.Jobs
                             {
                                 if (orderPrice >= smallestAskPrice)
                                 {
-                                    Log.Information("VolBot {0} safe run (ask)", bot.Base);
+                                    Log.Information("VolBot {0} safe run (ask) {1} {2}", bot.Base, orderPrice,
+                                        smallestAskPrice);
                                     return;
                                 }
 
                                 if (orderPrice <= biggestBidPrice)
                                 {
-                                    Log.Information("VolBot {0} safe run (bid)", bot.Base);
+                                    Log.Information("VolBot {0} safe run (bid) {1} {2}", bot.Base, orderPrice,
+                                        biggestBidPrice);
                                     return;
                                 }
                             }
