@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
+using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Dapper;
@@ -13,6 +14,7 @@ using mexcbot.Api.Models.Mexc;
 using Microsoft.Extensions.Hosting;
 using MySqlConnector;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using Serilog;
 using sp.Core.Extensions;
 using sp.Core.Utils;
@@ -366,7 +368,20 @@ namespace mexcbot.Api.Jobs
                             {
                                 #region Price
 
-                                if (makerOption.IsFollowBtc)
+                                if (bot.Base == "ANON")
+                                {
+                                    var httpClient = new HttpClient();
+
+                                    var response =
+                                        await httpClient.GetAsync(
+                                            "https://api.huobi.pro/market/detail?symbol=anonusdt");
+
+                                    var responseJson = JObject.Parse(await response.Content.ReadAsStringAsync());
+
+                                    if (!decimal.TryParse(responseJson["tick"]?["close"]?.ToString(), out price))
+                                        return;
+                                }
+                                else if (makerOption.IsFollowBtc)
                                 {
                                     var change = 100 * (lastBtcPrice - makerOption.FollowBtcBtcPrice) /
                                                  makerOption.FollowBtcBtcPrice;
