@@ -383,15 +383,15 @@ namespace mexcbot.Api.Jobs
                             var biggestBidPrice = bids[0][0];
 
 
+                            if (orderPrice >= smallestAskPrice)
+                                orderPrice = smallestAskPrice -
+                                             1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
+                            if (orderPrice <= biggestBidPrice)
+                                orderPrice = smallestAskPrice +
+                                             1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
+
                             if (volumeOption.SafeRun)
                             {
-                                if (orderPrice >= smallestAskPrice)
-                                    orderPrice = smallestAskPrice -
-                                                 1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
-                                if (orderPrice <= biggestBidPrice)
-                                    orderPrice = smallestAskPrice +
-                                                 1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
-                                
                                 if (orderPrice >= smallestAskPrice)
                                     return;
                                 if (orderPrice <= biggestBidPrice)

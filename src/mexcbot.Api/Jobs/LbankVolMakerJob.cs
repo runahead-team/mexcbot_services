@@ -49,7 +49,7 @@ namespace mexcbot.Api.Jobs
                         {
                             Status = BotStatus.ACTIVE,
                             Type = BotType.VOLUME,
-                            ExchangeTypes = new []{BotExchangeType.LBANK},
+                            ExchangeTypes = new[] { BotExchangeType.LBANK },
                             Now = AppUtils.NowMilis()
                         })).ToList();
 
@@ -213,7 +213,7 @@ namespace mexcbot.Api.Jobs
 
                     //todo random vol
                     rateVol24hr = rateVol24hr * (1 + (decimal)DateTime.UtcNow.Date.Day % 15 / 100);
-                    
+
                     Log.Warning($"btcUsdVol24hr {btcUsdVol24hr.ToString()} & rateVol24hr {rateVol24hr.ToString()}");
 
                     if (botLastPrice <= 0)
@@ -358,26 +358,26 @@ namespace mexcbot.Api.Jobs
                                 Log.Warning("askPrice zero");
                                 return;
                             }
-                            
+
                             var orderbook = await client.GetOrderbook(bot.Base, bot.Quote);
                             var asks = orderbook.Asks;
                             var bids = orderbook.Bids;
-                            
+
                             if (orderbook.Asks.Count == 0 || orderbook.Bids.Count == 0)
                                 return;
 
                             var smallestAskPrice = asks[0][0];
                             var biggestBidPrice = bids[0][0];
 
+                            if (orderPrice >= smallestAskPrice)
+                                orderPrice = smallestAskPrice -
+                                             1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
+                            if (orderPrice <= biggestBidPrice)
+                                orderPrice = smallestAskPrice +
+                                             1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
+
                             if (volumeOption.SafeRun)
                             {
-                                if (orderPrice >= smallestAskPrice)
-                                    orderPrice = smallestAskPrice -
-                                                 1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
-                                if (orderPrice <= biggestBidPrice)
-                                    orderPrice = smallestAskPrice +
-                                                 1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
-                                
                                 if (orderPrice >= smallestAskPrice)
                                     return;
                                 if (orderPrice <= biggestBidPrice)
@@ -430,7 +430,8 @@ namespace mexcbot.Api.Jobs
 
                                     await CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
-                                        orderPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()), OrderSide.BUY);
+                                        orderPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
+                                        OrderSide.BUY);
                                 }
                             }
                         }
