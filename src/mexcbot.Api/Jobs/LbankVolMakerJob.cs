@@ -379,9 +379,16 @@ namespace mexcbot.Api.Jobs
                             if (volumeOption.SafeRun)
                             {
                                 if (orderPrice >= smallestAskPrice)
+                                {
+                                    Log.Information("VolBot {0} safe run (ask)", bot.Base);
                                     return;
+                                }
+
                                 if (orderPrice <= biggestBidPrice)
+                                {
+                                    Log.Information("VolBot {0} safe run (bid)", bot.Base);
                                     return;
+                                }
                             }
 
                             totalUsdVolume += orderQty * orderPrice;
