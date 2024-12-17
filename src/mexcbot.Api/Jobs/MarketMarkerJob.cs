@@ -384,7 +384,10 @@ namespace mexcbot.Api.Jobs
                                     var responseJson = JObject.Parse(await response.Content.ReadAsStringAsync());
 
                                     if (!decimal.TryParse(responseJson["tick"]?["close"]?.ToString(), out price))
+                                    {
+                                        Log.Error("ANON price error", bot.Symbol);
                                         return;
+                                    }
                                 }
                                 else if (makerOption.IsFollowBtc)
                                 {
