@@ -358,8 +358,8 @@ namespace mexcbot.Api.Jobs.DeepCoin
                                     var change = 100 * (lastBtcPrice - makerOption.FollowBtcBtcPrice) /
                                                  makerOption.FollowBtcBtcPrice;
 
-                                    //OWL
-                                    if (bot.Base == "OWL" && change < 2)
+                                    //todo OWL
+                                    if (bot.Base == "OWL" && change < 5)
                                     {
                                         var makerOption = bot.MakerOptionObj;
                                         makerOption.FollowBtcBtcPrice = lastBtcPrice;
