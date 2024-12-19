@@ -39,7 +39,7 @@ namespace mexcbot.Api.Jobs
                     await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
 
                     var orders = (await dbConnection.QueryAsync<OrderDto>(
-                        "SELECT * FROM BotOrders WHERE IsRunCancellation = @IsRunCancellation AND ExpiredTime <= @Now",
+                        "SELECT * FROM BotOrders WHERE IsRunCancellation = @IsRunCancellation AND ExpiredTime <= @Now limit 10",
                         new
                         {
                             IsRunCancellation = false,
@@ -54,10 +54,14 @@ namespace mexcbot.Api.Jobs
                             Ids = botIds
                         })).ToList();
 
+                    var tasks = new List<Task>();
+
                     foreach (var order in orders)
                     {
-                        await Execute(order, bots, dbConnection);
+                        tasks.Add(Execute(order, bots, dbConnection));
                     }
+
+                    await Task.WhenAll(tasks);
 
                     #region Delete orders 7 days ago
 
@@ -71,7 +75,6 @@ namespace mexcbot.Api.Jobs
                         });
 
                     #endregion
-
 
                     await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
                 }
@@ -132,7 +135,8 @@ namespace mexcbot.Api.Jobs
                     bot.ApiSecret),
                 BotExchangeType.DEEPCOIN => new DeepCoinClient(Configurations.DeepCoinUrl, bot.ApiKey,
                     bot.ApiSecret, bot.Passphrase),
-                BotExchangeType.COINSTORE => new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey,bot.ApiSecret),
+                BotExchangeType.COINSTORE =>
+                    new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey, bot.ApiSecret),
                 _ => null
             };
 
