@@ -39,7 +39,7 @@ namespace mexcbot.Api.Jobs
                     await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
 
                     var orders = (await dbConnection.QueryAsync<OrderDto>(
-                        "SELECT * FROM BotOrders WHERE IsRunCancellation = @IsRunCancellation AND ExpiredTime <= @Now ORDER BY Id LIMIT 30",
+                        "SELECT * FROM BotOrders WHERE IsRunCancellation = @IsRunCancellation AND ExpiredTime <= @Now LIMIT 30",
                         new
                         {
                             IsRunCancellation = false,
