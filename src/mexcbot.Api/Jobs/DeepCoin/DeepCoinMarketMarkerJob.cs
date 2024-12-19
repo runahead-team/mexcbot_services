@@ -47,7 +47,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
                             Status = BotStatus.ACTIVE,
                             Type = BotType.MAKER,
                             ExchangeTypes = new[] { BotExchangeType.DEEPCOIN },
-                            Now = AppUtils.NowMilis()
+                            Now = AppUtils.NowMilis() + TimeSpan.FromDays(365).TotalMilliseconds
                         })).ToList();
 
                     if (bots.Count == 0)
@@ -359,7 +359,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
                                                  makerOption.FollowBtcBtcPrice;
 
                                     //todo OWL
-                                    if (bot.Base == "OWL" && change < 5)
+                                    if (bot.Base == "OWL" && change < -5)
                                     {
                                         var makerOption = bot.MakerOptionObj;
                                         makerOption.FollowBtcBtcPrice = lastBtcPrice;
