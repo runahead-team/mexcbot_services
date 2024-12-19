@@ -389,8 +389,7 @@ namespace mexcbot.Api.Jobs
                                         return;
                                     }
                                 }
-                                else 
-                                if (makerOption.IsFollowBtc)
+                                else if (makerOption.IsFollowBtc)
                                 {
                                     var change = 100 * (lastBtcPrice - makerOption.FollowBtcBtcPrice) /
                                                  makerOption.FollowBtcBtcPrice;
@@ -546,7 +545,11 @@ namespace mexcbot.Api.Jobs
 
                             if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.SELL)
                             {
-                                for (var sellPrice = (maxPrice + fillOrderBookPriceStep);
+                                var sellFromPrice = (maxPrice + fillOrderBookPriceStep);
+                                if (sellFromPrice > price * 1.1m)
+                                    sellFromPrice = price * 1.1m;
+
+                                for (var sellPrice = sellFromPrice;
                                      sellPrice > price;
                                      sellPrice -= fillOrderBookPriceStep)
                                 {
@@ -565,7 +568,11 @@ namespace mexcbot.Api.Jobs
 
                             if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.BUY)
                             {
-                                for (var buyPrice = (minPrice + fillOrderBookPriceStep);
+                                var buyFromPrice = (minPrice + fillOrderBookPriceStep);
+                                if (buyFromPrice < price * 0.9m)
+                                    buyFromPrice = price * 0.9m;
+
+                                for (var buyPrice = buyFromPrice;
                                      buyPrice < price;
                                      buyPrice += fillOrderBookPriceStep)
                                 {
