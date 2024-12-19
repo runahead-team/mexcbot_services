@@ -65,13 +65,13 @@ namespace mexcbot.Api.Jobs
 
                     #region Delete orders 7 days ago
 
-                    var ago7Days = AppUtils.NowMilis() - TimeSpan.FromDays(7).TotalMilliseconds;
+                    var ago2Days = AppUtils.NowMilis() - TimeSpan.FromDays(2).TotalMilliseconds;
                     await dbConnection.QueryAsync<OrderDto>(
                         "DELETE FROM BotOrders WHERE `IsRunCancellation` = @IsRunCancellation AND `ExpiredTime` <= @Ago7Days",
                         new
                         {
                             IsRunCancellation = true,
-                            Ago7Days = ago7Days
+                            Ago7Days = ago2Days
                         });
 
                     #endregion
