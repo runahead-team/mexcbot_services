@@ -47,7 +47,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
                             Status = BotStatus.ACTIVE,
                             Type = BotType.MAKER,
                             ExchangeTypes = new[] { BotExchangeType.DEEPCOIN },
-                            Now = AppUtils.NowMilis() + TimeSpan.FromDays(365).TotalMilliseconds
+                            Now = AppUtils.NowMilis()
                         })).ToList();
 
                     if (bots.Count == 0)
@@ -525,7 +525,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
 
                             if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.SELL)
                             {
-                                var sellFromPrice = (maxPrice + fillOrderBookPriceStep);
+                                var sellFromPrice = (maxPrice - fillOrderBookPriceStep);
                                 if (sellFromPrice > price * 1.1m)
                                     sellFromPrice = price * 1.1m;
 

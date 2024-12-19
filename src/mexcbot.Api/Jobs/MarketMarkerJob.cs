@@ -545,7 +545,7 @@ namespace mexcbot.Api.Jobs
 
                             if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.SELL)
                             {
-                                var sellFromPrice = (maxPrice + fillOrderBookPriceStep);
+                                var sellFromPrice = (maxPrice - fillOrderBookPriceStep);
                                 if (sellFromPrice > price * 1.1m)
                                     sellFromPrice = price * 1.1m;
 
