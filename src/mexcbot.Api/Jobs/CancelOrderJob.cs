@@ -58,7 +58,7 @@ namespace mexcbot.Api.Jobs
 
                     foreach (var order in orders)
                     {
-                        tasks.Add(Execute(order, bots, dbConnection));
+                        tasks.Add(Execute(order, bots));
                     }
 
                     await Task.WhenAll(tasks);
@@ -86,9 +86,11 @@ namespace mexcbot.Api.Jobs
             }
         }
 
-        private async Task Execute(OrderDto order, IEnumerable<BotDto> bots, IDbConnection dbConnection)
+        private async Task Execute(OrderDto order, IEnumerable<BotDto> bots)
         {
-            async Task UpdateRunFlag(string orderId, bool isRunCancellation, IDbConnection dbConnection)
+            await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
+
+            async Task UpdateRunFlag(string orderId, bool isRunCancellation)
             {
                 var updateParams = new
                 {
@@ -104,7 +106,7 @@ namespace mexcbot.Api.Jobs
                     Log.Error("CancelOrderJob:RunExpired {@data}", updateParams);
             }
 
-            async Task UpdateStatus(OrderDto order, IDbConnection dbConnection)
+            async Task UpdateStatus(OrderDto order)
             {
                 var updateParams = new
                 {
@@ -121,7 +123,7 @@ namespace mexcbot.Api.Jobs
                     Log.Error("CancelOrderJob:UpdateStatus {@data}", updateParams);
             }
 
-            await UpdateRunFlag(order.OrderId, true, dbConnection);
+            await UpdateRunFlag(order.OrderId, true);
 
             var bot = bots.FirstOrDefault(x => x.Id == order.BotId);
 
@@ -163,7 +165,7 @@ namespace mexcbot.Api.Jobs
                         ? OrderStatus.CANCELED
                         : canceledOrder.Status;
 
-                await UpdateStatus(order, dbConnection);
+                await UpdateStatus(order);
             }
         }
     }
