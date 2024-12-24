@@ -82,7 +82,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
             if (!success)
                 return
-            []
+[]
             ;
 
             var data = JObject.Parse(responseBody)["data"]["item"];

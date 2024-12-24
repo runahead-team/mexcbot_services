@@ -17,7 +17,7 @@ using Serilog;
 using sp.Core.Extensions;
 using sp.Core.Utils;
 
-namespace mexcbot.Api.Jobs
+namespace mexcbot.Api.Jobs.Custom
 {
     public class UzxMarketMarkerJob : BackgroundService
     {

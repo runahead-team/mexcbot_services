@@ -18,7 +18,7 @@ using Newtonsoft.Json.Linq;
 using Serilog;
 using sp.Core.Utils;
 
-namespace mexcbot.Api.Jobs
+namespace mexcbot.Api.Jobs.Custom
 {
     public class LbankVolMakerJob : BackgroundService
     {

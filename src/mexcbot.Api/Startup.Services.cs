@@ -2,6 +2,7 @@ using Microsoft.Extensions.DependencyInjection;
 using mexcbot.Api.Infrastructure;
 using mexcbot.Api.Infrastructure.Authentication;
 using mexcbot.Api.Jobs;
+using mexcbot.Api.Jobs.Custom;
 using mexcbot.Api.Jobs.DeepCoin;
 using mexcbot.Api.Services;
 using mexcbot.Api.Services.Interface;
