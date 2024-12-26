@@ -332,7 +332,10 @@ namespace mexcbot.Api.Services
         {
             try
             {
-                data.Date = AppUtils.NowDateMilis();
+                var now = AppUtils.NowMilis();
+                var h4 = (long)TimeSpan.FromHours(4).TotalMilliseconds;
+
+                data.Date = now - now % h4;
                 data.Spread = Math.Abs(data.Spread);
 
                 await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
