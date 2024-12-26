@@ -113,7 +113,7 @@ namespace mexcbot.Api.Controllers
             if (bot == null)
                 throw new AppException();
 
-            var history = await dbConnection.QueryAsync<BotDto>(
+            var history = await dbConnection.QueryAsync<BotHistoryDto>(
                 "SELECT * FROM BotHistory WHERE BotId = @BotId ORDER BY Id DESC",
                 new
                 {
