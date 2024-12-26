@@ -95,7 +95,7 @@ namespace mexcbot.Api.Controllers
             return new OkResponse();
         }
 
-        [HttpPost("bot-history")]
+        [HttpGet("bot-history")]
         public async Task<OkResponse> GetBotHistory([Required] long id)
         {
             var appUser = CurrentUser();
