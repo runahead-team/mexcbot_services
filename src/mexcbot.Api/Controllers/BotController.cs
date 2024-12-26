@@ -1,5 +1,6 @@
 using System;
 using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Threading.Tasks;
 using Dapper;
 using Microsoft.AspNetCore.Mvc;
@@ -113,12 +114,12 @@ namespace mexcbot.Api.Controllers
             if (bot == null)
                 throw new AppException();
 
-            var history = await dbConnection.QueryAsync<BotHistoryDto>(
+            var history = (await dbConnection.QueryAsync<BotHistoryDto>(
                 "SELECT * FROM BotHistory WHERE BotId = @BotId ORDER BY Id DESC LIMIT 240",
                 new
                 {
                     BotId = bot.Id
-                });
+                })).Reverse();
 
             return new OkResponse(history);
         }
