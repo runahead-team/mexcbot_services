@@ -345,19 +345,22 @@ namespace mexcbot.Api.Services
                         Date = data.Date
                     });
 
+
                 if (botHistory == null)
                 {
                     await dbConnection.ExecuteAsync(
                         @"INSERT INTO BotHistory(BotId,`Date`,BalanceBase,BalanceQuote,Spread)
-                            VALUE(@BotId,@Date,@BalanceBase,@BalanceQuote,@Spread)", botHistory);
+                            VALUE(@BotId,@Date,@BalanceBase,@BalanceQuote,@Spread)", data);
                 }
                 else
                 {
+                    data.Id = botHistory.Id;
+
                     await dbConnection.ExecuteAsync(
                         @"UPDATE BotHistory SET BalanceBase = @BalanceBase, 
                                 BalanceQuote = @BalanceQuote,
                                 Spread = @Spread
-                            WHERE Id = @Id", botHistory);
+                            WHERE Id = @Id", data);
                 }
             }
             catch (Exception e)
