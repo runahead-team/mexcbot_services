@@ -11,6 +11,7 @@ using mexcbot.Api.Infrastructure;
 using mexcbot.Api.Infrastructure.ExchangeClient;
 using mexcbot.Api.Models.Bot;
 using mexcbot.Api.Models.Mexc;
+using mexcbot.Api.Services.Interface;
 using Microsoft.Extensions.Hosting;
 using MySqlConnector;
 using Newtonsoft.Json;
@@ -22,8 +23,11 @@ namespace mexcbot.Api.Jobs.DeepCoin
 {
     public class DeepCoinVolMakerJob : BackgroundService
     {
-        public DeepCoinVolMakerJob()
+        private readonly IBotService _botService;
+
+        public DeepCoinVolMakerJob(IBotService botService)
         {
+            _botService = botService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -379,6 +383,20 @@ namespace mexcbot.Api.Jobs.DeepCoin
                             var smallestAskPrice = asks[0][0];
                             var biggestBidPrice = bids[0][0];
 
+                            var spread = smallestAskPrice - biggestBidPrice;
+                            
+                            await _botService.UpdateBotHistory(new BotHistoryDto
+                            {
+                                BotId = bot.Id,
+                                Spread = spread,
+                                BalanceBase = balances
+                                    .FirstOrDefault(x=>string.Equals(x.Asset,bot.Base,StringComparison.InvariantCultureIgnoreCase))
+                                    ?.Free,
+                                BalanceQuote = balances
+                                    .FirstOrDefault(x=>string.Equals(x.Asset,bot.Quote,StringComparison.InvariantCultureIgnoreCase))
+                                    ?.Free
+                            });
+                            
                             // if (orderPrice >= smallestAskPrice)
                             //     orderPrice = smallestAskPrice -
                             //                  1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);

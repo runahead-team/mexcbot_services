@@ -12,6 +12,7 @@ using mexcbot.Api.Models.Mexc;
 using mexcbot.Api.RequestModels.Bot;
 using mexcbot.Api.ResponseModels.Order;
 using mexcbot.Api.Services.Interface;
+using MySqlConnector;
 using Newtonsoft.Json;
 using Serilog;
 using sp.Core.Constants;
@@ -107,8 +108,10 @@ namespace mexcbot.Api.Services
             {
                 BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
                 BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey, bot.ApiSecret),
-                BotExchangeType.DEEPCOIN => new DeepCoinClient(Configurations.DeepCoinUrl, bot.ApiKey, bot.ApiSecret, bot.Passphrase),
-                BotExchangeType.COINSTORE => new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey, bot.ApiSecret),
+                BotExchangeType.DEEPCOIN => new DeepCoinClient(Configurations.DeepCoinUrl, bot.ApiKey, bot.ApiSecret,
+                    bot.Passphrase),
+                BotExchangeType.COINSTORE =>
+                    new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey, bot.ApiSecret),
                 _ => null
             };
 
@@ -177,7 +180,7 @@ namespace mexcbot.Api.Services
             //         ? string.Empty
             //         : JsonConvert.SerializeObject(accInfo);
             // }
-            
+
             await DbConnections.ExecAsync(async (dbConnection) =>
             {
                 if ((await dbConnection.ExecuteScalarAsync<int>(
@@ -323,6 +326,44 @@ namespace mexcbot.Api.Services
                     throw new AppException("Delete fail");
                 }
             });
+        }
+
+        public async Task UpdateBotHistory(BotHistoryDto data)
+        {
+            try
+            {
+                data.Date = AppUtils.NowDateMilis();
+                data.Spread = Math.Abs(data.Spread);
+
+                await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
+
+                var botHistory = await dbConnection.QueryFirstOrDefaultAsync<BotDto>(
+                    "SELECT * FROM BotHistory WHERE BotId = @BotId AND `Date` = @Date",
+                    new
+                    {
+                        BotId = data.BotId,
+                        Date = data.Date
+                    });
+
+                if (botHistory == null)
+                {
+                    await dbConnection.ExecuteAsync(
+                        @"INSERT INTO BotHistory(BotId,`Date`,BalanceBase,BalanceQuote,Spread)
+                            VALUE(@BotId,@Date,@BalanceBase,@BalanceQuote,@Spread)", botHistory);
+                }
+                else
+                {
+                    await dbConnection.ExecuteAsync(
+                        @"UPDATE BotHistory SET BalanceBase = @BalanceBase, 
+                                BalanceQuote = @BalanceQuote,
+                                Spread = @Spread
+                            WHERE Id = @Id", botHistory);
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "UpdateBotHistory");
+            }
         }
 
         #region Prv

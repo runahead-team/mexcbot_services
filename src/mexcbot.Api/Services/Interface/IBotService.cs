@@ -21,5 +21,7 @@ namespace mexcbot.Api.Services.Interface
         Task<PagingResult<OrderDto>> GetOrderHistoryAsync(TableRequest request, AppUser appUser);
 
         Task DeleteBotAsync(long botId, AppUser appUser);
+
+        Task UpdateBotHistory(BotHistoryDto data);
     }
 }

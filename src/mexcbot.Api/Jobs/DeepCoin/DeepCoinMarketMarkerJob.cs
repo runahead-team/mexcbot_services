@@ -10,6 +10,7 @@ using mexcbot.Api.Infrastructure;
 using mexcbot.Api.Infrastructure.ExchangeClient;
 using mexcbot.Api.Models.Bot;
 using mexcbot.Api.Models.Mexc;
+using mexcbot.Api.Services.Interface;
 using Microsoft.Extensions.Hosting;
 using MySqlConnector;
 using Newtonsoft.Json;
@@ -21,8 +22,11 @@ namespace mexcbot.Api.Jobs.DeepCoin
 {
     public class DeepCoinMarketMarkerJob : BackgroundService
     {
-        public DeepCoinMarketMarkerJob()
+        private readonly IBotService _botService;
+
+        public DeepCoinMarketMarkerJob(IBotService botService)
         {
+            _botService = botService;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -339,6 +343,20 @@ namespace mexcbot.Api.Jobs.DeepCoin
 
                     if (minPrice == 0 || maxPrice == 0)
                         return;
+                    
+                    var spread = maxPrice - minPrice;
+                            
+                    await _botService.UpdateBotHistory(new BotHistoryDto
+                    {
+                        BotId = bot.Id,
+                        Spread = spread,
+                        BalanceBase = balances
+                            .FirstOrDefault(x=>string.Equals(x.Asset,bot.Base,StringComparison.InvariantCultureIgnoreCase))
+                            ?.Free,
+                        BalanceQuote = balances
+                            .FirstOrDefault(x=>string.Equals(x.Asset,bot.Quote,StringComparison.InvariantCultureIgnoreCase))
+                            ?.Free
+                    });
 
                     try
                     {
