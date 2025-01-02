@@ -246,14 +246,14 @@ namespace mexcbot.Api.Jobs.Custom
                         Log.Warning("Get Candle Stick fail");
 
                     var btcCandleStickPre1Day =
-                        btcCandleStick5m.Where(x => x[0].Value<long>() >= preStartDate).ToList();
+                        btcCandleStick5m.Where(x => x[0].Value<decimal>() >= preStartDate).ToList();
 
-                    var botCandleStickOnDay = botCandleStick5m.Where(x => x[0].Value<long>() >= startDate).ToList();
+                    var botCandleStickOnDay = botCandleStick5m.Where(x => x[0].Value<decimal>() >= startDate).ToList();
 
-                    var botCandleStickAtNow = botCandleStickOnDay.LastOrDefault(x => x[0].Value<long>() <= nowDate);
+                    var botCandleStickAtNow = botCandleStickOnDay.LastOrDefault(x => x[0].Value<decimal>() <= nowDate);
 
                     var btcCandleStickPredict =
-                        btcCandleStickPre1Day.LastOrDefault(x => x[0].Value<long>() <= preDate);
+                        btcCandleStickPre1Day.LastOrDefault(x => x[0].Value<decimal>() <= preDate);
 
                     if ((btcCandleStickPredict == null || botCandleStickAtNow == null))
                     {
@@ -262,17 +262,15 @@ namespace mexcbot.Api.Jobs.Custom
                     }
 
                     var btcUsdVolumePredict =
-                        decimal.Parse(btcCandleStickPredict[5].Value<string>(), new NumberFormatInfo())
-                        * decimal.Parse(
-                            btcCandleStickPredict[4].Value<string>(), new NumberFormatInfo());
+                        btcCandleStickPredict[5].Value<decimal>()
+                        * btcCandleStickPredict[4].Value<decimal>();
 
                     Log.Warning($"btcUsdVolume5m 1day before {btcUsdVolumePredict.ToString()}");
 
                     var botUsdVolumeTarget = rateVol24hr * btcUsdVolumePredict;
 
-                    var botUsdVolumeReal = decimal.Parse(botCandleStickAtNow[5].ToString(), new NumberFormatInfo())
-                                           * decimal.Parse(botCandleStickAtNow[4].ToString(),
-                                               new NumberFormatInfo());
+                    var botUsdVolumeReal = botCandleStickAtNow[5].Value<decimal>()
+                                           * botCandleStickAtNow[4].Value<decimal>();
 
                     var botUsdOrderValue = botUsdVolumeTarget - botUsdVolumeReal;
 
