@@ -270,8 +270,8 @@ namespace mexcbot.Api.Jobs.Custom
 
                     var botUsdVolumeTarget = rateVol24hr * btcUsdVolumePredict;
 
-                    var botUsdVolumeReal = decimal.Parse(botCandleStickAtNow[5].Value<string>(), new NumberFormatInfo())
-                                           * decimal.Parse(botCandleStickAtNow[4].Value<string>(),
+                    var botUsdVolumeReal = decimal.Parse(botCandleStickAtNow[5].ToString(), new NumberFormatInfo())
+                                           * decimal.Parse(botCandleStickAtNow[4].ToString(),
                                                new NumberFormatInfo());
 
                     var botUsdOrderValue = botUsdVolumeTarget - botUsdVolumeReal;
