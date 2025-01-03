@@ -306,14 +306,17 @@ namespace mexcbot.Api.Jobs
                 {
                     var minQty = 0m;
 
-                    if (bot.ExchangeType != BotExchangeType.COINSTORE)
+                    if (!string.IsNullOrEmpty(exchangeInfo.MinQty))
                     {
-                        minQty = (decimal.Parse(exchangeInfo.QuoteAmountPrecision, new NumberFormatInfo()) /
-                                  decimal.Parse(bot24hr.LastPrice, new NumberFormatInfo()));
-                    }
-                    else
-                    {
-                        minQty = decimal.Parse(exchangeInfo.MinQty, new NumberFormatInfo());
+                        if (bot.ExchangeType != BotExchangeType.COINSTORE)
+                        {
+                            minQty = (decimal.Parse(exchangeInfo.QuoteAmountPrecision, new NumberFormatInfo()) /
+                                      decimal.Parse(bot24hr.LastPrice, new NumberFormatInfo()));
+                        }
+                        else
+                        {
+                            minQty = decimal.Parse(exchangeInfo.MinQty, new NumberFormatInfo());
+                        }
                     }
 
                     if (makerOption.MinQty < minQty)
@@ -362,18 +365,20 @@ namespace mexcbot.Api.Jobs
 
                     if (minPrice == 0 || maxPrice == 0)
                         return;
-                    
+
                     var spread = maxPrice - minPrice;
-                            
+
                     await _botService.UpdateBotHistory(new BotHistoryDto
                     {
                         BotId = bot.Id,
                         Spread = spread,
                         BalanceBase = balances
-                            .FirstOrDefault(x=>string.Equals(x.Asset,bot.Base,StringComparison.InvariantCultureIgnoreCase))
+                            .FirstOrDefault(x =>
+                                string.Equals(x.Asset, bot.Base, StringComparison.InvariantCultureIgnoreCase))
                             ?.Free,
                         BalanceQuote = balances
-                            .FirstOrDefault(x=>string.Equals(x.Asset,bot.Quote,StringComparison.InvariantCultureIgnoreCase))
+                            .FirstOrDefault(x =>
+                                string.Equals(x.Asset, bot.Quote, StringComparison.InvariantCultureIgnoreCase))
                             ?.Free
                     });
 
