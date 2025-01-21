@@ -522,6 +522,7 @@ namespace mexcbot.Api.Jobs
                                             overStepPrice.ToString($"F{quotePrecision.ToString()}",
                                                 new NumberFormatInfo()), OrderSide.BUY,
                                             true);
+                                    await Task.Delay(TimeSpan.FromSeconds(1));
                                 }
 
                                 if (makerOption.MaxPriceOverStep > 0 && price > 0)
@@ -543,6 +544,7 @@ namespace mexcbot.Api.Jobs
                                             overStepPrice.ToString($"F{quotePrecision.ToString()}",
                                                 new NumberFormatInfo()), OrderSide.SELL,
                                             true);
+                                    await Task.Delay(TimeSpan.FromSeconds(1));
                                 }
 
                                 #endregion
@@ -586,6 +588,7 @@ namespace mexcbot.Api.Jobs
                                             new NumberFormatInfo()),
                                         sellPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
                                         OrderSide.SELL, isFillOrder: true);
+                                    await Task.Delay(TimeSpan.FromSeconds(1));
                                 }
                             }
 
@@ -609,6 +612,7 @@ namespace mexcbot.Api.Jobs
                                             new NumberFormatInfo()),
                                         buyPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
                                         OrderSide.BUY, isFillOrder: true);
+                                    await Task.Delay(TimeSpan.FromSeconds(1));
                                 }
                             }
                         }
