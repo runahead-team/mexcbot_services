@@ -570,19 +570,24 @@ namespace mexcbot.Api.Jobs
 
                             if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.SELL)
                             {
-                                var sellFromPrice = (maxPrice - fillOrderBookPriceStep);
-                                if (sellFromPrice > price * 1.1m)
-                                    sellFromPrice = price * 1.1m;
+                                var sellFromPrice = price * 1.05m;
 
+                                var askList = orderbook.Asks
+                                    .Where(x => x[0] < sellFromPrice)
+                                    .ToList();
                                 for (var sellPrice = sellFromPrice;
                                      sellPrice > price;
                                      sellPrice -= fillOrderBookPriceStep)
                                 {
+                                    sellPrice -= RandomNumber(0, 5, 0) / (decimal)Math.Pow(10, quotePrecision);
+
+                                    if (askList.Any(x => x[0] > sellPrice))
+                                        continue;
+
                                     var fillOrderBookQty =
                                         RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
                                             .Truncate(basePrecision);
 
-                                    sellPrice -= RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
                                     await CreateLimitOrder(client, bot,
                                         fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
                                             new NumberFormatInfo()),
@@ -594,19 +599,25 @@ namespace mexcbot.Api.Jobs
 
                             if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.BUY)
                             {
-                                var buyFromPrice = (minPrice + fillOrderBookPriceStep);
-                                if (buyFromPrice < price * 0.9m)
-                                    buyFromPrice = price * 0.9m;
+                                var buyFromPrice = price * 0.95m;
+
+                                var bidList = orderbook.Bids
+                                    .Where(x => x[0] > buyFromPrice)
+                                    .ToList();
 
                                 for (var buyPrice = buyFromPrice;
                                      buyPrice < price;
                                      buyPrice += fillOrderBookPriceStep)
                                 {
+                                    buyPrice += RandomNumber(0, 5, 0) / (decimal)Math.Pow(10, quotePrecision);
+
+                                    if (bidList.Any(x => x[0] < buyPrice))
+                                        continue;
+
                                     var fillOrderBookQty =
                                         RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
                                             .Truncate(basePrecision);
 
-                                    buyPrice += RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
                                     await CreateLimitOrder(client, bot,
                                         fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
                                             new NumberFormatInfo()),

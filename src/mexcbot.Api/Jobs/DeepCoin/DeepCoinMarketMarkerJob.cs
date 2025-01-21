@@ -547,7 +547,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
 
                             if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.SELL)
                             {
-                                var sellFromPrice = price * 1.02m;
+                                var sellFromPrice = price * 1.05m;
 
                                 var askList = orderbook.Asks
                                     .Where(x => x[0] < sellFromPrice)
@@ -575,7 +575,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
 
                             if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.BUY)
                             {
-                                var buyFromPrice = price * 0.92m;
+                                var buyFromPrice = price * 0.95m;
 
                                 var bidList = orderbook.Bids
                                     .Where(x => x[0] > buyFromPrice)
