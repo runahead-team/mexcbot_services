@@ -566,7 +566,7 @@ namespace mexcbot.Api.Jobs
 
                         if (price > 0)
                         {
-                            var fillOrderBookPriceStep = 10 / (decimal)Math.Pow(10, quotePrecision);
+                            var fillOrderBookPriceStep = 6 / (decimal)Math.Pow(10, quotePrecision);
 
                             if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.SELL)
                             {
