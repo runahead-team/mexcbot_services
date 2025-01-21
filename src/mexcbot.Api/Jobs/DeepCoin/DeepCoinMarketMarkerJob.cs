@@ -343,18 +343,20 @@ namespace mexcbot.Api.Jobs.DeepCoin
 
                     if (minPrice == 0 || maxPrice == 0)
                         return;
-                    
+
                     var spread = maxPrice - minPrice;
-                            
+
                     await _botService.UpdateBotHistory(new BotHistoryDto
                     {
                         BotId = bot.Id,
                         Spread = spread,
                         BalanceBase = balances
-                            .FirstOrDefault(x=>string.Equals(x.Asset,bot.Base,StringComparison.InvariantCultureIgnoreCase))
+                            .FirstOrDefault(x =>
+                                string.Equals(x.Asset, bot.Base, StringComparison.InvariantCultureIgnoreCase))
                             ?.Free,
                         BalanceQuote = balances
-                            .FirstOrDefault(x=>string.Equals(x.Asset,bot.Quote,StringComparison.InvariantCultureIgnoreCase))
+                            .FirstOrDefault(x =>
+                                string.Equals(x.Asset, bot.Quote, StringComparison.InvariantCultureIgnoreCase))
                             ?.Free
                     });
 
@@ -561,6 +563,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
                                             new NumberFormatInfo()),
                                         sellPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
                                         OrderSide.SELL, isFillOrder: true);
+                                    await Task.Delay(TimeSpan.FromSeconds(1));
                                 }
                             }
 
