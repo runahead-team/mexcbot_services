@@ -557,7 +557,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
                                         RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
                                             .Truncate(basePrecision);
 
-                                    sellPrice -= RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
+                                    sellPrice -= RandomNumber(0, 5, 0) / (decimal)Math.Pow(10, quotePrecision);
                                     await CreateLimitOrder(client, bot,
                                         fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
                                             new NumberFormatInfo()),
@@ -581,7 +581,7 @@ namespace mexcbot.Api.Jobs.DeepCoin
                                         RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
                                             .Truncate(basePrecision);
 
-                                    buyPrice += RandomNumber(0, 9, 0) / (decimal)Math.Pow(10, quotePrecision);
+                                    buyPrice += RandomNumber(0, 5, 0) / (decimal)Math.Pow(10, quotePrecision);
                                     await CreateLimitOrder(client, bot,
                                         fillOrderBookQty.ToString($"F{basePrecision.ToString()}",
                                             new NumberFormatInfo()),
