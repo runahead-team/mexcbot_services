@@ -29,6 +29,8 @@ namespace mexcbot.Api.Models.Bot
 
         public decimal MaxPriceOverStep { get; set; }
 
+        public decimal Spread { get; set; }
+
         //Number of order per execute time from MinTradePerExec - MaxTradePerExec
         public int MinTradePerExec { get; set; }
 

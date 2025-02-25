@@ -564,6 +564,8 @@ namespace mexcbot.Api.Jobs
                             price = maxPrice;
                         }
 
+                        var minSpreadPerSide = (price * makerOption.Spread / 100) / 2;
+
                         if (price > 0)
                         {
                             var fillOrderBookPriceStep = 6 / (decimal)Math.Pow(10, quotePrecision);
@@ -576,7 +578,7 @@ namespace mexcbot.Api.Jobs
                                     .Where(x => x[0] < sellFromPrice)
                                     .ToList();
                                 for (var sellPrice = sellFromPrice;
-                                     sellPrice > price;
+                                     sellPrice > price + minSpreadPerSide;
                                      sellPrice -= fillOrderBookPriceStep)
                                 {
                                     sellPrice -= RandomNumber(0, 5, 0) / (decimal)Math.Pow(10, quotePrecision);
@@ -606,7 +608,7 @@ namespace mexcbot.Api.Jobs
                                     .ToList();
 
                                 for (var buyPrice = buyFromPrice;
-                                     buyPrice < price;
+                                     buyPrice < price + minSpreadPerSide;
                                      buyPrice += fillOrderBookPriceStep)
                                 {
                                     buyPrice += RandomNumber(0, 5, 0) / (decimal)Math.Pow(10, quotePrecision);
