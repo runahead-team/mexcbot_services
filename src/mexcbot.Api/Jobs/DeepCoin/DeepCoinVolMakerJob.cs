@@ -87,6 +87,10 @@ namespace mexcbot.Api.Jobs.DeepCoin
             {
                 Log.Information("DeepCoin BOT {0} run", bot.Symbol);
 
+                var key = $"{bot.Symbol}-{bot.ExchangeType}-#{bot.Id}".ToUpper();
+                if (!MemCache.BotStatuses.ContainsKey(key))
+                    MemCache.BotStatuses.TryAdd(key, "ACTIVE");
+
                 ExchangeClient client = bot.ExchangeType switch
                 {
                     BotExchangeType.DEEPCOIN => new DeepCoinClient(Configurations.DeepCoinUrl, bot.ApiKey,
@@ -384,19 +388,21 @@ namespace mexcbot.Api.Jobs.DeepCoin
                             var biggestBidPrice = bids[0][0];
 
                             var spread = smallestAskPrice - biggestBidPrice;
-                            
+
                             await _botService.UpdateBotHistory(new BotHistoryDto
                             {
                                 BotId = bot.Id,
                                 Spread = spread,
                                 BalanceBase = balances
-                                    .FirstOrDefault(x=>string.Equals(x.Asset,bot.Base,StringComparison.InvariantCultureIgnoreCase))
+                                    .FirstOrDefault(x =>
+                                        string.Equals(x.Asset, bot.Base, StringComparison.InvariantCultureIgnoreCase))
                                     ?.Free,
                                 BalanceQuote = balances
-                                    .FirstOrDefault(x=>string.Equals(x.Asset,bot.Quote,StringComparison.InvariantCultureIgnoreCase))
+                                    .FirstOrDefault(x => string.Equals(x.Asset, bot.Quote,
+                                        StringComparison.InvariantCultureIgnoreCase))
                                     ?.Free
                             });
-                            
+
                             // if (orderPrice >= smallestAskPrice)
                             //     orderPrice = smallestAskPrice -
                             //                  1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);

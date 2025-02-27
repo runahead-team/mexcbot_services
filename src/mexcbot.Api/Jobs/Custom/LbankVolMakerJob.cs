@@ -25,7 +25,7 @@ namespace mexcbot.Api.Jobs.Custom
     {
         private readonly IBotService _botService;
 
-        public LbankVolMakerJob( IBotService botService)
+        public LbankVolMakerJob(IBotService botService)
         {
             _botService = botService;
         }
@@ -86,6 +86,10 @@ namespace mexcbot.Api.Jobs.Custom
             try
             {
                 Log.Information("LBank BOT {0} run", bot.Symbol);
+
+                var key = $"{bot.Symbol}-{bot.ExchangeType}-#{bot.Id}".ToUpper();
+                if (!MemCache.BotStatuses.ContainsKey(key))
+                    MemCache.BotStatuses.TryAdd(key, "ACTIVE");
 
                 ExchangeClient client = bot.ExchangeType switch
                 {
@@ -364,27 +368,29 @@ namespace mexcbot.Api.Jobs.Custom
                             var orderbook = await client.GetOrderbook(bot.Base, bot.Quote);
                             var asks = orderbook.Asks;
                             var bids = orderbook.Bids;
-                            
+
                             if (orderbook.Asks.Count == 0 || orderbook.Bids.Count == 0)
                                 return;
 
                             var smallestAskPrice = asks[0][0];
                             var biggestBidPrice = bids[0][0];
-                            
+
                             var spread = smallestAskPrice - biggestBidPrice;
-                            
+
                             await _botService.UpdateBotHistory(new BotHistoryDto
                             {
                                 BotId = bot.Id,
                                 Spread = spread,
                                 BalanceBase = balances
-                                    .FirstOrDefault(x=>string.Equals(x.Asset,bot.Base,StringComparison.InvariantCultureIgnoreCase))
-                                ?.Free,
+                                    .FirstOrDefault(x =>
+                                        string.Equals(x.Asset, bot.Base, StringComparison.InvariantCultureIgnoreCase))
+                                    ?.Free,
                                 BalanceQuote = balances
-                                    .FirstOrDefault(x=>string.Equals(x.Asset,bot.Quote,StringComparison.InvariantCultureIgnoreCase))
+                                    .FirstOrDefault(x => string.Equals(x.Asset, bot.Quote,
+                                        StringComparison.InvariantCultureIgnoreCase))
                                     ?.Free
                             });
-                                
+
                             if (orderPrice >= smallestAskPrice)
                                 orderPrice = smallestAskPrice -
                                              1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);

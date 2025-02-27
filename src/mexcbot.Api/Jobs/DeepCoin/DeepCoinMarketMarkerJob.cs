@@ -82,6 +82,10 @@ namespace mexcbot.Api.Jobs.DeepCoin
             {
                 Log.Information("BOT {0} run", bot.Symbol);
 
+                var key = $"{bot.Symbol}-{bot.ExchangeType}-#{bot.Id}".ToUpper();
+                if (!MemCache.BotStatuses.ContainsKey(key))
+                    MemCache.BotStatuses.TryAdd(key, "ACTIVE");
+
                 ExchangeClient client = bot.ExchangeType switch
                 {
                     BotExchangeType.DEEPCOIN => new DeepCoinClient(Configurations.DeepCoinUrl, bot.ApiKey,

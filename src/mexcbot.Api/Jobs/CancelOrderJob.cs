@@ -130,6 +130,12 @@ namespace mexcbot.Api.Jobs
             if (bot == null)
                 return;
 
+            var key = $"{bot.Symbol}-{bot.ExchangeType}-#{bot.Id}".ToUpper();
+            if (MemCache.BotStatuses.ContainsKey(key))
+                MemCache.BotStatuses[key] = "LIVE";
+            else
+                MemCache.BotStatuses.TryAdd(key, "LIVE");
+
             ExchangeClient client = bot.ExchangeType switch
             {
                 BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
