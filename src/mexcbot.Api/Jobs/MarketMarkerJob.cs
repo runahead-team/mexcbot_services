@@ -508,47 +508,53 @@ namespace mexcbot.Api.Jobs
 
                                 #region Order Over Step
 
-                                if (makerOption.MinPriceOverStep < 0 && price > 0)
+                                if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.BUY)
                                 {
-                                    var overStepQty =
-                                        RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
-                                            .Truncate(basePrecision);
+                                    if (makerOption.MinPriceOverStep < 0 && price > 0)
+                                    {
+                                        var overStepQty =
+                                            RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
+                                                .Truncate(basePrecision);
 
-                                    var overStepPrice = RandomNumber(
-                                        price + (makerOption.MinPriceStep + makerOption.MinPriceOverStep) * price /
-                                        100,
-                                        price + makerOption.MinPriceStep * price / 100, quotePrecision);
+                                        var overStepPrice = RandomNumber(
+                                            price + (makerOption.MinPriceStep + makerOption.MinPriceOverStep) * price /
+                                            100,
+                                            price + makerOption.MinPriceStep * price / 100, quotePrecision);
 
-                                    if (overStepPrice > 0)
-                                        await CreateLimitOrder(client, bot,
-                                            overStepQty.ToString($"F{basePrecision.ToString()}",
-                                                new NumberFormatInfo()),
-                                            overStepPrice.ToString($"F{quotePrecision.ToString()}",
-                                                new NumberFormatInfo()), OrderSide.BUY,
-                                            true);
-                                    await Task.Delay(TimeSpan.FromSeconds(1));
+                                        if (overStepPrice > 0)
+                                            await CreateLimitOrder(client, bot,
+                                                overStepQty.ToString($"F{basePrecision.ToString()}",
+                                                    new NumberFormatInfo()),
+                                                overStepPrice.ToString($"F{quotePrecision.ToString()}",
+                                                    new NumberFormatInfo()), OrderSide.BUY,
+                                                true);
+                                        await Task.Delay(TimeSpan.FromSeconds(1));
+                                    }
                                 }
 
-                                if (makerOption.MaxPriceOverStep > 0 && price > 0)
+                                if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.SELL)
                                 {
-                                    var overStepQty =
-                                        RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
-                                            .Truncate(basePrecision);
+                                    if (makerOption.MaxPriceOverStep > 0 && price > 0)
+                                    {
+                                        var overStepQty =
+                                            RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision)
+                                                .Truncate(basePrecision);
 
-                                    var overStepPrice = RandomNumber(
-                                        price + makerOption.MaxPriceOverStep *
-                                        price / 100,
-                                        price + (makerOption.MaxPriceStep + makerOption.MaxPriceOverStep) *
-                                        price / 100, quotePrecision);
+                                        var overStepPrice = RandomNumber(
+                                            price + makerOption.MaxPriceOverStep *
+                                            price / 100,
+                                            price + (makerOption.MaxPriceStep + makerOption.MaxPriceOverStep) *
+                                            price / 100, quotePrecision);
 
-                                    if (overStepPrice > 0)
-                                        await CreateLimitOrder(client, bot,
-                                            overStepQty.ToString($"F{basePrecision.ToString()}",
-                                                new NumberFormatInfo()),
-                                            overStepPrice.ToString($"F{quotePrecision.ToString()}",
-                                                new NumberFormatInfo()), OrderSide.SELL,
-                                            true);
-                                    await Task.Delay(TimeSpan.FromSeconds(1));
+                                        if (overStepPrice > 0)
+                                            await CreateLimitOrder(client, bot,
+                                                overStepQty.ToString($"F{basePrecision.ToString()}",
+                                                    new NumberFormatInfo()),
+                                                overStepPrice.ToString($"F{quotePrecision.ToString()}",
+                                                    new NumberFormatInfo()), OrderSide.SELL,
+                                                true);
+                                        await Task.Delay(TimeSpan.FromSeconds(1));
+                                    }
                                 }
 
                                 #endregion
