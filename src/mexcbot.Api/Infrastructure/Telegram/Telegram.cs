@@ -14,6 +14,8 @@ namespace mexcbot.Api.Infrastructure.Telegram
 
         public static void Send(string message, uint noRepeatMinutes = 0, string messageId = "_")
         {
+            return;
+            
             if (noRepeatMinutes > 0)
             {
                 var now = AppUtils.NowMilis();
