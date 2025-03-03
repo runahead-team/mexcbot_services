@@ -87,9 +87,7 @@ namespace mexcbot.Api.Jobs.Custom
             {
                 Log.Information("LBank BOT {0} run", bot.Symbol);
 
-                var key = $"{bot.Symbol}-{bot.ExchangeType}-#{bot.Id}".ToUpper();
-                if (!MemCache.BotStatuses.ContainsKey(key))
-                    MemCache.BotStatuses.TryAdd(key, "ACTIVE");
+                MemCache.AddActiveBot(bot);
 
                 ExchangeClient client = bot.ExchangeType switch
                 {

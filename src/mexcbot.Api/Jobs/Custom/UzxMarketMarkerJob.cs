@@ -75,6 +75,8 @@ namespace mexcbot.Api.Jobs.Custom
             {
                 Log.Information("BOT {0} run", bot.Symbol);
 
+                MemCache.AddActiveBot(bot);
+
                 var client = new UzxClient(bot.ApiSecret);
 
                 await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
@@ -315,7 +317,6 @@ namespace mexcbot.Api.Jobs.Custom
                         }
 
                         #endregion
-                        
                     }, CancellationToken.None));
                 }
 
