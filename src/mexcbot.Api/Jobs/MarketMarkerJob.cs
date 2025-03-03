@@ -558,7 +558,6 @@ namespace mexcbot.Api.Jobs
                                 }
 
                                 #endregion
-                                
                             }, CancellationToken.None));
                         }
 
@@ -581,7 +580,7 @@ namespace mexcbot.Api.Jobs
                         {
                             var fillOrderBookPriceStep = 6 / (decimal)Math.Pow(10, quotePrecision);
 
-                            if (makerOption.Side == OrderSide.BOTH)
+                            if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.SELL)
                             {
                                 var sellFromPrice = price * 1.05m;
 
@@ -610,7 +609,7 @@ namespace mexcbot.Api.Jobs
                                 }
                             }
 
-                            if (makerOption.Side == OrderSide.BOTH)
+                            if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.BUY)
                             {
                                 var buyFromPrice = price * 0.95m;
 
@@ -619,7 +618,7 @@ namespace mexcbot.Api.Jobs
                                     .ToList();
 
                                 for (var buyPrice = buyFromPrice;
-                                     buyPrice < price + minSpreadPerSide;
+                                     buyPrice < price - minSpreadPerSide;
                                      buyPrice += fillOrderBookPriceStep)
                                 {
                                     buyPrice += RandomNumber(0, 5, 0) / (decimal)Math.Pow(10, quotePrecision);
