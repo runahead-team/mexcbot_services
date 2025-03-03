@@ -40,6 +40,14 @@ namespace mexcbot.Api.ResponseModels.Ticker
             LastPrice = coinStoreTicker24Hr.Latest;
             QuoteVolume = coinStoreTicker24Hr.Turnover;
         }
+        
+        public Ticker24hrView(Io.Gate.GateApi.Model.Ticker gateTicker24Hr)
+        {
+            Symbol = gateTicker24Hr.CurrencyPair;
+            Volume = gateTicker24Hr.BaseVolume;
+            LastPrice = gateTicker24Hr.Last;
+            QuoteVolume = gateTicker24Hr.QuoteVolume;
+        }
 
         public string Symbol { get; set; }
 

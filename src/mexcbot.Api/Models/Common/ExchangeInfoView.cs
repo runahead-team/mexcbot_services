@@ -1,3 +1,4 @@
+using Io.Gate.GateApi.Model;
 using mexcbot.Api.Models.LBank;
 using sp.Core.Extensions;
 
@@ -48,6 +49,18 @@ namespace mexcbot.Api.ResponseModels.ExchangeInfo
             QuoteAssetPrecision = quoteAssetPrecision;
             BaseAssetPrecision = baseAssetPrecision;
             Status = deepCoinExchangeInfo.State;
+        }
+        
+        public ExchangeInfoView(CurrencyPair gateInfo)
+        {
+            Symbol = gateInfo.Id;
+            MinQty = gateInfo.MinBaseAmount;
+            MaxLimitQty = gateInfo.MaxBaseAmount;
+
+            BaseAssetPrecision = gateInfo.AmountPrecision;
+            QuoteAssetPrecision = gateInfo.Precision;
+            
+            Status = gateInfo.TradeStatus.GetValueOrDefault().ToString();
         }
 
         public string Symbol { get; set; }

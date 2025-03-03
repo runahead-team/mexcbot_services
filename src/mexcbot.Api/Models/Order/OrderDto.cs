@@ -1,4 +1,5 @@
 using mexcbot.Api.Constants;
+using mexcbot.Api.Infrastructure;
 using mexcbot.Api.Models.CoinStore;
 using mexcbot.Api.Models.DeepCoin;
 using sp.Core.Utils;
@@ -25,6 +26,16 @@ namespace mexcbot.Api.ResponseModels.Order
             Price = coinStoreOrder.Price;
             OrigQty = coinStoreOrder.OrigQty;
             Side = coinStoreOrder.Side;
+            TransactTime = AppUtils.NowMilis();
+        }
+        
+        public OrderDto(Io.Gate.GateApi.Model.Order gateOrder)
+        {
+            Symbol = gateOrder.CurrencyPair;
+            OrderId = gateOrder.Id.ToString();
+            Price = gateOrder.Price;
+            OrigQty = gateOrder.Amount;
+            Side = BotUtils.GetSide(gateOrder.Side).ToString();
             TransactTime = AppUtils.NowMilis();
         }
         
