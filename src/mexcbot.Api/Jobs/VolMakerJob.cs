@@ -8,6 +8,7 @@ using Dapper;
 using mexcbot.Api.Constants;
 using mexcbot.Api.Infrastructure;
 using mexcbot.Api.Infrastructure.ExchangeClient;
+using mexcbot.Api.Infrastructure.Telegram;
 using mexcbot.Api.Models.Bot;
 using mexcbot.Api.Models.Mexc;
 using mexcbot.Api.Services.Interface;
@@ -159,6 +160,7 @@ namespace mexcbot.Api.Jobs
                     {
                         bot.Status = BotStatus.INACTIVE;
                         stopLog += $"Stop when your {bot.Base} balance below 0 or null\n";
+                        Telegram.Send($"🟠 VOL BOT {bot.Base} is stopped by balance {bot.Base} = 0 or null");
                     }
 
                     var quoteBalance = balances.FirstOrDefault(x =>
@@ -168,6 +170,7 @@ namespace mexcbot.Api.Jobs
                     {
                         bot.Status = BotStatus.INACTIVE;
                         stopLog += $"Stop when your {bot.Quote} balance below 0 or null\n";
+                        Telegram.Send($"🟠 VOL BOT {bot.Base} is stopped by balance {bot.Quote} = 0 or null");
                     }
                 }
 

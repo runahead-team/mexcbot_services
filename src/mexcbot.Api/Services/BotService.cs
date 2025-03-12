@@ -7,6 +7,7 @@ using Dapper;
 using mexcbot.Api.Constants;
 using mexcbot.Api.Infrastructure;
 using mexcbot.Api.Infrastructure.ExchangeClient;
+using mexcbot.Api.Infrastructure.Telegram;
 using mexcbot.Api.Models.Bot;
 using mexcbot.Api.Models.Mexc;
 using mexcbot.Api.RequestModels.Bot;
@@ -234,6 +235,10 @@ namespace mexcbot.Api.Services
                 if (exec != 1)
                     throw new AppException(AppError.OPERATION_FAIL);
 
+                if (bot.Status != BotStatus.ACTIVE
+                    && request.Status == BotStatus.ACTIVE)
+                    Telegram.Send($"🟢 BOT {bot.Base} active");
+
                 await Task.CompletedTask;
             });
         }
@@ -333,9 +338,9 @@ namespace mexcbot.Api.Services
             try
             {
                 var now = AppUtils.NowMilis();
-                var h1 = (long)TimeSpan.FromHours(1).TotalMilliseconds;
+                var d1 = (long)TimeSpan.FromDays(1).TotalMilliseconds;
 
-                data.Date = now - now % h1;
+                data.Date = now - now % d1;
                 data.Spread = Math.Abs(data.Spread);
 
                 await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);

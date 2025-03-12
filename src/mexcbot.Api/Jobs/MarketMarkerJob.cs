@@ -9,6 +9,7 @@ using Dapper;
 using mexcbot.Api.Constants;
 using mexcbot.Api.Infrastructure;
 using mexcbot.Api.Infrastructure.ExchangeClient;
+using mexcbot.Api.Infrastructure.Telegram;
 using mexcbot.Api.Models.Bot;
 using mexcbot.Api.Models.Mexc;
 using mexcbot.Api.Services.Interface;
@@ -240,6 +241,7 @@ namespace mexcbot.Api.Jobs
                             {
                                 bot.Status = BotStatus.INACTIVE;
                                 stopLog += $"Stop when your {bot.Base} balance below 0 or null; \n";
+                                Telegram.Send($"🟠 BOT {bot.Base} is stopped by balance {bot.Base} null");
                             }
                             else
                             {
@@ -250,6 +252,7 @@ namespace mexcbot.Api.Jobs
                                 {
                                     bot.Status = BotStatus.INACTIVE;
                                     stopLog += $"Stop when your {bot.Base} balance below 0 or null; \n";
+                                    Telegram.Send($"🟠 BOT {bot.Base} is stopped by balance {bot.Base} = 0");
                                 }
                                 else
                                 {
@@ -260,6 +263,8 @@ namespace mexcbot.Api.Jobs
                                             bot.Status = BotStatus.INACTIVE;
                                             stopLog +=
                                                 $"Stop when your {bot.Base} balance lower than {makerOption.StopLossBase}; \n";
+                                            Telegram.Send(
+                                                $"🟠 BOT {bot.Base} is stopped by balance {bot.Base}: {baseBalanceValue:N} < {makerOption.StopLossBase:N}");
                                         }
                                     }
                                 }
@@ -275,6 +280,7 @@ namespace mexcbot.Api.Jobs
                             {
                                 bot.Status = BotStatus.INACTIVE;
                                 stopLog += $"Stop when your {bot.Quote} balance below 0 or null; \n";
+                                Telegram.Send($"🟠 BOT {bot.Base} is stopped by balance {bot.Quote} null");
                             }
                             else
                             {
@@ -285,6 +291,7 @@ namespace mexcbot.Api.Jobs
                                 {
                                     bot.Status = BotStatus.INACTIVE;
                                     stopLog += $"Stop when your {bot.Quote} balance below 0 or null; \n";
+                                    Telegram.Send($"🟠 BOT {bot.Base} is stopped by balance {bot.Quote} = 0");
                                 }
                                 else
                                 {
@@ -295,6 +302,8 @@ namespace mexcbot.Api.Jobs
                                             bot.Status = BotStatus.INACTIVE;
                                             stopLog +=
                                                 $"Stop when your {bot.Quote} balance lower than {makerOption.StopLossQuote}; \n";
+                                            Telegram.Send(
+                                                $"🟠 BOT {bot.Base} is stopped by balance {bot.Quote}: {quoteBalanceValue:N} < {makerOption.StopLossQuote:N}");
                                         }
                                     }
                                 }

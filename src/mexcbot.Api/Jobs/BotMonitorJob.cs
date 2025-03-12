@@ -39,7 +39,14 @@ namespace mexcbot.Api.Jobs
                 {
                     foreach (var keyValuePair in MemCache.ActiveBots)
                     {
-                        if (!MemCache.LiveBots.ContainsKey(keyValuePair.Key))
+                        if (MemCache.LiveBots.TryGetValue(keyValuePair.Key, out var lastCancel))
+                        {
+                            var lastActive = keyValuePair.Value;
+
+                            if (TimeSpan.FromMilliseconds(Math.Abs(lastCancel - lastActive)).TotalMinutes > 15)
+                                Telegram.Send($"🟠 BOT {keyValuePair.Key} is not running.");
+                        }
+                        else
                             Telegram.Send($"🟠 BOT {keyValuePair.Key} is not running.");
                     }
                 }
