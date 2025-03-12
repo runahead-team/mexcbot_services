@@ -19,6 +19,12 @@ public static class MemCache
             ActiveBots[key] = now;
     }
 
+    public static void RemoveActiveBot(BotDto bot)
+    {
+        var key = $"{bot.Symbol}-{bot.ExchangeType}-#{bot.Id}".ToUpper();
+        ActiveBots.Remove(key);
+    }
+
     public static readonly Dictionary<string, long> LiveBots = new Dictionary<string, long>();
 
 

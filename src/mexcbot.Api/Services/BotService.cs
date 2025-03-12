@@ -239,6 +239,9 @@ namespace mexcbot.Api.Services
                     && request.Status == BotStatus.ACTIVE)
                     Telegram.Send($"🟢 BOT {bot.Base} active");
 
+                if (request.Status == BotStatus.INACTIVE)
+                    MemCache.RemoveActiveBot(bot);
+
                 await Task.CompletedTask;
             });
         }
