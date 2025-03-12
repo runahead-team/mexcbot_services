@@ -1,5 +1,6 @@
 using System;
 using mexcbot.Api.Constants;
+using mexcbot.Api.Infrastructure;
 
 namespace mexcbot.Api.ResponseModels.Order
 {
@@ -29,6 +30,15 @@ namespace mexcbot.Api.ResponseModels.Order
                 status = parsedStatus;
 
             Status = status;
+        }
+        
+        public CanceledOrderView(Io.Gate.GateApi.Model.Order gateCanceledOrderView)
+        {
+            Symbol = gateCanceledOrderView.CurrencyPair;
+            OrigClientOrderId = string.Empty;
+            OrderId = gateCanceledOrderView.Id;
+
+            Status = BotUtils.GetStatus(gateCanceledOrderView.Status);
         }
 
         public string Symbol { get; set; }

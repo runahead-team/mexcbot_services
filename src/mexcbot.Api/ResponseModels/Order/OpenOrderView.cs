@@ -1,3 +1,5 @@
+using System;
+using Io.Gate.GateApi.Model;
 using mexcbot.Api.Models.CoinStore;
 
 namespace mexcbot.Api.ResponseModels.Order
@@ -15,6 +17,17 @@ namespace mexcbot.Api.ResponseModels.Order
             Type = openOrderView.Type;
             Side = openOrderView.Side;
             TransactTime = openOrderView.TransactTime;
+        }
+        
+        public OpenOrderView(Io.Gate.GateApi.Model.Order openOrderView)
+        {
+            Symbol = openOrderView.CurrencyPair;
+            OrderId = openOrderView.Id;
+            Price = openOrderView.Price;
+            OrigQty = openOrderView.Amount;
+            Type = openOrderView.Type.HasValue ? openOrderView.Type.Value.ToString() : string.Empty;
+            Side =  openOrderView.Side.ToString();
+            TransactTime = openOrderView.CreateTimeMs;
         }
         
         public string Symbol { get; set; }
