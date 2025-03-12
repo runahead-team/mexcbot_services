@@ -53,14 +53,14 @@ namespace mexcbot.Api.Jobs
                     await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
 
                     var bots = (await dbConnection.QueryAsync<BotDto>(
-                        "SELECT * FROM Bots WHERE Status = @Status AND Type = @Type AND ExchangeType IN @ExchangeTypes AND (NextRunMakerTime < @Now OR NextRunMakerTime IS NULL)",
+                        "SELECT * FROM Bots WHERE Status = @Status AND Type = @Type AND ExchangeType IN @ExchangeTypes",
                         new
                         {
                             Status = BotStatus.ACTIVE,
                             Type = BotType.MAKER,
                             ExchangeTypes = new[]
                                 { exchangeType },
-                            Now = AppUtils.NowMilis()
+                            Now = AppUtils.NowMilis() + TimeSpan.FromDays(1).TotalMilliseconds
                         })).ToList();
 
                     if (bots.Count == 0)
@@ -101,6 +101,9 @@ namespace mexcbot.Api.Jobs
                         bot.ApiSecret),
                     _ => null
                 };
+
+                if (bot.ExchangeType != BotExchangeType.COINSTORE)
+                    return;
 
                 if (client == null)
                     return;
@@ -580,6 +583,10 @@ namespace mexcbot.Api.Jobs
                         {
                             price = maxPrice;
                         }
+                        else
+                        {
+                            price = decimal.Parse(bot24hr.LastPrice, new CultureInfo("en-US"));
+                        }
 
                         var minSpreadPerSide = (price * makerOption.Spread / 100) / 2;
 
@@ -589,7 +596,7 @@ namespace mexcbot.Api.Jobs
 
                             if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.SELL)
                             {
-                                var sellFromPrice = price * 1.05m;
+                                var sellFromPrice = price * 1.02m;
 
                                 var askList = orderbook.Asks
                                     .Where(x => x[0] < sellFromPrice)
@@ -618,7 +625,7 @@ namespace mexcbot.Api.Jobs
 
                             if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.BUY)
                             {
-                                var buyFromPrice = price * 0.95m;
+                                var buyFromPrice = price * 0.92m;
 
                                 var bidList = orderbook.Bids
                                     .Where(x => x[0] > buyFromPrice)
