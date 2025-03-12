@@ -12,24 +12,27 @@ namespace mexcbot.Api.Infrastructure.Telegram
     {
         private static readonly Dictionary<string, long> Messages = new();
 
-        public static void Send(string message, uint noRepeatMinutes = 0, string messageId = "_")
+        public static void Send(string message, uint noRepeatMinutes = 0, string messageId = "")
         {
-            return;
-            
-            if (noRepeatMinutes > 0)
+            if (!string.IsNullOrEmpty(messageId))
             {
-                var now = AppUtils.NowMilis();
-                var mutePeriod = (long)TimeSpan.FromMinutes(noRepeatMinutes).TotalMilliseconds;
-                if (Messages.TryGetValue(messageId, out var muteTime))
+                if (noRepeatMinutes > 0)
                 {
-                    if (muteTime > now)
-                        return;
+                    var now = AppUtils.NowMilis();
+                    var mutePeriod = (long)TimeSpan.FromMinutes(noRepeatMinutes).TotalMilliseconds;
 
-                    Messages[messageId] = now + mutePeriod;
-                }
-                else
-                {
-                    Messages.Add(messageId, now + mutePeriod);
+
+                    if (Messages.TryGetValue(messageId, out var muteTime))
+                    {
+                        if (muteTime > now)
+                            return;
+
+                        Messages[messageId] = now + mutePeriod;
+                    }
+                    else
+                    {
+                        Messages.Add(messageId, now + mutePeriod);
+                    }
                 }
             }
 
