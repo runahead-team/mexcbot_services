@@ -622,7 +622,7 @@ namespace mexcbot.Api.Jobs
 
                             if (makerOption.Side == OrderSide.BOTH || makerOption.Side == OrderSide.BUY)
                             {
-                                var buyFromPrice = price * 0.92m;
+                                var buyFromPrice = price * 0.98m;
 
                                 var bidList = orderbook.Bids
                                     .Where(x => x[0] > buyFromPrice)
