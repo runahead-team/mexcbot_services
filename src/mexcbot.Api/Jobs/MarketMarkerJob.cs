@@ -604,7 +604,7 @@ namespace mexcbot.Api.Jobs
                                 {
                                     sellPrice -= RandomNumber(0, 5, 0) / (decimal)Math.Pow(10, quotePrecision);
 
-                                    if (askList.Any(x => x[0] > sellPrice))
+                                    if (askList.Any(x => x[0] < sellPrice))
                                         continue;
 
                                     var fillOrderBookQty =
@@ -634,7 +634,7 @@ namespace mexcbot.Api.Jobs
                                 {
                                     buyPrice += RandomNumber(0, 5, 0) / (decimal)Math.Pow(10, quotePrecision);
 
-                                    if (bidList.Any(x => x[0] < buyPrice))
+                                    if (bidList.Any(x => x[0] > buyPrice))
                                         continue;
 
                                     var fillOrderBookQty =
