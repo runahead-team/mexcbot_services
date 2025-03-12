@@ -53,14 +53,14 @@ namespace mexcbot.Api.Jobs
                     await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
 
                     var bots = (await dbConnection.QueryAsync<BotDto>(
-                        "SELECT * FROM Bots WHERE Status = @Status AND Type = @Type AND ExchangeType IN @ExchangeTypes",
+                        "SELECT * FROM Bots WHERE Status = @Status AND Type = @Type AND ExchangeType IN @ExchangeTypes AND (NextRunMakerTime < @Now OR NextRunMakerTime IS NULL)",
                         new
                         {
                             Status = BotStatus.ACTIVE,
                             Type = BotType.MAKER,
                             ExchangeTypes = new[]
                                 { exchangeType },
-                            Now = AppUtils.NowMilis() + TimeSpan.FromDays(1).TotalMilliseconds
+                            Now = AppUtils.NowMilis()
                         })).ToList();
 
                     if (bots.Count == 0)
@@ -101,9 +101,6 @@ namespace mexcbot.Api.Jobs
                         bot.ApiSecret),
                     _ => null
                 };
-
-                if (bot.ExchangeType != BotExchangeType.COINSTORE)
-                    return;
 
                 if (client == null)
                     return;
