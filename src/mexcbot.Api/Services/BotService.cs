@@ -132,7 +132,11 @@ namespace mexcbot.Api.Services
                 bot.AccountInfo = (!accBalances.Any())
                     ? string.Empty
                     : JsonConvert.SerializeObject(accInfo);
+
+                bot.BasePrecision ??= exchangeInfo?.BaseAssetPrecision;
+                bot.QuotePrecision ??= exchangeInfo?.QuoteAssetPrecision;
             }
+
 
             await DbConnections.ExecAsync(async (dbConnection) =>
             {
