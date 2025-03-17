@@ -8,3 +8,13 @@ create table BotHistory(
     PRIMARY KEY (`Id`),
     KEY `BotIdDate` (`BotId`, `Date`)
 ) ENGINE = InnoDB;
+
+alter table
+    Bots
+add
+    `BasePrecision` int;
+
+alter table
+    Bots
+add
+    `QuotePrecision` int;
