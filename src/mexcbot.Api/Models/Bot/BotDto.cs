@@ -26,9 +26,8 @@ namespace mexcbot.Api.Models.Bot
             UserId = user.Id;
             Base = request.Base;
             Quote = request.Quote;
-            BasePrecision =
-                request.BasePrecision is > 0 ? request.BasePrecision : null;
-            QuotePrecision = request.QuotePrecision is > 0 ? request.QuotePrecision : null;
+            BasePrecision = request.BasePrecision;
+            QuotePrecision = request.QuotePrecision;
             Type = request.Type;
             ExchangeType = request.ExchangeType;
             VolumeOption = request.VolumeOption == null
