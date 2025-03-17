@@ -26,6 +26,8 @@ namespace mexcbot.Api.Models.Bot
             UserId = user.Id;
             Base = request.Base;
             Quote = request.Quote;
+            BasePrecision = request.BasePrecision;
+            QuotePrecision = request.QuotePrecision;
             Type = request.Type;
             ExchangeType = request.ExchangeType;
             VolumeOption = request.VolumeOption == null
@@ -110,6 +112,10 @@ namespace mexcbot.Api.Models.Bot
 
         public string Quote { get; set; }
 
+        public int? BasePrecision { get; set; }
+
+        public int? QuotePrecision { get; set; }
+
         public BotType Type { get; set; }
 
         public BotExchangeType ExchangeType { get; set; }
@@ -145,7 +151,7 @@ namespace mexcbot.Api.Models.Bot
         public string ApiKey { get; set; }
 
         public string ApiSecret { get; set; }
-        
+
         public string Passphrase { get; set; }
 
         public string Logs { get; set; }

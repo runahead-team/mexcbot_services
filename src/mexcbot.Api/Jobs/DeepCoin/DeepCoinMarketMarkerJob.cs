@@ -323,8 +323,8 @@ namespace mexcbot.Api.Jobs.DeepCoin
                 {
                     var price = 0m;
 
-                    var quotePrecision = exchangeInfo.QuoteAssetPrecision;
-                    var basePrecision = exchangeInfo.BaseAssetPrecision;
+                    var quotePrecision = bot.QuotePrecision ?? exchangeInfo.QuoteAssetPrecision;
+                    var basePrecision = bot.BasePrecision ?? exchangeInfo.BaseAssetPrecision;
 
                     var orderbook = (await client.GetOrderbook(bot.Base, bot.Quote));
 

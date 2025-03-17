@@ -343,8 +343,8 @@ namespace mexcbot.Api.Jobs
                     var totalUsdVolume = 0m;
                     var fromTime = AppUtils.NowMilis();
 
-                    var quotePrecision = exchangeInfo.QuoteAssetPrecision;
-                    var basePrecision = exchangeInfo.BaseAssetPrecision;
+                    var quotePrecision = bot.QuotePrecision ?? exchangeInfo.QuoteAssetPrecision;
+                    var basePrecision = bot.BasePrecision ?? exchangeInfo.BaseAssetPrecision;
 
                     Log.Information("numOfOrder {0}", numOfOrder);
 
