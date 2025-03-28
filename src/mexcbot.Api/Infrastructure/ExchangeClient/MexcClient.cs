@@ -24,8 +24,6 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
         private readonly string _apiKey;
         private readonly string _secretKey;
 
-        private readonly HttpClient _httpClient = new HttpClient();
-
         public MexcClient(string baseUrl)
         {
             _baseUri = new Uri(baseUrl);
@@ -33,9 +31,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
         public MexcClient(string baseUrl, string apiKey, string secretKey)
         {
-            _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("x-mexc-apikey", apiKey);
             _baseUri = new Uri(baseUrl);
-
             _apiKey = apiKey;
             _secretKey = secretKey;
         }
@@ -200,8 +196,11 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             if (logInfo)
                 Log.Information($"MexcClient:SendRequest request {endpoint} {payload}");
 
+            var httpClient = new HttpClient();
             if (useSignature)
             {
+                httpClient.DefaultRequestHeaders.TryAddWithoutValidation("x-mexc-apikey", _apiKey);
+                
                 var timestamp = AppUtils.NowMilis();
 
                 if (!string.IsNullOrEmpty(payload))
@@ -227,16 +226,16 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 switch (method)
                 {
                     case "GET":
-                        response = await _httpClient.GetAsync($"{uri}?{payload}");
+                        response = await httpClient.GetAsync($"{uri}?{payload}");
                         break;
                     case "POST":
-                        response = await _httpClient.PostAsync($"{uri}?{payload}", null);
+                        response = await httpClient.PostAsync($"{uri}?{payload}", null);
                         break;
                     case "PUT":
-                        response = await _httpClient.PutAsync($"{uri}?{payload}", null);
+                        response = await httpClient.PutAsync($"{uri}?{payload}", null);
                         break;
                     case "DELETE":
-                        response = await _httpClient.DeleteAsync($"{uri}?{payload}");
+                        response = await httpClient.DeleteAsync($"{uri}?{payload}");
                         break;
                     default:
                         throw new ArgumentOutOfRangeException();
