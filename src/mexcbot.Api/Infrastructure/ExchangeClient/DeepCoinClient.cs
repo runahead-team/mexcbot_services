@@ -52,7 +52,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             payload = payload + $"&instId={@base}-{quote}";
 
             var (success, responseBody) =
-                await SendRequest("GET", $"/deepcoin/market/instruments", payload, false, false);
+                await SendRequest("GET", $"/deepcoin/market/instruments", payload);
 
             if (!success)
                 return new ExchangeInfoView();
@@ -74,14 +74,16 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             payload = payload + $"&bar={interval}&limit=300";
 
             var (success, responseBody) =
-                await SendRequest("GET", "/deepcoin/market/candles", payload, false, false);
+                await SendRequest("GET", "/deepcoin/market/candles", payload);
 
             if (!success)
-                return [];
-            
+                return
+            []
+            ;
+
             var data = JObject.Parse(responseBody)["data"];
 
-            return data == null ? [] : JsonConvert.DeserializeObject<List<JArray>>(data.ToString());
+            return data == null?[] : JsonConvert.DeserializeObject<List<JArray>>(data.ToString());
         }
 
         public async Task<Ticker24hrView> GetTicker24hr(string @base, string quote)
@@ -90,7 +92,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var payload = $"instType={_instType}";
 
             var (success, responseBody) =
-                await SendRequest("GET", "/deepcoin/market/tickers", payload, false, false);
+                await SendRequest("GET", "/deepcoin/market/tickers", payload);
 
             if (!success)
                 return new Ticker24hrView();
@@ -164,7 +166,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var payload = $"instId={@base}-{quote}";
 
             var (success, responseBody) =
-                await SendRequest("GET", "/deepcoin/trade/v2/orders-pending", payload, true, false);
+                await SendRequest("GET", "/deepcoin/trade/v2/orders-pending", payload, true);
 
             if (!success)
                 return new List<OpenOrderView>();
@@ -188,7 +190,9 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                     var data = JObject.Parse(responseBody)["data"];
 
                     if (data == null)
-                        return [];
+                        return
+                    []
+                    ;
 
                     var balances = JsonConvert.DeserializeObject<List<DeepCoinAccBalance>>(data.ToString())
                         .Where(x => decimal.Parse(x.Free, new NumberFormatInfo()) > 0m)
@@ -232,14 +236,14 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
         }
 
         private async Task<(bool, string)> SendRequest(string method, string endpoint, string payload = "",
-            bool useSignature = false, bool logInfo = true, Uri otherUri = null)
+            bool useSignature = false, bool logRequest = false, bool logResponse = false, Uri otherUri = null)
         {
             var uri =
                 otherUri != null
                     ? new Uri(otherUri, endpoint)
                     : new Uri(_baseUri, endpoint);
 
-            if (logInfo)
+            if (logRequest)
                 Log.Information($"DeepCoinClient:SendRequest request {endpoint} {payload}");
 
             if (useSignature)
@@ -251,7 +255,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 preHashStr = preHashStr + $"?{payload}";
 
                 var sign = GetHmacSha256Signature(preHashStr, _secretKey);
-                
+
                 _httpClient.DefaultRequestHeaders.Clear();
 
                 _httpClient.DefaultRequestHeaders.TryAddWithoutValidation("DC-ACCESS-KEY", _apiKey);
@@ -289,7 +293,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 {
                     responseBody = await response.Content.ReadAsStringAsync();
 
-                    if (logInfo)
+                    if (logResponse)
                         Log.Information($"DeepCoinClient:SendRequest response {endpoint} {payload} {responseBody}");
 
                     return (true, responseBody);

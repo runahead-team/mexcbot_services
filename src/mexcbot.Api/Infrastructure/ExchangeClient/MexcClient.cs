@@ -71,7 +71,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var payload = $"symbol={@base}{quote}";
 
             var (success, responseBody) =
-                await SendRequest("GET", "/api/v3/ticker/24hr", payload, false, false);
+                await SendRequest("GET", "/api/v3/ticker/24hr", payload);
 
             if (!success)
                 return new Ticker24hrView();
@@ -87,7 +87,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var payload = $"symbol={@base}{quote}&side={side}&type={OrderType.LIMIT}&quantity={quantity}&price={price}";
 
             var (success, responseBody) =
-                await SendRequest("POST", "/api/v3/order", payload, true, true);
+                await SendRequest("POST", "/api/v3/order", payload, true, logRequest: true);
 
             if (!success)
                 return new OrderDto();
@@ -102,7 +102,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var payload = $"symbol={@base}{quote}&orderId={orderId}";
 
             var (success, responseBody) =
-                await SendRequest("DELETE", "/api/v3/order", payload, true, true);
+                await SendRequest("DELETE", "/api/v3/order", payload, true, logRequest: true);
 
             if (!success)
                 return null;
@@ -186,21 +186,21 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
         }
 
         private async Task<(bool, string)> SendRequest(string method, string endpoint, string payload = "",
-            bool useSignature = false, bool logInfo = true, Uri otherUri = null)
+            bool useSignature = false, bool logRequest = false, bool logResponse = false, Uri otherUri = null)
         {
             var uri =
                 otherUri != null
                     ? new Uri(otherUri, endpoint)
                     : new Uri(_baseUri, endpoint);
 
-            if (logInfo)
+            if (logRequest)
                 Log.Information($"MexcClient:SendRequest request {endpoint} {payload}");
 
             var httpClient = new HttpClient();
             if (useSignature)
             {
                 httpClient.DefaultRequestHeaders.TryAddWithoutValidation("x-mexc-apikey", _apiKey);
-                
+
                 var timestamp = AppUtils.NowMilis();
 
                 if (!string.IsNullOrEmpty(payload))
@@ -245,7 +245,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 {
                     responseBody = await response.Content.ReadAsStringAsync();
 
-                    if (logInfo)
+                    if (logResponse)
                         Log.Information($"MexcClient:SendRequest response {endpoint} {payload} {responseBody}");
 
                     return (true, responseBody);
@@ -253,6 +253,9 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
                 responseBody = await response.Content.ReadAsStringAsync();
                 var error = JsonConvert.DeserializeObject<MexcError>(responseBody);
+
+                if (error.Code == -2011)
+                    return (true, null);
 
                 Log.Error($"MexcClient:SendRequest response {endpoint} {payload} {responseBody}");
 
