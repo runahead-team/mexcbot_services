@@ -407,12 +407,19 @@ namespace mexcbot.Api.Jobs
                                     ?.Free
                             });
 
-                            if (orderPrice >= smallestAskPrice)
-                                orderPrice = smallestAskPrice -
-                                             1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
-                            if (orderPrice <= biggestBidPrice)
-                                orderPrice = biggestBidPrice +
-                                             1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
+                            var unit = 1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
+
+                            if (spread <= unit)
+                            {
+                                orderPrice = biggestBidPrice;
+                            }
+                            else
+                            {
+                                if (orderPrice >= smallestAskPrice)
+                                    orderPrice = smallestAskPrice - unit;
+                                if (orderPrice <= biggestBidPrice)
+                                    orderPrice = biggestBidPrice + unit;
+                            }
 
                             if (volumeOption.SafeRun)
                             {
