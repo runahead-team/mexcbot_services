@@ -708,7 +708,6 @@ namespace mexcbot.Api.Jobs
 
         private async Task RunBlinking(BotDto bot)
         {
-            var stopLog = "";
 
             try
             {
@@ -747,7 +746,7 @@ namespace mexcbot.Api.Jobs
                     await CreateLimitOrder(client, bot,
                         qty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
                         orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                        OrderSide.SELL);
+                        OrderSide.BUY);
                 }
                 else
                 {
@@ -756,7 +755,7 @@ namespace mexcbot.Api.Jobs
                     await CreateLimitOrder(client, bot,
                         qty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
                         orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                        OrderSide.BUY);
+                        OrderSide.SELL);
                 }
             }
             catch (Exception e)
