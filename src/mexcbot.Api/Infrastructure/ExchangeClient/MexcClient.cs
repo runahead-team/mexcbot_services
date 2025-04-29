@@ -58,7 +58,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var payload = $"symbol={@base}{quote}&interval={interval}";
 
             var (success, responseBody) =
-                await SendRequest("GET", "/api/v3/klines", payload, false, false);
+                await SendRequest("GET", "/api/v3/klines", payload, useSignature: true);
 
             if (!success)
                 return new List<JArray>();

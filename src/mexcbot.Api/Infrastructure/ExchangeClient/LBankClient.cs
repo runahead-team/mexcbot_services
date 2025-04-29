@@ -352,7 +352,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 }
 
                 if (logRequest)
-                    Log.Information("Lbank {client} {endpoint} {request}", GetType().Name, endpoint,
+                    Log.Information("Lbank {method} {endpoint} {request}", method, endpoint,
                         body);
 
 
@@ -373,7 +373,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 var responseBody = await response.Content.ReadAsStringAsync();
 
                 if (logResponse)
-                    Log.Information("Lbank {client} {endpoint} {request} {response}", GetType().Name, endpoint,
+                    Log.Information("Lbank {method} {endpoint} {request} {response}", method, endpoint,
                         body, responseBody);
 
                 var responseObj = JsonConvert.DeserializeObject<JObject>(responseBody);
@@ -382,7 +382,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
                 if (errorCode > 0 && errorCode != 10025)
                 {
-                    Log.Error("Lbank {client} {endpoint} {request} {response}", GetType().Name, endpoint, body,
+                    Log.Error("Lbank {method} {endpoint} {request} {response}", method, endpoint, body,
                         responseBody);
                 }
 
