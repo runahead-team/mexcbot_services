@@ -38,10 +38,51 @@ namespace mexcbot.Api.Jobs
             {
                 CreateOrderJob(stoppingToken, BotExchangeType.MEXC),
                 CreateOrderJob(stoppingToken, BotExchangeType.LBANK),
-                CreateOrderJob(stoppingToken, BotExchangeType.COINSTORE)
+                CreateOrderJob(stoppingToken, BotExchangeType.COINSTORE),
+                OrderbookBlinking(stoppingToken, BotExchangeType.MEXC),
+                OrderbookBlinking(stoppingToken, BotExchangeType.LBANK),
+                OrderbookBlinking(stoppingToken, BotExchangeType.COINSTORE)
             };
 
             await Task.WhenAll(tasks);
+        }
+
+        private async Task OrderbookBlinking(CancellationToken stoppingToken, BotExchangeType exchangeType)
+        {
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                try
+                {
+                    await using var dbConnection = new MySqlConnection(Configurations.DbConnectionString);
+
+                    var bots = (await dbConnection.QueryAsync<BotDto>(
+                        "SELECT * FROM Bots WHERE Status = @Status AND Type = @Type AND ExchangeType IN @ExchangeTypes AND IsRunBlinking = @IsRunBlinking",
+                        new
+                        {
+                            Status = BotStatus.ACTIVE,
+                            Type = BotType.MAKER,
+                            ExchangeTypes = new[]
+                                { exchangeType },
+                            IsRunBlinking = true
+                        })).ToList();
+
+                    if (bots.Count == 0)
+                        continue;
+
+                    var tasks = bots.Select(RunBlinking).ToList();
+
+                    await Task.WhenAll(tasks);
+                }
+                catch (Exception e)
+                {
+                    if (!(e is TaskCanceledException))
+                        Log.Error(e, "MarketMarkerJob:OrderbookBlinking");
+                }
+                finally
+                {
+                    await Task.Delay(TimeSpan.FromSeconds(10), stoppingToken);
+                }
+            }
         }
 
         private async Task CreateOrderJob(CancellationToken stoppingToken, BotExchangeType exchangeType)
@@ -66,7 +107,7 @@ namespace mexcbot.Api.Jobs
                     if (bots.Count == 0)
                         continue;
 
-                    var tasks = bots.Select(Run).ToList();
+                    var tasks = bots.Select(RunMarketMaker).ToList();
 
                     await Task.WhenAll(tasks);
                 }
@@ -82,7 +123,7 @@ namespace mexcbot.Api.Jobs
             }
         }
 
-        private async Task Run(BotDto bot)
+        private async Task RunMarketMaker(BotDto bot)
         {
             var stopLog = "";
             var now = AppUtils.NowMilis();
@@ -665,10 +706,69 @@ namespace mexcbot.Api.Jobs
             }
         }
 
+        private async Task RunBlinking(BotDto bot)
+        {
+            var stopLog = "";
+
+            try
+            {
+                Log.Information("BOT {0} run", bot.Symbol);
+
+                MemCache.AddActiveBot(bot);
+
+                ExchangeClient client = bot.ExchangeType switch
+                {
+                    BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
+                    BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey, bot.ApiSecret),
+                    BotExchangeType.COINSTORE => new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey,
+                        bot.ApiSecret),
+                    _ => null
+                };
+
+                if (client == null)
+                    return;
+
+                var bot24hr = await client.GetTicker24hr(bot.Base, bot.Quote);
+                var exchangeInfo = bot.ExchangeInfoObj;
+                var makerOption = JsonConvert.DeserializeObject<BotMakerOption>(bot.MakerOption);
+
+                var botLastPrice = decimal.Parse(bot24hr.LastPrice, new NumberFormatInfo());
+
+                var quotePrecision = bot.QuotePrecision ?? exchangeInfo.QuoteAssetPrecision;
+                var basePrecision = bot.BasePrecision ?? exchangeInfo.BaseAssetPrecision;
+
+                var qty = makerOption.IsRandomQty
+                    ? RandomNumber(makerOption.MinQty, makerOption.MinQty * 2, basePrecision)
+                    : RandomNumber(makerOption.MinQty, makerOption.MaxQty, basePrecision);
+
+                if (new Random().Next(0, 2) == 0)
+                {
+                    var orderPrice = RandomNumber(botLastPrice * 0.98m, botLastPrice, quotePrecision);
+                    await CreateLimitOrder(client, bot,
+                        qty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                        orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                        OrderSide.SELL);
+                }
+                else
+                {
+                    var orderPrice = RandomNumber(botLastPrice * 1.02m, botLastPrice, quotePrecision);
+
+                    await CreateLimitOrder(client, bot,
+                        qty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                        orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                        OrderSide.BUY);
+                }
+            }
+            catch (Exception e)
+            {
+                Log.Error(e, "Bot run");
+            }
+        }
+
         #region Private
 
         private async Task<bool> CreateLimitOrder(ExchangeClient client, BotDto bot, string qty, string price,
-            OrderSide side, bool isOverStepOrder = false, bool isFillOrder = false)
+            OrderSide side, bool isOverStepOrder = false, bool isFillOrder = false, bool isBlinking = false)
         {
             var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty,
                 price);
@@ -693,7 +793,12 @@ namespace mexcbot.Api.Jobs
             order.Type = bot.ExchangeType == BotExchangeType.COINSTORE ? "LIMIT" : order.Type;
             order.TransactTime = AppUtils.NowMilis();
 
-            if (isOverStepOrder && bot.MakerOptionObj != null && bot.MakerOptionObj.OrderExp > 0)
+            if (isBlinking)
+            {
+                order.ExpiredTime =
+                    order.TransactTime + 5000;
+            }
+            else if (isOverStepOrder && bot.MakerOptionObj != null && bot.MakerOptionObj.OrderExp > 0)
             {
                 order.ExpiredTime =
                     order.TransactTime + (long)bot.MakerOptionObj.OrderExp * 1000;
@@ -705,6 +810,7 @@ namespace mexcbot.Api.Jobs
             }
             else
                 order.ExpiredTime = order.TransactTime + MexcBotConstants.ExpiredOrderTime;
+
 
             var exec = await sqlConnection.ExecuteAsync(
                 @"INSERT INTO BotOrders(BotId,BotType,BotExchangeType,UserId,OrderId,Symbol,OrderListId,Price,OrigQty,Type,Side,ExpiredTime,Status,`TransactTime`)

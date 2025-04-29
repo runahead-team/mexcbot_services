@@ -18,3 +18,8 @@ alter table
     Bots
 add
     `QuotePrecision` int;
+
+alter table
+    Bots
+add
+    IsRunBlinking bit default 0;
