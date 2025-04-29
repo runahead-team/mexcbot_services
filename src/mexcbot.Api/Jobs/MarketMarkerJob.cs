@@ -708,12 +708,9 @@ namespace mexcbot.Api.Jobs
 
         private async Task RunBlinking(BotDto bot)
         {
-
             try
             {
                 Log.Information("BOT {0} run", bot.Symbol);
-
-                MemCache.AddActiveBot(bot);
 
                 ExchangeClient client = bot.ExchangeType switch
                 {
@@ -746,7 +743,7 @@ namespace mexcbot.Api.Jobs
                     await CreateLimitOrder(client, bot,
                         qty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
                         orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                        OrderSide.BUY);
+                        OrderSide.BUY, isBlinking: true);
                 }
                 else
                 {
@@ -755,7 +752,7 @@ namespace mexcbot.Api.Jobs
                     await CreateLimitOrder(client, bot,
                         qty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
                         orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                        OrderSide.SELL);
+                        OrderSide.SELL, isBlinking: true);
                 }
             }
             catch (Exception e)
