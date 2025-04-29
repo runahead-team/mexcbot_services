@@ -149,7 +149,7 @@ namespace mexcbot.Api.Jobs
 
             var canceledOrder = await client.CancelOrder(bot.Base, bot.Quote, order.OrderId);
 
-            if (canceledOrder == null)
+            if (canceledOrder == null && bot.ExchangeType == BotExchangeType.MEXC)
             {
                 order.Status = OrderStatus.CANCELED;
                 await UpdateStatus(order);
