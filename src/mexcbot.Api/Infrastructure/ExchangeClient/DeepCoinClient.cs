@@ -150,6 +150,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 return null;
 
             var data = JObject.Parse(responseBody)["data"];
+
             if (data == null)
                 return new CanceledOrderView();
 

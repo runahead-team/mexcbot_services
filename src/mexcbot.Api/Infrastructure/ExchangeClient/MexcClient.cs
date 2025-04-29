@@ -107,6 +107,10 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             if (!success)
                 return null;
 
+
+            if (string.IsNullOrEmpty(responseBody))
+                return null;
+
             var data = JObject.Parse(responseBody);
 
             return JsonConvert.DeserializeObject<CanceledOrderView>(data.ToString());
