@@ -47,7 +47,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var endpoint = $"symbol={@base.ToLower()}_{quote.ToLower()}";
 
             var (success, responseBody) =
-                await SendRequest<JArray>(HttpMethod.Get, $"/v2/accuracy.do?{endpoint}", false, null, false);
+                await SendRequest<JArray>(HttpMethod.Get, $"/v2/accuracy.do?{endpoint}");
 
             if (!success)
                 return new ExchangeInfoView();
@@ -70,7 +70,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             payload += $"&time={(queryFromTime / 1000).ToString()}";
 
             var (success, responseBody) =
-                await SendRequest<JArray>(HttpMethod.Get, $"/v2/kline.do?{payload}", false, null, false);
+                await SendRequest<JArray>(HttpMethod.Get, $"/v2/kline.do?{payload}");
 
             var result = new List<JArray>();
 
@@ -106,7 +106,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var payload = $"symbol={baseSymbol}";
 
             var (success, responseBody) =
-                await SendRequest<JArray>(HttpMethod.Get, $"/v2/ticker/24hr.do?{payload}", false, null, false);
+                await SendRequest<JArray>(HttpMethod.Get, $"/v2/ticker/24hr.do?{payload}");
 
             if (!success)
                 return new Ticker24hrView();
@@ -137,7 +137,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                         type = type,
                         price = price,
                         amount = quantity
-                    }, false, true);
+                    }, logRequest: true);
 
             if (!success)
                 return new OrderDto();
@@ -159,8 +159,6 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
         public async Task<CanceledOrderView> CancelOrder(string @base, string quote, string orderId)
         {
-            Log.Information("Bot cancel order {0} {1} {2}", @base, quote, orderId);
-
             var symbol = $"{@base}_{quote}";
             symbol = symbol.ToLower();
 
@@ -169,7 +167,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 {
                     symbol = symbol,
                     orderId = orderId
-                });
+                }, logRequest: true);
 
             if (!success || response is null)
                 return new CanceledOrderView();
@@ -302,7 +300,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
         }
 
         private async Task<(bool, T)> SendRequest<T>(HttpMethod method, string endpoint, bool isAuth = false,
-            object body = null, bool ignored400 = false, bool logResponse = false)
+            object body = null, bool ignored400 = false, bool logRequest = false, bool logResponse = false)
         {
             try
             {
@@ -353,6 +351,11 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                     requestMessage.Content = requestContent;
                 }
 
+                if (logRequest)
+                    Log.Information("Lbank {client} {endpoint} {request}", GetType().Name, endpoint,
+                        body);
+
+
                 var response = await _httpClient.SendAsync(requestMessage);
 
                 if (response.StatusCode != HttpStatusCode.OK)
@@ -370,7 +373,8 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 var responseBody = await response.Content.ReadAsStringAsync();
 
                 if (logResponse)
-                    Log.Information("Lbank response {0}", responseBody);
+                    Log.Information("Lbank {client} {endpoint} {request} {response}", GetType().Name, endpoint,
+                        body, responseBody);
 
                 var responseObj = JsonConvert.DeserializeObject<JObject>(responseBody);
 
@@ -378,7 +382,8 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
                 if (errorCode > 0 && errorCode != 10025)
                 {
-                    Log.Error("{client} {endpoint} {request} {response}", GetType().Name, endpoint, body, responseBody);
+                    Log.Error("Lbank {client} {endpoint} {request} {response}", GetType().Name, endpoint, body,
+                        responseBody);
                 }
 
                 var success = responseObj["result"];

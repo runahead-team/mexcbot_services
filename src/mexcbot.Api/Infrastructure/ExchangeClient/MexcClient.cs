@@ -198,7 +198,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                     : new Uri(_baseUri, endpoint);
 
             if (logRequest)
-                Log.Information($"MexcClient:SendRequest request {endpoint} {payload}");
+                Log.Information($"MEXC {method} {endpoint} {payload}");
 
             var httpClient = new HttpClient();
             if (useSignature)
@@ -250,7 +250,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                     responseBody = await response.Content.ReadAsStringAsync();
 
                     if (logResponse)
-                        Log.Information($"MexcClient:SendRequest response {endpoint} {payload} {responseBody}");
+                        Log.Information($"MEXC {method} {endpoint} {payload} {responseBody}");
 
                     return (true, responseBody);
                 }
@@ -261,7 +261,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 if (error.Code == -2011)
                     return (true, null);
 
-                Log.Error($"MexcClient:SendRequest response {endpoint} {payload} {responseBody}");
+                Log.Information($"MEXC {method} {endpoint} {payload} {responseBody}");
 
                 var errorMessage = $"{error.Code} {error.Description}";
 

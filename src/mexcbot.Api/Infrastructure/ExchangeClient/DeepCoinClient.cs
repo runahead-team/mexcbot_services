@@ -245,7 +245,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                     : new Uri(_baseUri, endpoint);
 
             if (logRequest)
-                Log.Information($"DeepCoinClient:SendRequest request {endpoint} {payload}");
+                Log.Information($"DeepCoin {method} {endpoint} {payload}");
 
             if (useSignature)
             {
@@ -295,7 +295,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                     responseBody = await response.Content.ReadAsStringAsync();
 
                     if (logResponse)
-                        Log.Information($"DeepCoinClient:SendRequest response {endpoint} {payload} {responseBody}");
+                        Log.Information($"DeepCoin {method} {endpoint} {payload} {responseBody}");
 
                     return (true, responseBody);
                 }
@@ -303,7 +303,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                 responseBody = await response.Content.ReadAsStringAsync();
                 var error = JsonConvert.DeserializeObject<DeepCoinError>(responseBody);
 
-                Log.Error($"DeepCoinClient:SendRequest response {endpoint} {payload} {responseBody}");
+                Log.Error($"DeepCoin {method} {endpoint} {payload} {responseBody}");
 
                 var errorMessage = $"{error.Code} {error.Description}";
 
