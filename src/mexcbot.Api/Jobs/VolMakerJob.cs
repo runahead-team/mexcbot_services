@@ -233,7 +233,7 @@ namespace mexcbot.Api.Jobs
                     //todo random vol
                     rateVol24hr = rateVol24hr * (1 + (decimal)DateTime.UtcNow.Date.Day % 15 / 100);
 
-                    Log.Warning($"btcUsdVol24hr {btcUsdVol24hr.ToString()} & rateVol24hr {rateVol24hr.ToString()}");
+                    // Log.Warning($"btcUsdVol24hr {btcUsdVol24hr.ToString()} & rateVol24hr {rateVol24hr.ToString()}");
 
                     if (botLastPrice <= 0)
                     {
@@ -288,7 +288,7 @@ namespace mexcbot.Api.Jobs
                     var btcUsdVolumePredict =
                         decimal.Parse(btcCandleStickPredict[7].Value<string>(), new NumberFormatInfo());
 
-                    Log.Warning($"btcUsdVolume5m 1day before {btcUsdVolumePredict}");
+                    // Log.Warning($"btcUsdVolume5m 1day before {btcUsdVolumePredict}");
 
                     var botUsdVolumeTarget = rateVol24hr * btcUsdVolumePredict;
 
@@ -297,11 +297,11 @@ namespace mexcbot.Api.Jobs
 
                     var botUsdOrderValue = botUsdVolumeTarget - botUsdVolumeReal;
 
-                    Log.Warning($"botUsdOrderValue5m {botUsdOrderValue}");
-
-                    Log.Warning($"botUsdVolumeTarget5m {botUsdVolumeTarget}");
-
-                    Log.Warning($"botUsdVolumeReal5m {botUsdVolumeReal}");
+                    // Log.Warning($"botUsdOrderValue5m {botUsdOrderValue}");
+                    //
+                    // Log.Warning($"botUsdVolumeTarget5m {botUsdVolumeTarget}");
+                    //
+                    // Log.Warning($"botUsdVolumeReal5m {botUsdVolumeReal}");
 
                     //If volume 5m >= predict
                     if (botUsdOrderValue > botUsdVolumeTarget)
