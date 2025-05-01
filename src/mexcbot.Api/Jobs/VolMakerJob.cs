@@ -436,16 +436,11 @@ namespace mexcbot.Api.Jobs
 
                             var unit = 1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
 
+                            orderPrice = biggestBidPrice + unit;
+
                             if (spread <= unit)
                             {
                                 orderPrice = biggestBidPrice;
-                            }
-                            else
-                            {
-                                if (orderPrice >= smallestAskPrice)
-                                    orderPrice = smallestAskPrice - unit;
-                                if (orderPrice <= biggestBidPrice)
-                                    orderPrice = biggestBidPrice + unit;
                             }
 
                             if (volumeOption.SafeRun)
