@@ -557,7 +557,7 @@ namespace mexcbot.Api.Jobs
             order.BotExchangeType = bot.ExchangeType;
             order.UserId = bot.UserId;
             order.ExpiredTime = side == OrderSide.SELL
-                ? order.TransactTime + 5000
+                ? order.TransactTime + 30000
                 : order.TransactTime;
 
             order.Side = side.ToString();
