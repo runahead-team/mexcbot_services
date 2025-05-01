@@ -162,6 +162,20 @@ namespace mexcbot.Api.Jobs
                         stopLog += $"Stop when your {bot.Base} balance below 0 or null\n";
                         Telegram.Send($"🟠 VOL BOT {bot.Base} is stopped by balance {bot.Base} = 0 or null");
                     }
+                    else
+                    {
+                        if (decimal.TryParse(baseBalance.Free, new NumberFormatInfo(), out var baseBalanceValue))
+                            if (bot.VolumeOptionObj.StopLossBase > 0)
+                                if (baseBalanceValue <= bot.VolumeOptionObj.StopLossBase)
+                                {
+                                    bot.Status = BotStatus.INACTIVE;
+                                    stopLog +=
+                                        $"Stop when your {bot.Base} balance lower than {bot.VolumeOptionObj.StopLossBase}; \n";
+                                    Telegram.Send(
+                                        $"🟠 VOL BOT {bot.Base} is stopped by balance {bot.Base}: {baseBalanceValue:N} < {bot.VolumeOptionObj.StopLossBase:N}");
+                                }
+                    }
+
 
                     var quoteBalance = balances.FirstOrDefault(x =>
                         string.Equals(x.Asset, bot.Quote, StringComparison.InvariantCultureIgnoreCase));
@@ -171,6 +185,19 @@ namespace mexcbot.Api.Jobs
                         bot.Status = BotStatus.INACTIVE;
                         stopLog += $"Stop when your {bot.Quote} balance below 0 or null\n";
                         Telegram.Send($"🟠 VOL BOT {bot.Base} is stopped by balance {bot.Quote} = 0 or null");
+                    }
+                    else
+                    {
+                        if (decimal.TryParse(quoteBalance.Free, new NumberFormatInfo(), out var quoteBalanceValue))
+                            if (bot.VolumeOptionObj.StopLossBase > 0)
+                                if (quoteBalanceValue <= bot.VolumeOptionObj.StopLossQuote)
+                                {
+                                    bot.Status = BotStatus.INACTIVE;
+                                    stopLog +=
+                                        $"Stop when your {bot.Base} balance lower than {bot.VolumeOptionObj.StopLossQuote}; \n";
+                                    Telegram.Send(
+                                        $"🟠 VOL BOT {bot.Base} is stopped by balance {bot.Quote}: {quoteBalanceValue:N} < {bot.VolumeOptionObj.StopLossQuote:N}");
+                                }
                     }
                 }
 

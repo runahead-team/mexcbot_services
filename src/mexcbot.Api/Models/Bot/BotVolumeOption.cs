@@ -24,5 +24,12 @@ namespace mexcbot.Api.Models.Bot
         public bool AlwaysRun { get; set; }
         
         public bool SafeRun { get; set; }
+        
+        //Trade bot will be terminate when balance of base reach StopLossBase
+        public decimal StopLossBase { get; set; }
+
+        //Trade bot will be terminate when balance of quote reach StopLossBase
+        public decimal StopLossQuote { get; set; }
+
     }
 }
