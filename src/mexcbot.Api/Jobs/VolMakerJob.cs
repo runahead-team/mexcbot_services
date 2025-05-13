@@ -35,7 +35,8 @@ namespace mexcbot.Api.Jobs
             var tasks = new List<Task>
             {
                 CreateOrderJob(stoppingToken, BotExchangeType.MEXC),
-                CreateOrderJob(stoppingToken, BotExchangeType.COINSTORE)
+                CreateOrderJob(stoppingToken, BotExchangeType.COINSTORE),
+                //CreateOrderJob(stoppingToken, BotExchangeType.GATE)
             };
 
             await Task.WhenAll(tasks);
@@ -97,6 +98,8 @@ namespace mexcbot.Api.Jobs
                 {
                     BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
                     BotExchangeType.COINSTORE => new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey,
+                        bot.ApiSecret),
+                    BotExchangeType.GATE => new GateClient(Configurations.GateUrl, bot.ApiKey,
                         bot.ApiSecret),
                     _ => throw new ArgumentOutOfRangeException()
                 };

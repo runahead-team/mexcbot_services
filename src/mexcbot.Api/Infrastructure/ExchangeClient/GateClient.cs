@@ -10,6 +10,7 @@ using mexcbot.Api.Models.Mexc;
 using mexcbot.Api.ResponseModels.ExchangeInfo;
 using mexcbot.Api.ResponseModels.Order;
 using mexcbot.Api.ResponseModels.Ticker;
+using Newtonsoft.Json;
 using Serilog;
 using Newtonsoft.Json.Linq;
 
@@ -17,8 +18,6 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 {
     public class GateClient : ExchangeClient
     {
-        private readonly string _ordType = "LIMIT";
-
         private readonly SpotApi _spotApi;
 
         public GateClient(string baseUrl)
@@ -45,9 +44,9 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
         public async Task<ExchangeInfoView> GetExchangeInfo(string @base, string quote)
         {
             var symbol = $"{@base}_{quote}";
-
+            
             var exchangeInfo = await _spotApi.GetCurrencyPairAsync(symbol);
-
+            
             return exchangeInfo == null ? new ExchangeInfoView() : new ExchangeInfoView(exchangeInfo);
         }
 
