@@ -55,7 +55,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             //10s, 1m, 5m, 15m, 30m, 60m, 4h, 8h, 1d, 7d, 30d
             var symbol = $"{@base}_{quote}";
 
-            var candleTicks = await _spotApi.ListCandlesticksAsync(symbol, 2000, null, null, interval);
+            var candleTicks = await _spotApi.ListCandlesticksAsync(symbol, 1000, null, null, interval);
 
             var result = new List<JArray>();
 
@@ -78,9 +78,9 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
                     candleTick[3],
                     candleTick[4],
                     candleTick[2],
-                    candleTick[1],
+                    candleTick[5],
                     GetEndTime(startTimeMilis, interval),
-                    candleTick[6]
+                    candleTick[1]
                 ]);
             }
 
@@ -105,14 +105,14 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
         public async Task<OrderDto> PlaceOrder(string @base, string quote, OrderSide side,
             string quantity, string price)
         {
-            var symbol = $"{@base}{quote}";
+            var symbol = $"{@base}_{quote}";
 
             var gateSide = BotUtils.GetGateSide(side);
             if(gateSide==null)
                 return new OrderDto();
             
             //Account types， spot - spot account, margin - margin account, unified - unified account, cross_margin - cross margin account
-            var payload = new Order("PlaceOrder", symbol,Order.TypeEnum.Limit,"spot", gateSide.Value, quantity, price);
+            var payload = new Order(null, symbol,Order.TypeEnum.Limit,"spot", gateSide.Value, quantity, price);
 
             var createdOrder = await _spotApi.CreateOrderAsync(payload);
 

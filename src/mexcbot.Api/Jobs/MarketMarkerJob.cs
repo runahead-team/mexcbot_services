@@ -41,7 +41,8 @@ namespace mexcbot.Api.Jobs
                 CreateOrderJob(stoppingToken, BotExchangeType.COINSTORE),
                 OrderbookBlinking(stoppingToken, BotExchangeType.MEXC),
                 OrderbookBlinking(stoppingToken, BotExchangeType.LBANK),
-                OrderbookBlinking(stoppingToken, BotExchangeType.COINSTORE)
+                OrderbookBlinking(stoppingToken, BotExchangeType.COINSTORE),
+                OrderbookBlinking(stoppingToken, BotExchangeType.GATE)
             };
 
             await Task.WhenAll(tasks);
@@ -718,6 +719,8 @@ namespace mexcbot.Api.Jobs
                     BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey, bot.ApiSecret),
                     BotExchangeType.COINSTORE => new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey,
                         bot.ApiSecret),
+                    BotExchangeType.GATE => new CoinStoreClient(Configurations.GateUrl, bot.ApiKey,
+                        bot.ApiSecret),
                     _ => null
                 };
 
@@ -786,7 +789,7 @@ namespace mexcbot.Api.Jobs
             order.UserId = bot.UserId;
 
             order.Side = side.ToString();
-            order.Type = bot.ExchangeType == BotExchangeType.COINSTORE ? "LIMIT" : order.Type;
+            order.Type = bot.ExchangeType == BotExchangeType.COINSTORE ? "LIMIT" : string.IsNullOrEmpty(order.Type) ? "LIMIT" : order.Type;
             order.TransactTime = AppUtils.NowMilis();
 
             if (isBlinking)

@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using Io.Gate.GateApi.Model;
 using mexcbot.Api.Models.CoinStore;
@@ -21,12 +22,13 @@ namespace mexcbot.Api.ResponseModels.Order
             Asks = orderbookView.Asks;
             Bids = orderbookView.Bids;
         }
-        
+
         public OrderbookView(OrderBook gateOrderbookView)
         {
             Ver = AppUtils.NowMilis();
-            Asks = gateOrderbookView.Asks.Select(x => x.Select(decimal.Parse).ToArray()).ToList();
-            Bids = gateOrderbookView.Bids.Select(x => x.Select(decimal.Parse).ToArray()).ToList();
+            Asks = gateOrderbookView.Asks.Select(x => x.Select(y => decimal.Parse(y, new NumberFormatInfo())).ToArray())
+                .ToList();
+            Bids = gateOrderbookView.Bids.Select(x => x.Select(y => decimal.Parse(y, new NumberFormatInfo())).ToArray()).ToList();
         }
 
         public long Ver { get; set; }
