@@ -141,6 +141,8 @@ namespace mexcbot.Api.Jobs
                     BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey, bot.ApiSecret),
                     BotExchangeType.COINSTORE => new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey,
                         bot.ApiSecret),
+                    BotExchangeType.GATE => new GateClient(Configurations.GateUrl, bot.ApiKey,
+                        bot.ApiSecret),
                     _ => null
                 };
 
@@ -719,7 +721,7 @@ namespace mexcbot.Api.Jobs
                     BotExchangeType.LBANK => new LBankClient(Configurations.LBankUrl, bot.ApiKey, bot.ApiSecret),
                     BotExchangeType.COINSTORE => new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey,
                         bot.ApiSecret),
-                    BotExchangeType.GATE => new CoinStoreClient(Configurations.GateUrl, bot.ApiKey,
+                    BotExchangeType.GATE => new GateClient(Configurations.GateUrl, bot.ApiKey,
                         bot.ApiSecret),
                     _ => null
                 };
@@ -771,7 +773,7 @@ namespace mexcbot.Api.Jobs
         {
             var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty,
                 price);
-
+    
             if (order == null)
                 return false;
 
