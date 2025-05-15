@@ -167,5 +167,6 @@ namespace mexcbot.Api.Models.Bot
         public long CreatedTime { get; set; }
         
         public bool IsRunBlinking { get; set; }
+        
     }
 }

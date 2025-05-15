@@ -482,14 +482,22 @@ namespace mexcbot.Api.Jobs
                                         orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
                                         orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
                                         OrderSide.SELL));
+                                    tasks.Add(CreateLimitOrder(client, bot,
+                                        orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                        orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                        OrderSide.BUY));
                                 }
 
-                                if (volumeOption.Side is OrderSide.BUY or OrderSide.BOTH)
+                                if (volumeOption.Side is OrderSide.BUY)
                                 {
                                     tasks.Add(CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
                                         orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
                                         OrderSide.BUY));
+                                    tasks.Add(CreateLimitOrder(client, bot,
+                                        orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                        orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                        OrderSide.SELL));
                                 }
 
                                 await Task.WhenAll(tasks);
@@ -502,16 +510,28 @@ namespace mexcbot.Api.Jobs
                                         orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
                                         orderPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
                                         OrderSide.SELL);
-                                }
 
-                                if (volumeOption.Side is OrderSide.BUY or OrderSide.BOTH)
-                                {
                                     await TradeDelay(bot);
 
                                     await CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
                                         orderPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
                                         OrderSide.BUY);
+                                }
+
+                                if (volumeOption.Side is OrderSide.BUY)
+                                {
+                                    await CreateLimitOrder(client, bot,
+                                        orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
+                                        orderPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
+                                        OrderSide.BUY);
+
+                                    await TradeDelay(bot);
+
+                                    await CreateLimitOrder(client, bot,
+                                        orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
+                                        orderPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
+                                        OrderSide.SELL);
                                 }
                             }
                         }
@@ -563,7 +583,8 @@ namespace mexcbot.Api.Jobs
             order.ExpiredTime = order.TransactTime + (int)TimeSpan.FromMinutes(5).TotalMilliseconds;
 
             order.Side = side.ToString();
-            order.Type = bot.ExchangeType == BotExchangeType.COINSTORE ? "LIMIT" : string.IsNullOrEmpty(order.Type) ? "LIMIT" : order.Type;
+            order.Type = bot.ExchangeType == BotExchangeType.COINSTORE ? "LIMIT" :
+                string.IsNullOrEmpty(order.Type) ? "LIMIT" : order.Type;
             order.TransactTime = AppUtils.NowMilis();
 
             var exec = await sqlConnection.ExecuteAsync(
