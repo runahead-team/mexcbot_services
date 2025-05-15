@@ -439,8 +439,15 @@ namespace mexcbot.Api.Jobs
 
                             var unit = 1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
 
-                            orderPrice = biggestBidPrice + unit;
-                            orderPrice = orderPrice - 0.01m;
+
+                            if (volumeOption.Side is OrderSide.SELL or OrderSide.BOTH)
+                            {
+                                orderPrice = smallestAskPrice - unit;
+                            }
+                            else if (volumeOption.Side is OrderSide.BUY)
+                            {
+                                orderPrice = biggestBidPrice + unit;
+                            }
 
                             if (spread <= unit)
                             {
@@ -472,6 +479,7 @@ namespace mexcbot.Api.Jobs
                                 return;
                             }
 
+                            const int orderWaitSecs = 10;
                             if (volumeOption.MatchingDelayFrom == 0 || volumeOption.MatchingDelayTo == 0)
                             {
                                 var tasks = new List<Task>();
@@ -481,11 +489,11 @@ namespace mexcbot.Api.Jobs
                                     tasks.Add(CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
                                         orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                        OrderSide.SELL));
+                                        OrderSide.SELL, orderWaitSecs));
                                     tasks.Add(CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
                                         orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                        OrderSide.BUY));
+                                        OrderSide.BUY, 0));
                                 }
 
                                 if (volumeOption.Side is OrderSide.BUY)
@@ -493,11 +501,11 @@ namespace mexcbot.Api.Jobs
                                     tasks.Add(CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
                                         orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                        OrderSide.BUY));
+                                        OrderSide.BUY, orderWaitSecs));
                                     tasks.Add(CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
                                         orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                        OrderSide.SELL));
+                                        OrderSide.SELL, 0));
                                 }
 
                                 await Task.WhenAll(tasks);
@@ -509,14 +517,14 @@ namespace mexcbot.Api.Jobs
                                     await CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
                                         orderPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
-                                        OrderSide.SELL);
+                                        OrderSide.SELL, (int)bot.VolumeOptionObj.MatchingDelayTo + orderWaitSecs);
 
                                     await TradeDelay(bot);
 
                                     await CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
                                         orderPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
-                                        OrderSide.BUY);
+                                        OrderSide.BUY, 0);
                                 }
 
                                 if (volumeOption.Side is OrderSide.BUY)
@@ -524,14 +532,14 @@ namespace mexcbot.Api.Jobs
                                     await CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
                                         orderPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
-                                        OrderSide.BUY);
+                                        OrderSide.BUY, (int)bot.VolumeOptionObj.MatchingDelayTo + orderWaitSecs);
 
                                     await TradeDelay(bot);
 
                                     await CreateLimitOrder(client, bot,
                                         orderQty.ToString($"F{basePrecision}", new NumberFormatInfo()),
                                         orderPrice.ToString($"F{quotePrecision}", new NumberFormatInfo()),
-                                        OrderSide.SELL);
+                                        OrderSide.SELL, 0);
                                 }
                             }
                         }
@@ -560,7 +568,7 @@ namespace mexcbot.Api.Jobs
         #region Private
 
         private async Task<bool> CreateLimitOrder(ExchangeClient client, BotDto bot, string qty, string price,
-            OrderSide side)
+            OrderSide side, int expireSecs)
         {
             var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty,
                 price);
@@ -580,7 +588,7 @@ namespace mexcbot.Api.Jobs
             order.BotType = bot.Type;
             order.BotExchangeType = bot.ExchangeType;
             order.UserId = bot.UserId;
-            order.ExpiredTime = order.TransactTime + (int)TimeSpan.FromMinutes(5).TotalMilliseconds;
+            order.ExpiredTime = order.TransactTime + (int)TimeSpan.FromSeconds(expireSecs).TotalMilliseconds;
 
             order.Side = side.ToString();
             order.Type = bot.ExchangeType == BotExchangeType.COINSTORE ? "LIMIT" :
