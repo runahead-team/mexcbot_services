@@ -556,9 +556,7 @@ namespace mexcbot.Api.Jobs
             order.BotType = bot.Type;
             order.BotExchangeType = bot.ExchangeType;
             order.UserId = bot.UserId;
-            order.ExpiredTime = side == OrderSide.SELL
-                ? order.TransactTime + 10000
-                : order.TransactTime;
+            order.ExpiredTime = order.TransactTime + (int)TimeSpan.FromMinutes(5).TotalMilliseconds;
 
             order.Side = side.ToString();
             order.Type = bot.ExchangeType == BotExchangeType.COINSTORE ? "LIMIT" : order.Type;
