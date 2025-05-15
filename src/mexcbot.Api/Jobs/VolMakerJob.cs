@@ -35,7 +35,8 @@ namespace mexcbot.Api.Jobs
             var tasks = new List<Task>
             {
                 CreateOrderJob(stoppingToken, BotExchangeType.MEXC),
-                CreateOrderJob(stoppingToken, BotExchangeType.COINSTORE)
+                CreateOrderJob(stoppingToken, BotExchangeType.COINSTORE),
+                CreateOrderJob(stoppingToken, BotExchangeType.GATE)
             };
 
             await Task.WhenAll(tasks);
@@ -98,6 +99,8 @@ namespace mexcbot.Api.Jobs
                     BotExchangeType.MEXC => new MexcClient(Configurations.MexcUrl, bot.ApiKey, bot.ApiSecret),
                     BotExchangeType.COINSTORE => new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey,
                         bot.ApiSecret),
+                    BotExchangeType.GATE => new GateClient(Configurations.GateUrl, bot.ApiKey,
+                        bot.ApiSecret),
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
@@ -139,7 +142,7 @@ namespace mexcbot.Api.Jobs
                 if (bot.ExchangeType != BotExchangeType.COINSTORE)
                 {
                     var selfSymbols = await client.GetSelfSymbols();
-                    if (!selfSymbols.Contains(bot.Symbol))
+                    if (selfSymbols.Count > 0 && !selfSymbols.Contains(bot.Symbol))
                     {
                         bot.Status = BotStatus.INACTIVE;
                         stopLog += $"{bot.Symbol} is not support\n";
@@ -437,6 +440,7 @@ namespace mexcbot.Api.Jobs
                             var unit = 1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
 
                             orderPrice = biggestBidPrice + unit;
+                            orderPrice = orderPrice - 0.01m;
 
                             if (spread <= unit)
                             {
@@ -559,7 +563,7 @@ namespace mexcbot.Api.Jobs
             order.ExpiredTime = order.TransactTime + (int)TimeSpan.FromMinutes(5).TotalMilliseconds;
 
             order.Side = side.ToString();
-            order.Type = bot.ExchangeType == BotExchangeType.COINSTORE ? "LIMIT" : order.Type;
+            order.Type = bot.ExchangeType == BotExchangeType.COINSTORE ? "LIMIT" : string.IsNullOrEmpty(order.Type) ? "LIMIT" : order.Type;
             order.TransactTime = AppUtils.NowMilis();
 
             var exec = await sqlConnection.ExecuteAsync(

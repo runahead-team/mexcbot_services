@@ -141,6 +141,8 @@ namespace mexcbot.Api.Jobs
                     bot.ApiSecret, bot.Passphrase),
                 BotExchangeType.COINSTORE =>
                     new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey, bot.ApiSecret),
+                BotExchangeType.GATE => new GateClient(Configurations.GateUrl, bot.ApiKey,
+                    bot.ApiSecret),
                 _ => null
             };
 
