@@ -191,16 +191,6 @@ namespace mexcbot.Api.Jobs
                 var baseBalanceValue = 0m;
                 var quoteBalanceValue = 0m;
 
-                if (bot.ExchangeType != BotExchangeType.COINSTORE)
-                {
-                    var selfSymbols = await client.GetSelfSymbols();
-                    if (!selfSymbols.Contains(bot.Symbol))
-                    {
-                        bot.Status = BotStatus.INACTIVE;
-                        stopLog += $"{bot.Symbol} is not support; \n";
-                    }
-                }
-
                 if (exchangeInfo == null || string.IsNullOrEmpty(exchangeInfo.Symbol))
                 {
                     bot.Status = BotStatus.INACTIVE;

@@ -139,16 +139,6 @@ namespace mexcbot.Api.Jobs
 
                 #region Validate
 
-                if (bot.ExchangeType != BotExchangeType.COINSTORE)
-                {
-                    var selfSymbols = await client.GetSelfSymbols();
-                    if (selfSymbols.Count > 0 && !selfSymbols.Contains(bot.Symbol))
-                    {
-                        bot.Status = BotStatus.INACTIVE;
-                        stopLog += $"{bot.Symbol} is not support\n";
-                    }
-                }
-
                 if (!balances.Any())
                 {
                     bot.Status = BotStatus.INACTIVE;
