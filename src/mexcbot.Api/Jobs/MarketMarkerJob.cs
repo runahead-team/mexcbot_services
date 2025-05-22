@@ -846,6 +846,9 @@ namespace mexcbot.Api.Jobs
 
         private decimal RandomNumber(decimal from, decimal to, int precision)
         {
+            if (from > 1 && precision > 4)
+                precision = 4;
+
             if (from >= to)
                 return from;
 
