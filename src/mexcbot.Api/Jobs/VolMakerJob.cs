@@ -472,7 +472,7 @@ namespace mexcbot.Api.Jobs
                                 return;
                             }
 
-                            const int orderWaitSecs = 10;
+                            const int orderWaitSecs = 600;
                             if (volumeOption.MatchingDelayFrom == 0 || volumeOption.MatchingDelayTo == 0)
                             {
                                 var tasks = new List<Task>();
