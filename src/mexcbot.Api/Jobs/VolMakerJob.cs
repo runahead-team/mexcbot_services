@@ -71,14 +71,17 @@ namespace mexcbot.Api.Jobs
 
                     ver++;
                 }
+                catch (TaskCanceledException)
+                {
+                }
                 catch (Exception e)
                 {
-                    if (!(e is TaskCanceledException))
-                        Log.Error(e, "MolMarkerJob:CreateOrderJob");
+                    await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+                    Log.Error(e, "MolMarkerJob:CreateOrderJob");
                 }
                 finally
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
                 }
             }
         }

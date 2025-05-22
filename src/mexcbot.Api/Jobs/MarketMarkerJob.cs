@@ -112,14 +112,17 @@ namespace mexcbot.Api.Jobs
 
                     await Task.WhenAll(tasks);
                 }
+                catch (TaskCanceledException)
+                {
+                }
                 catch (Exception e)
                 {
-                    if (!(e is TaskCanceledException))
-                        Log.Error(e, "MarketMarkerJob:CreateOrderJob");
+                    await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
+                    Log.Error(e, "MarketMarkerJob:CreateOrderJob");
                 }
                 finally
                 {
-                    await Task.Delay(TimeSpan.FromSeconds(5), stoppingToken);
+                    await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
                 }
             }
         }
@@ -763,7 +766,7 @@ namespace mexcbot.Api.Jobs
         {
             var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty,
                 price);
-    
+
             if (order == null)
                 return false;
 
@@ -781,7 +784,8 @@ namespace mexcbot.Api.Jobs
             order.UserId = bot.UserId;
 
             order.Side = side.ToString();
-            order.Type = bot.ExchangeType == BotExchangeType.COINSTORE ? "LIMIT" : string.IsNullOrEmpty(order.Type) ? "LIMIT" : order.Type;
+            order.Type = bot.ExchangeType == BotExchangeType.COINSTORE ? "LIMIT" :
+                string.IsNullOrEmpty(order.Type) ? "LIMIT" : order.Type;
             order.TransactTime = AppUtils.NowMilis();
 
             if (isBlinking)

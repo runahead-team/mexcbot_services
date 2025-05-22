@@ -78,10 +78,14 @@ namespace mexcbot.Api.Jobs
 
                     await Task.Delay(TimeSpan.FromSeconds(1), stoppingToken);
                 }
+                catch (TaskCanceledException)
+                {
+                }
                 catch (Exception e)
                 {
-                    if (!(e is TaskCanceledException))
-                        Log.Error(e, "CancelOrderJob:CancelOrderJob");
+                    Log.Error(e, "CancelOrderJob:CancelOrderJob");
+
+                    await Task.Delay(TimeSpan.FromMinutes(5), stoppingToken);
                 }
             }
         }
