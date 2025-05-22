@@ -39,6 +39,7 @@ namespace mexcbot.Api.Jobs
                 CreateOrderJob(stoppingToken, BotExchangeType.MEXC),
                 CreateOrderJob(stoppingToken, BotExchangeType.LBANK),
                 CreateOrderJob(stoppingToken, BotExchangeType.COINSTORE),
+                CreateOrderJob(stoppingToken, BotExchangeType.GATE),
                 OrderbookBlinking(stoppingToken, BotExchangeType.MEXC),
                 OrderbookBlinking(stoppingToken, BotExchangeType.LBANK),
                 OrderbookBlinking(stoppingToken, BotExchangeType.COINSTORE),
