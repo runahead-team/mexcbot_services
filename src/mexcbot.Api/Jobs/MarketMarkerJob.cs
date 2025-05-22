@@ -357,15 +357,7 @@ namespace mexcbot.Api.Jobs
 
                     if (!string.IsNullOrEmpty(exchangeInfo.MinQty))
                     {
-                        if (bot.ExchangeType != BotExchangeType.COINSTORE)
-                        {
-                            minQty = (decimal.Parse(exchangeInfo.QuoteAmountPrecision, new NumberFormatInfo()) /
-                                      decimal.Parse(bot24hr.LastPrice, new NumberFormatInfo()));
-                        }
-                        else
-                        {
-                            minQty = decimal.Parse(exchangeInfo.MinQty, new NumberFormatInfo());
-                        }
+                        minQty = decimal.Parse(exchangeInfo.MinQty, new NumberFormatInfo());
                     }
 
                     if (makerOption.MinQty < minQty)
