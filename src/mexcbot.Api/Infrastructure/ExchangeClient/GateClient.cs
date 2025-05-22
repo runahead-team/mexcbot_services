@@ -44,9 +44,9 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
         public async Task<ExchangeInfoView> GetExchangeInfo(string @base, string quote)
         {
             var symbol = $"{@base}_{quote}";
-            
+
             var exchangeInfo = await _spotApi.GetCurrencyPairAsync(symbol);
-            
+
             return exchangeInfo == null ? new ExchangeInfoView() : new ExchangeInfoView(exchangeInfo);
         }
 
@@ -93,7 +93,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
             var tickers = await _spotApi.ListTickersAsync(symbol);
 
-            if (tickers.Count<=0)
+            if (tickers.Count <= 0)
                 return new Ticker24hrView();
 
             var ticker = tickers.FirstOrDefault(x =>
@@ -108,11 +108,11 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var symbol = $"{@base}_{quote}";
 
             var gateSide = BotUtils.GetGateSide(side);
-            if(gateSide==null)
+            if (gateSide == null)
                 return new OrderDto();
-            
+
             //Account types， spot - spot account, margin - margin account, unified - unified account, cross_margin - cross margin account
-            var payload = new Order(null, symbol,Order.TypeEnum.Limit,"spot", gateSide.Value, quantity, price);
+            var payload = new Order(null, symbol, Order.TypeEnum.Limit, "spot", gateSide.Value, quantity, price);
 
             var createdOrder = await _spotApi.CreateOrderAsync(payload);
 
@@ -121,28 +121,38 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
 
         public async Task<CanceledOrderView> CancelOrder(string @base, string quote, string orderId)
         {
-            //Account types， spot - spot account, margin - margin account, unified - unified account, cross_margin - cross margin account
-            
-            var symbol = $"{@base}_{quote}";
-
-            if (!long.TryParse(orderId, out var orderIdRequest) || orderIdRequest <= 0)
+            try
             {
-                Log.Error($"GateClient:CancelOrder: {symbol} - {orderId}");
-                return new CanceledOrderView();
+                //Account types， spot - spot account, margin - margin account, unified - unified account, cross_margin - cross margin account
+
+                var symbol = $"{@base}_{quote}";
+
+                if (!long.TryParse(orderId, out var orderIdRequest) || orderIdRequest <= 0)
+                {
+                    Log.Error($"GateClient:CancelOrder: {symbol} - {orderId}");
+                    return new CanceledOrderView();
+                }
+
+                var cancelOrder = await _spotApi.CancelOrderAsync(orderId, symbol);
+
+                return cancelOrder == null ? null : new CanceledOrderView(cancelOrder);
             }
-
-            var cancelOrder = await _spotApi.CancelOrderAsync(orderId,symbol);
-
-            return cancelOrder == null ? null : new CanceledOrderView(cancelOrder);
+            catch (GateApiException e)
+            {
+                if (e.ErrorLabel == "ORDER_NOT_FOUND")
+                    return null;
+                throw;
+            }
         }
 
         public async Task<List<OpenOrderView>> GetOpenOrder(string @base, string quote)
         {
             var @params = $"symbol={@base}_{quote}";
 
-            var openOrders = (await _spotApi.ListAllOpenOrdersAsync()).FirstOrDefault(x=>x.CurrencyPair == @params)?.Orders.ToList() ?? [];
+            var openOrders = (await _spotApi.ListAllOpenOrdersAsync()).FirstOrDefault(x => x.CurrencyPair == @params)
+                ?.Orders.ToList() ?? [];
 
-            if (openOrders is not { Count: > 0 } )
+            if (openOrders is not { Count: > 0 })
                 return [];
 
             var result = openOrders.Select(x => new OpenOrderView(x)).ToList();
