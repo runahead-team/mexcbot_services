@@ -449,6 +449,8 @@ namespace mexcbot.Api.Jobs
 
                             if (volumeOption.SafeRun)
                             {
+                                orderPrice = (smallestAskPrice + biggestBidPrice) / 2;
+
                                 if (orderPrice >= smallestAskPrice)
                                 {
                                     Log.Information("VolBot {0} safe run (ask) {1} {2}", bot.Base, orderPrice,
@@ -472,7 +474,7 @@ namespace mexcbot.Api.Jobs
                                 return;
                             }
 
-                            const int orderWaitSecs = 600;
+                            const int orderWaitSecs = 0;
                             if (volumeOption.MatchingDelayFrom == 0 || volumeOption.MatchingDelayTo == 0)
                             {
                                 var tasks = new List<Task>();
