@@ -369,6 +369,29 @@ namespace mexcbot.Api.Jobs
                     var quotePrecision = bot.QuotePrecision ?? exchangeInfo.QuoteAssetPrecision;
                     var basePrecision = bot.BasePrecision ?? exchangeInfo.BaseAssetPrecision;
 
+
+                    var orderbook0 = await client.GetOrderbook(bot.Base, bot.Quote);
+                    if (orderbook0.Asks.Count == 0 || orderbook0.Bids.Count == 0)
+                        return;
+
+                    var smallestAskPrice0 = orderbook0.Asks[0][0];
+                    var biggestBidPrice0 = orderbook0.Bids[0][0];
+                    var spread = smallestAskPrice0 - biggestBidPrice0;
+
+                    await _botService.UpdateBotHistory(new BotHistoryDto
+                    {
+                        BotId = bot.Id,
+                        Spread = spread,
+                        BalanceBase = balances
+                            .FirstOrDefault(x =>
+                                string.Equals(x.Asset, bot.Base, StringComparison.InvariantCultureIgnoreCase))
+                            ?.Free,
+                        BalanceQuote = balances
+                            .FirstOrDefault(x => string.Equals(x.Asset, bot.Quote,
+                                StringComparison.InvariantCultureIgnoreCase))
+                            ?.Free
+                    });
+
                     Log.Information("numOfOrder {0}", numOfOrder);
 
                     for (var i = 0; i < numOfOrder; i++)
@@ -395,14 +418,7 @@ namespace mexcbot.Api.Jobs
 
                             totalQty += orderQty;
 
-                            botTicker24hr = (await client.GetTicker24hr(bot.Base, bot.Quote));
-                            var orderPrice = decimal.Parse(botTicker24hr.LastPrice, new NumberFormatInfo());
-
-                            if (orderPrice < 0)
-                            {
-                                Log.Warning("Price zero");
-                                return;
-                            }
+                            decimal orderPrice = 0;
 
                             var orderbook = await client.GetOrderbook(bot.Base, bot.Quote);
                             var asks = orderbook.Asks;
@@ -413,39 +429,17 @@ namespace mexcbot.Api.Jobs
 
                             var smallestAskPrice = asks[0][0];
                             var biggestBidPrice = bids[0][0];
-
-                            var spread = smallestAskPrice - biggestBidPrice;
-
-                            await _botService.UpdateBotHistory(new BotHistoryDto
-                            {
-                                BotId = bot.Id,
-                                Spread = spread,
-                                BalanceBase = balances
-                                    .FirstOrDefault(x =>
-                                        string.Equals(x.Asset, bot.Base, StringComparison.InvariantCultureIgnoreCase))
-                                    ?.Free,
-                                BalanceQuote = balances
-                                    .FirstOrDefault(x => string.Equals(x.Asset, bot.Quote,
-                                        StringComparison.InvariantCultureIgnoreCase))
-                                    ?.Free
-                            });
+                            spread = smallestAskPrice - biggestBidPrice;
 
                             var unit = 1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
 
-
                             if (volumeOption.Side is OrderSide.SELL or OrderSide.BOTH)
-                            {
                                 orderPrice = smallestAskPrice - unit;
-                            }
                             else if (volumeOption.Side is OrderSide.BUY)
-                            {
                                 orderPrice = biggestBidPrice + unit;
-                            }
 
                             if (spread <= unit)
-                            {
                                 orderPrice = biggestBidPrice;
-                            }
 
                             if (volumeOption.SafeRun)
                             {
@@ -466,13 +460,19 @@ namespace mexcbot.Api.Jobs
                                 }
                             }
 
-                            totalUsdVolume += orderQty * orderPrice;
+                            if (orderPrice <= 0)
+                            {
+                                Log.Warning("orderPrice zero");
+                                return;
+                            }
 
                             if (orderQty < 0)
                             {
                                 Log.Warning("orderQty zero");
                                 return;
                             }
+
+                            totalUsdVolume += orderQty * orderPrice;
 
                             const int orderWaitSecs = 0;
                             if (volumeOption.MatchingDelayFrom == 0 || volumeOption.MatchingDelayTo == 0)
