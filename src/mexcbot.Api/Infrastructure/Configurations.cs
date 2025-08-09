@@ -25,6 +25,8 @@ namespace mexcbot.Api.Infrastructure
         public static string CoinStoreUrl { get; set; }
         
         public static string GateUrl { get; set; }
+        
+        public static string BybitUrl { get; set; }
 
         public static TelegramConfig Telegram { get; set; }
 

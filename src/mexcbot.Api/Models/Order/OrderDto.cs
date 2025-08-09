@@ -2,6 +2,7 @@ using mexcbot.Api.Constants;
 using mexcbot.Api.Infrastructure;
 using mexcbot.Api.Models.CoinStore;
 using mexcbot.Api.Models.DeepCoin;
+using mexcbot.Api.Models.Bybit;
 using sp.Core.Utils;
 
 namespace mexcbot.Api.ResponseModels.Order
@@ -37,6 +38,18 @@ namespace mexcbot.Api.ResponseModels.Order
             OrigQty = gateOrder.Amount;
             Side = BotUtils.GetSide(gateOrder.Side).ToString();
             TransactTime = AppUtils.NowMilis();
+        }
+        
+        public OrderDto(BybitOrder bybitOrder)
+        {
+            Symbol = bybitOrder.Symbol;
+            OrderId = bybitOrder.OrderId;
+            Price = bybitOrder.Price;
+            OrigQty = bybitOrder.OrigQty;
+            Side = bybitOrder.Side;
+            BotExchangeType = BotExchangeType.BYBIT;
+            TransactTime = long.TryParse(bybitOrder.CreateTime, out var createTime) 
+                ? createTime : AppUtils.NowMilis();
         }
         
         public long Id { get; set; }

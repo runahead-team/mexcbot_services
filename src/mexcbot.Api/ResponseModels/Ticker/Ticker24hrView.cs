@@ -1,5 +1,8 @@
 using System.Globalization;
 using mexcbot.Api.Models.LBank;
+using mexcbot.Api.Models.DeepCoin;
+using mexcbot.Api.Models.CoinStore;
+using mexcbot.Api.Models.Bybit;
 
 namespace mexcbot.Api.ResponseModels.Ticker
 {
@@ -47,6 +50,14 @@ namespace mexcbot.Api.ResponseModels.Ticker
             Volume = gateTicker24Hr.BaseVolume;
             LastPrice = gateTicker24Hr.Last;
             QuoteVolume = gateTicker24Hr.QuoteVolume;
+        }
+        
+        public Ticker24hrView(BybitTicker24hr bybitTicker24Hr)
+        {
+            Symbol = bybitTicker24Hr.Symbol;
+            Volume = bybitTicker24Hr.Volume24h;
+            LastPrice = bybitTicker24Hr.LastPrice;
+            QuoteVolume = bybitTicker24Hr.Turnover24h;
         }
 
         public string Symbol { get; set; }

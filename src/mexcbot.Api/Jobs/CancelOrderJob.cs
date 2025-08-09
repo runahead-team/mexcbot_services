@@ -147,6 +147,8 @@ namespace mexcbot.Api.Jobs
                     new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey, bot.ApiSecret),
                 BotExchangeType.GATE => new GateClient(Configurations.GateUrl, bot.ApiKey,
                     bot.ApiSecret),
+                BotExchangeType.BYBIT => new BybitClient(Configurations.BybitUrl, bot.ApiKey,
+                    bot.ApiSecret),
                 _ => null
             };
 

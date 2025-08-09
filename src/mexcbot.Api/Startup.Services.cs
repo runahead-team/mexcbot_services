@@ -32,6 +32,7 @@ namespace mexcbot.Api
             //
             services.AddHostedService<DeepCoinVolMakerJob>();
             services.AddHostedService<DeepCoinMarketMarkerJob>();
+            services.AddHostedService<BybitVolMarkerJob>();
             services.AddHostedService<BotMonitorJob>();
         }
     }

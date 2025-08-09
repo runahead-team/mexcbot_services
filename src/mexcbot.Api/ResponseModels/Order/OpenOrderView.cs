@@ -44,6 +44,12 @@ namespace mexcbot.Api.ResponseModels.Order
         
         public string Side { get; set; }
         
+        public string ExecutedQty { get; set; }
+        
+        public string Status { get; set; }
+        
+        public long Time { get; set; }
+        
         public long TransactTime { get; set; }
     }
 }

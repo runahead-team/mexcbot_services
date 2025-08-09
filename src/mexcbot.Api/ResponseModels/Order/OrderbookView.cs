@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Linq;
 using Io.Gate.GateApi.Model;
 using mexcbot.Api.Models.CoinStore;
+using mexcbot.Api.Models.Bybit;
 using sp.Core.Utils;
 
 namespace mexcbot.Api.ResponseModels.Order
@@ -29,6 +30,14 @@ namespace mexcbot.Api.ResponseModels.Order
             Asks = gateOrderbookView.Asks.Select(x => x.Select(y => decimal.Parse(y, new NumberFormatInfo())).ToArray())
                 .ToList();
             Bids = gateOrderbookView.Bids.Select(x => x.Select(y => decimal.Parse(y, new NumberFormatInfo())).ToArray()).ToList();
+        }
+
+        public OrderbookView(BybitOrderbook bybitOrderbook)
+        {
+            Ver = AppUtils.NowMilis();
+            Asks = bybitOrderbook.Asks.Select(x => x.Select(y => decimal.Parse(y, new NumberFormatInfo())).ToArray())
+                .ToList();
+            Bids = bybitOrderbook.Bids.Select(x => x.Select(y => decimal.Parse(y, new NumberFormatInfo())).ToArray()).ToList();
         }
 
         public long Ver { get; set; }

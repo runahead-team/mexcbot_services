@@ -1,6 +1,8 @@
 using System;
 using mexcbot.Api.Constants;
 using mexcbot.Api.Infrastructure;
+using mexcbot.Api.Models.DeepCoin;
+using mexcbot.Api.Models.CoinStore;
 
 namespace mexcbot.Api.ResponseModels.Order
 {

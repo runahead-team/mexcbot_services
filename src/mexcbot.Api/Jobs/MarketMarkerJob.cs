@@ -40,10 +40,12 @@ namespace mexcbot.Api.Jobs
                 CreateOrderJob(stoppingToken, BotExchangeType.LBANK),
                 CreateOrderJob(stoppingToken, BotExchangeType.COINSTORE),
                 CreateOrderJob(stoppingToken, BotExchangeType.GATE),
+                CreateOrderJob(stoppingToken, BotExchangeType.BYBIT),
                 OrderbookBlinking(stoppingToken, BotExchangeType.MEXC),
                 OrderbookBlinking(stoppingToken, BotExchangeType.LBANK),
                 OrderbookBlinking(stoppingToken, BotExchangeType.COINSTORE),
-                OrderbookBlinking(stoppingToken, BotExchangeType.GATE)
+                OrderbookBlinking(stoppingToken, BotExchangeType.GATE),
+                //OrderbookBlinking(stoppingToken, BotExchangeType.BYBIT)
             };
 
             await Task.WhenAll(tasks);
@@ -146,6 +148,8 @@ namespace mexcbot.Api.Jobs
                     BotExchangeType.COINSTORE => new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey,
                         bot.ApiSecret),
                     BotExchangeType.GATE => new GateClient(Configurations.GateUrl, bot.ApiKey,
+                        bot.ApiSecret),
+                    BotExchangeType.BYBIT => new BybitClient(Configurations.BybitUrl, bot.ApiKey,
                         bot.ApiSecret),
                     _ => null
                 };
@@ -708,6 +712,8 @@ namespace mexcbot.Api.Jobs
                     BotExchangeType.COINSTORE => new CoinStoreClient(Configurations.CoinStoreUrl, bot.ApiKey,
                         bot.ApiSecret),
                     BotExchangeType.GATE => new GateClient(Configurations.GateUrl, bot.ApiKey,
+                        bot.ApiSecret),
+                    BotExchangeType.BYBIT => new BybitClient(Configurations.BybitUrl, bot.ApiKey,
                         bot.ApiSecret),
                     _ => null
                 };
