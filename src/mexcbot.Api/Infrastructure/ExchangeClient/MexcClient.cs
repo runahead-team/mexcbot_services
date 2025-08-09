@@ -71,7 +71,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var payload = $"symbol={@base}{quote}";
 
             var (success, responseBody) =
-                await SendRequest("GET", "/api/v3/ticker/24hr", payload);
+                await SendRequest("GET", "/api/v3/ticker/24hr", payload, true);
 
             if (!success)
                 return new Ticker24hrView();
