@@ -41,7 +41,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var payload = $"symbol={@base}{quote}";
 
             var (success, responseBody) =
-                await SendRequest("GET", "/api/v3/exchangeInfo", payload, false, false);
+                await SendRequest("GET", "/api/v3/exchangeInfo", payload, true, false);
 
             if (!success)
                 return new ExchangeInfoView();

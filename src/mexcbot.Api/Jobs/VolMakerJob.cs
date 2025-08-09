@@ -369,7 +369,6 @@ namespace mexcbot.Api.Jobs
                     var quotePrecision = bot.QuotePrecision!.Value;
                     var basePrecision = bot.BasePrecision!.Value;
 
-
                     var orderbook0 = await client.GetOrderbook(bot.Base, bot.Quote);
                     if (orderbook0.Asks.Count == 0 || orderbook0.Bids.Count == 0)
                         return;
