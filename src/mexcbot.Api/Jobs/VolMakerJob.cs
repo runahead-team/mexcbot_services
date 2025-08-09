@@ -107,7 +107,7 @@ namespace mexcbot.Api.Jobs
                     _ => throw new ArgumentOutOfRangeException()
                 };
 
-                var exchangeInfo = await client.GetExchangeInfo(bot.Base, bot.Quote);
+                // var exchangeInfo = await client.GetExchangeInfo(bot.Base, bot.Quote);
                 var balances = await client.GetAccInformation();
 
                 #region Update info bot
@@ -122,9 +122,9 @@ namespace mexcbot.Api.Jobs
                         Balances = balances
                     };
 
-                    bot.ExchangeInfo = (exchangeInfo == null || string.IsNullOrEmpty(exchangeInfo.Symbol))
-                        ? string.Empty
-                        : JsonConvert.SerializeObject(exchangeInfo);
+                    // bot.ExchangeInfo = (exchangeInfo == null || string.IsNullOrEmpty(exchangeInfo.Symbol))
+                    //     ? string.Empty
+                    //     : JsonConvert.SerializeObject(exchangeInfo);
                     bot.AccountInfo = !balances.Any() ? string.Empty : JsonConvert.SerializeObject(accInfo);
 
                     await dbConnection.ExecuteAsync(
@@ -197,11 +197,11 @@ namespace mexcbot.Api.Jobs
                     }
                 }
 
-                if (exchangeInfo == null)
-                {
-                    bot.Status = BotStatus.INACTIVE;
-                    stopLog += $"Stop when exchange info not found\n";
-                }
+                // if (exchangeInfo == null)
+                // {
+                //     bot.Status = BotStatus.INACTIVE;
+                //     stopLog += $"Stop when exchange info not found\n";
+                // }
 
                 //default
                 bot.NextRunVolTime = now;
@@ -366,8 +366,8 @@ namespace mexcbot.Api.Jobs
                     var totalUsdVolume = 0m;
                     var fromTime = AppUtils.NowMilis();
 
-                    var quotePrecision = bot.QuotePrecision ?? exchangeInfo.QuoteAssetPrecision;
-                    var basePrecision = bot.BasePrecision ?? exchangeInfo.BaseAssetPrecision;
+                    var quotePrecision = bot.QuotePrecision!.Value;
+                    var basePrecision = bot.BasePrecision!.Value;
 
 
                     var orderbook0 = await client.GetOrderbook(bot.Base, bot.Quote);
@@ -431,7 +431,7 @@ namespace mexcbot.Api.Jobs
                             var biggestBidPrice = bids[0][0];
                             spread = smallestAskPrice - biggestBidPrice;
 
-                            var unit = 1 / (decimal)Math.Pow(10, exchangeInfo.QuoteAssetPrecision);
+                            var unit = 1 / (decimal)Math.Pow(10, quotePrecision);
 
                             if (volumeOption.Side is OrderSide.SELL or OrderSide.BOTH)
                                 orderPrice = smallestAskPrice - unit;
