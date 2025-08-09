@@ -58,7 +58,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var payload = $"symbol={@base}{quote}&interval={interval}";
 
             var (success, responseBody) =
-                await SendRequest("GET", "/api/v3/klines", payload, useSignature: true);
+                await SendRequest("GET", "/api/v3/klines", payload, useSignature: true, false);
 
             if (!success)
                 return new List<JArray>();
@@ -71,7 +71,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var payload = $"symbol={@base}{quote}";
 
             var (success, responseBody) =
-                await SendRequest("GET", "/api/v3/ticker/24hr", payload, true);
+                await SendRequest("GET", "/api/v3/ticker/24hr", payload, true, false);
 
             if (!success)
                 return new Ticker24hrView();
@@ -179,7 +179,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             var payload = $"symbol={@base}{quote}";
 
             var (success, responseBody) =
-                await SendRequest("GET", "/api/v3/depth", payload, false, false);
+                await SendRequest("GET", "/api/v3/depth", payload, true, false);
 
             if (!success)
                 return new OrderbookView();
