@@ -126,7 +126,7 @@ namespace mexcbot.Api.Infrastructure.ExchangeClient
             };
 
             var (success, responseBody) =
-                await SendRequest("POST", "/v5/order/create", string.Empty, payload, true, true);
+                await SendRequest("POST", "/v5/order/create", string.Empty, payload, true, true, true);
 
             if (!success)
                 return new OrderDto();
