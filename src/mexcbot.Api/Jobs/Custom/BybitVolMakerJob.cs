@@ -261,7 +261,7 @@ namespace mexcbot.Api.Jobs
 
                         var sleepTime = (int)(usdLiqRequired /
                                               (midPrice * (volumeOption.MinOrderQty + volumeOption.MaxOrderQty) / 2)) *
-                                        volumeOption.MaxInterval;
+                                        volumeOption.MinInterval;
 
                         var maxAsk = midPrice * 1.02m;
                         var totalAsk = orderbook0.Asks
@@ -284,7 +284,7 @@ namespace mexcbot.Api.Jobs
                                 await CreateLimitOrder(client, bot,
                                     orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
                                     orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                    OrderSide.SELL, sleepTime);
+                                    OrderSide.SELL, sleepTime + i * volumeOption.MinInterval);
 
                                 totalAsk += orderQty * orderPrice;
 
@@ -315,7 +315,7 @@ namespace mexcbot.Api.Jobs
                                 await CreateLimitOrder(client, bot,
                                     orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
                                     orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                    OrderSide.BUY, sleepTime);
+                                    OrderSide.BUY, sleepTime + i * volumeOption.MinInterval);
 
                                 totalBid += orderQty * orderPrice;
 
