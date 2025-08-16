@@ -257,7 +257,7 @@ namespace mexcbot.Api.Jobs
                         var midPrice = Math.Round((smallestAskPrice0 + biggestBidPrice0) / 2,
                             bot.QuotePrecision ?? 8);
 
-                        const decimal usdLiqRequired = 1500;
+                        const decimal usdLiqRequired = 2000;
 
                         var sleepTime = (int)(usdLiqRequired /
                                               (midPrice * (volumeOption.MinOrderQty + volumeOption.MaxOrderQty) / 2)) *
@@ -290,6 +290,8 @@ namespace mexcbot.Api.Jobs
 
                                 if (totalAsk > usdLiqRequired)
                                     break;
+
+                                await Task.Delay(TimeSpan.FromSeconds(1));
                             }
                         }
 
@@ -319,6 +321,8 @@ namespace mexcbot.Api.Jobs
 
                                 if (totalBid > usdLiqRequired)
                                     break;
+
+                                await Task.Delay(TimeSpan.FromSeconds(1));
                             }
                         }
                     }
