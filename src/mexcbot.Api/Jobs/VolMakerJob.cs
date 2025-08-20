@@ -246,6 +246,98 @@ namespace mexcbot.Api.Jobs
                 if (bot.VolumeOption != null)
                 {
                     var volumeOption = JsonConvert.DeserializeObject<BotVolumeOption>(bot.VolumeOption);
+
+                    var quotePrecision = bot.QuotePrecision ?? 8;
+                    var basePrecision = bot.BasePrecision ?? 0;
+
+                    var orderbook0 = await client.GetOrderbook(bot.Base, bot.Quote);
+                    if (orderbook0.Asks.Count == 0 || orderbook0.Bids.Count == 0)
+                        return;
+
+                    var smallestAskPrice0 = orderbook0.Asks[0][0];
+                    var biggestBidPrice0 = orderbook0.Bids[0][0];
+                    var spread = smallestAskPrice0 - biggestBidPrice0;
+
+                    decimal usdLiqRequired = 1000;
+
+                    if (bot.Base == "FISHW")
+                    {
+                        usdLiqRequired = 1000;
+                    }
+
+                    if (bot.Base == "FISHW" && bot.ExchangeType == BotExchangeType.MEXC)
+                    {
+                        var midPrice = Math.Round((smallestAskPrice0 + biggestBidPrice0) / 2,
+                            bot.QuotePrecision ?? 8);
+
+                        var sleepTime = (int)(usdLiqRequired /
+                                              (midPrice * (volumeOption.MinOrderQty + volumeOption.MaxOrderQty) / 2)) *
+                                        volumeOption.MinInterval;
+
+                        var maxAsk = midPrice * 1.02m;
+                        var totalAsk = orderbook0.Asks
+                            .Where(x => x[0] <= maxAsk)
+                            .Sum(x => x[0] * x[1]);
+
+
+                        if (totalAsk < usdLiqRequired)
+                        {
+                            for (var i = 0; i < 10; i++)
+                            {
+                                var orderPrice = Math.Round(RandomNumber(midPrice, maxAsk, quotePrecision),
+                                    quotePrecision);
+
+                                var orderQty =
+                                    Math.Round(
+                                        RandomNumber(volumeOption.MinOrderQty, volumeOption.MaxOrderQty, basePrecision),
+                                        basePrecision);
+
+                                await CreateLimitOrder(client, bot,
+                                    orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                    orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                    OrderSide.SELL, sleepTime + i * volumeOption.MinInterval);
+
+                                totalAsk += orderQty * orderPrice;
+
+                                if (totalAsk > usdLiqRequired)
+                                    break;
+
+                                await Task.Delay(TimeSpan.FromSeconds(1));
+                            }
+                        }
+
+                        var minBid = midPrice * 0.98m;
+                        var totalBid = orderbook0.Bids
+                            .Where(x => x[0] >= minBid)
+                            .Sum(x => x[0] * x[1]);
+
+                        if (totalBid < usdLiqRequired)
+                        {
+                            for (var i = 0; i < 10; i++)
+                            {
+                                var orderPrice = Math.Round(RandomNumber(minBid, midPrice, quotePrecision),
+                                    quotePrecision);
+
+                                var orderQty =
+                                    Math.Round(
+                                        RandomNumber(volumeOption.MinOrderQty, volumeOption.MaxOrderQty, basePrecision),
+                                        basePrecision);
+
+                                await CreateLimitOrder(client, bot,
+                                    orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                    orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                    OrderSide.BUY, sleepTime + i * volumeOption.MinInterval);
+
+                                totalBid += orderQty * orderPrice;
+
+                                if (totalBid > usdLiqRequired)
+                                    break;
+
+                                await Task.Delay(TimeSpan.FromSeconds(1));
+                            }
+                        }
+                    }
+
                     var botTicker24hr = (await client.GetTicker24hr(bot.Base, bot.Quote));
                     var btcUsdVol24hr = decimal.Parse((await client.GetTicker24hr("BTC", "USDT"))?.QuoteVolume,
                         new NumberFormatInfo());
@@ -321,9 +413,9 @@ namespace mexcbot.Api.Jobs
                     var botUsdOrderValue = botUsdVolumeTarget - botUsdVolumeReal;
 
                     Log.Warning($"botUsdOrderValue5m {botUsdOrderValue}");
-                    
+
                     Log.Warning($"botUsdVolumeTarget5m {botUsdVolumeTarget}");
-                    
+
                     Log.Warning($"botUsdVolumeReal5m {botUsdVolumeReal}");
 
                     //If volume 5m >= predict
@@ -366,16 +458,8 @@ namespace mexcbot.Api.Jobs
                     var totalUsdVolume = 0m;
                     var fromTime = AppUtils.NowMilis();
 
-                    var quotePrecision = bot.QuotePrecision!.Value;
-                    var basePrecision = bot.BasePrecision!.Value;
-
-                    var orderbook0 = await client.GetOrderbook(bot.Base, bot.Quote);
                     if (orderbook0.Asks.Count == 0 || orderbook0.Bids.Count == 0)
                         return;
-
-                    var smallestAskPrice0 = orderbook0.Asks[0][0];
-                    var biggestBidPrice0 = orderbook0.Bids[0][0];
-                    var spread = smallestAskPrice0 - biggestBidPrice0;
 
                     await _botService.UpdateBotHistory(new BotHistoryDto
                     {
