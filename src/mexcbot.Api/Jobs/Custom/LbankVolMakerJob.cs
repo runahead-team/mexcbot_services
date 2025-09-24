@@ -210,6 +210,104 @@ namespace mexcbot.Api.Jobs.Custom
                 if (bot.VolumeOption != null)
                 {
                     var volumeOption = JsonConvert.DeserializeObject<BotVolumeOption>(bot.VolumeOption);
+
+                    var quotePrecision = bot.QuotePrecision ?? 8;
+                    var basePrecision = bot.BasePrecision ?? 0;
+
+                    var orderbook0 = await client.GetOrderbook(bot.Base, bot.Quote);
+                    if (orderbook0.Asks.Count == 0 || orderbook0.Bids.Count == 0)
+                        return;
+
+                    var smallestAskPrice0 = orderbook0.Asks[0][0];
+                    var biggestBidPrice0 = orderbook0.Bids[0][0];
+
+                    var liqs = new[]
+                    {
+                        new
+                        {
+                            Symbol = "FISHW",
+                            Exchange = BotExchangeType.MEXC,
+                            Liq = 1000
+                        }
+                    };
+
+                    var liq = liqs.FirstOrDefault(x => x.Symbol == bot.Base
+                                                       && x.Exchange == bot.ExchangeType);
+
+                    if (liq != null)
+                    {
+                        var usdLiqRequired = liq.Liq;
+
+                        var midPrice = Math.Round((smallestAskPrice0 + biggestBidPrice0) / 2,
+                            bot.QuotePrecision ?? 8);
+
+                        var sleepTime = (int)(usdLiqRequired /
+                                              (midPrice * (volumeOption.MinOrderQty + volumeOption.MaxOrderQty) / 2)) *
+                                        volumeOption.MinInterval;
+
+                        var maxAsk = midPrice * 1.02m;
+                        var totalAsk = orderbook0.Asks
+                            .Where(x => x[0] <= maxAsk)
+                            .Sum(x => x[0] * x[1]);
+
+                        if (totalAsk < usdLiqRequired)
+                        {
+                            for (var i = 0; i < 10; i++)
+                            {
+                                var orderPrice = Math.Round(RandomNumber(midPrice, maxAsk, quotePrecision),
+                                    quotePrecision);
+
+                                var orderQty =
+                                    Math.Round(
+                                        RandomNumber(volumeOption.MinOrderQty, volumeOption.MaxOrderQty, basePrecision),
+                                        basePrecision);
+
+                                await CreateLimitOrder(client, bot,
+                                    orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                    orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                    OrderSide.SELL, sleepTime + i * volumeOption.MinInterval);
+
+                                totalAsk += orderQty * orderPrice;
+
+                                if (totalAsk > usdLiqRequired)
+                                    break;
+
+                                await Task.Delay(TimeSpan.FromSeconds(1));
+                            }
+                        }
+
+                        var minBid = midPrice * 0.98m;
+                        var totalBid = orderbook0.Bids
+                            .Where(x => x[0] >= minBid)
+                            .Sum(x => x[0] * x[1]);
+
+                        if (totalBid < usdLiqRequired)
+                        {
+                            for (var i = 0; i < 10; i++)
+                            {
+                                var orderPrice = Math.Round(RandomNumber(minBid, midPrice, quotePrecision),
+                                    quotePrecision);
+
+                                var orderQty =
+                                    Math.Round(
+                                        RandomNumber(volumeOption.MinOrderQty, volumeOption.MaxOrderQty, basePrecision),
+                                        basePrecision);
+
+                                await CreateLimitOrder(client, bot,
+                                    orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                    orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                    OrderSide.BUY, sleepTime + i * volumeOption.MinInterval);
+
+                                totalBid += orderQty * orderPrice;
+
+                                if (totalBid > usdLiqRequired)
+                                    break;
+
+                                await Task.Delay(TimeSpan.FromSeconds(1));
+                            }
+                        }
+                    }
+
                     var botTicker24hr = (await client.GetTicker24hr(bot.Base, bot.Quote));
                     var btcUsdVol24hr = decimal.Parse((await client.GetTicker24hr("BTC", "USDT"))?.QuoteVolume,
                         new NumberFormatInfo());
@@ -324,9 +422,6 @@ namespace mexcbot.Api.Jobs.Custom
                     var totalQty = 0m;
                     var totalUsdVolume = 0m;
                     var fromTime = AppUtils.NowMilis();
-
-                    var quotePrecision = bot.QuotePrecision ?? exchangeInfo.QuoteAssetPrecision;
-                    var basePrecision = bot.BasePrecision ?? exchangeInfo.BaseAssetPrecision;
 
                     Log.Information("numOfOrder {0}", numOfOrder);
 
@@ -487,7 +582,7 @@ namespace mexcbot.Api.Jobs.Custom
         #region Private
 
         private async Task<bool> CreateLimitOrder(ExchangeClient client, BotDto bot, string qty, string price,
-            OrderSide side)
+            OrderSide side, int expireSecs = 0)
         {
             var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty,
                 price);
@@ -507,7 +602,7 @@ namespace mexcbot.Api.Jobs.Custom
             order.BotType = bot.Type;
             order.BotExchangeType = bot.ExchangeType;
             order.UserId = bot.UserId;
-            order.ExpiredTime = order.TransactTime;
+            order.ExpiredTime = order.TransactTime + (int)TimeSpan.FromSeconds(expireSecs).TotalMilliseconds;
 
             var exec = await sqlConnection.ExecuteAsync(
                 @"INSERT INTO BotOrders(BotId,BotType,BotExchangeType,UserId,OrderId,Symbol,OrderListId,Price,OrigQty,Type,Side,ExpiredTime,Status,`TransactTime`)

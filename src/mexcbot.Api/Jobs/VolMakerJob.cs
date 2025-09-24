@@ -258,20 +258,23 @@ namespace mexcbot.Api.Jobs
                     var biggestBidPrice0 = orderbook0.Bids[0][0];
                     var spread = smallestAskPrice0 - biggestBidPrice0;
 
-                    decimal usdLiqRequired = 1000;
-
                     var liqs = new[]
                     {
-                        "FISHW",
-                        "WING"
+                        new
+                        {
+                            Symbol = "FISHW",
+                            Exchange = BotExchangeType.MEXC,
+                            Liq = 1000
+                        }
                     };
-                    if (liqs.Contains(bot.Base))
-                    {
-                        usdLiqRequired = 1000;
-                    }
 
-                    if (liqs.Contains(bot.Base) && bot.ExchangeType == BotExchangeType.MEXC)
+                    var liq = liqs.FirstOrDefault(x => x.Symbol == bot.Base
+                                                       && x.Exchange == bot.ExchangeType);
+
+                    if (liq != null)
                     {
+                        var usdLiqRequired = liq.Liq;
+
                         var midPrice = Math.Round((smallestAskPrice0 + biggestBidPrice0) / 2,
                             bot.QuotePrecision ?? 8);
 
@@ -283,7 +286,7 @@ namespace mexcbot.Api.Jobs
                         var totalAsk = orderbook0.Asks
                             .Where(x => x[0] <= maxAsk)
                             .Sum(x => x[0] * x[1]);
-                        
+
                         if (totalAsk < usdLiqRequired)
                         {
                             for (var i = 0; i < 10; i++)
