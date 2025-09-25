@@ -262,13 +262,13 @@ namespace mexcbot.Api.Jobs
                     {
                         new
                         {
-                            Symbol = "FISHW",
+                            Base = "FISHW",
                             Exchange = BotExchangeType.MEXC,
                             Liq = 1000
                         }
                     };
 
-                    var liq = liqs.FirstOrDefault(x => x.Symbol == bot.Base
+                    var liq = liqs.FirstOrDefault(x => x.Base.ToUpper() == bot.Base.ToUpper()
                                                        && x.Exchange == bot.ExchangeType);
 
                     if (liq != null)
