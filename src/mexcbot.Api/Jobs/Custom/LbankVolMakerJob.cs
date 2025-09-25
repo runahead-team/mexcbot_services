@@ -220,6 +220,8 @@ namespace mexcbot.Api.Jobs.Custom
 
                     var smallestAskPrice0 = orderbook0.Asks[0][0];
                     var biggestBidPrice0 = orderbook0.Bids[0][0];
+                    var midPrice = Math.Round((smallestAskPrice0 + biggestBidPrice0) / 2,
+                        bot.QuotePrecision ?? 8);
 
                     var liqs = new[]
                     {
@@ -234,12 +236,9 @@ namespace mexcbot.Api.Jobs.Custom
                     var liq = liqs.FirstOrDefault(x => x.Base.ToUpper() == bot.Base.ToUpper()
                                                        && x.Exchange == bot.ExchangeType);
 
-                    if (liq != null)
+                    if (liq != null && midPrice < 0.006m)
                     {
                         var usdLiqRequired = liq.Liq;
-
-                        var midPrice = Math.Round((smallestAskPrice0 + biggestBidPrice0) / 2,
-                            bot.QuotePrecision ?? 8);
 
                         var sleepTime = (int)(usdLiqRequired /
                                               (midPrice * (volumeOption.MinOrderQty + volumeOption.MaxOrderQty) / 2)) *
