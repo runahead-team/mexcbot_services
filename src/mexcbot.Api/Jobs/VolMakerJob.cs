@@ -265,6 +265,12 @@ namespace mexcbot.Api.Jobs
                             Base = "FISHW",
                             Exchange = BotExchangeType.MEXC,
                             Liq = 1000
+                        },
+                        new
+                        {
+                            Base = "FISHW",
+                            Exchange = BotExchangeType.GATE,
+                            Liq = 1000
                         }
                     };
 
