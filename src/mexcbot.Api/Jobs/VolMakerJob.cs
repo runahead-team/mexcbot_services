@@ -667,40 +667,47 @@ namespace mexcbot.Api.Jobs
         private async Task<bool> CreateLimitOrder(ExchangeClient client, BotDto bot, string qty, string price,
             OrderSide side, int expireSecs)
         {
-            var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty,
-                price);
+            try
+            {
+                var order = await client.PlaceOrder(bot.Base, bot.Quote, side, qty,
+                    price);
 
-            if (order == null)
-                return false;
+                if (order == null)
+                    return false;
 
-            if (string.IsNullOrEmpty(order.OrderId))
-                return false;
+                if (string.IsNullOrEmpty(order.OrderId))
+                    return false;
 
-            Log.Information("Bot create order {0}",
-                $"{side} {qty} {bot.Symbol} at price {price} {order.OrderId}");
+                Log.Information("Bot create order {0}",
+                    $"{side} {qty} {bot.Symbol} at price {price} {order.OrderId}");
 
-            await using var sqlConnection = new MySqlConnection(Configurations.DbConnectionString);
+                await using var sqlConnection = new MySqlConnection(Configurations.DbConnectionString);
 
-            order.BotId = bot.Id;
-            order.BotType = bot.Type;
-            order.BotExchangeType = bot.ExchangeType;
-            order.UserId = bot.UserId;
-            order.ExpiredTime = order.TransactTime + (int)TimeSpan.FromSeconds(expireSecs).TotalMilliseconds;
+                order.BotId = bot.Id;
+                order.BotType = bot.Type;
+                order.BotExchangeType = bot.ExchangeType;
+                order.UserId = bot.UserId;
+                order.ExpiredTime = order.TransactTime + (int)TimeSpan.FromSeconds(expireSecs).TotalMilliseconds;
 
-            order.Side = side.ToString();
-            order.Type = bot.ExchangeType == BotExchangeType.COINSTORE ? "LIMIT" :
-                string.IsNullOrEmpty(order.Type) ? "LIMIT" : order.Type;
-            order.TransactTime = AppUtils.NowMilis();
+                order.Side = side.ToString();
+                order.Type = bot.ExchangeType == BotExchangeType.COINSTORE ? "LIMIT" :
+                    string.IsNullOrEmpty(order.Type) ? "LIMIT" : order.Type;
+                order.TransactTime = AppUtils.NowMilis();
 
-            var exec = await sqlConnection.ExecuteAsync(
-                @"INSERT INTO BotOrders(BotId,BotType,BotExchangeType,UserId,OrderId,Symbol,OrderListId,Price,OrigQty,Type,Side,ExpiredTime,Status,`TransactTime`)
+                var exec = await sqlConnection.ExecuteAsync(
+                    @"INSERT INTO BotOrders(BotId,BotType,BotExchangeType,UserId,OrderId,Symbol,OrderListId,Price,OrigQty,Type,Side,ExpiredTime,Status,`TransactTime`)
                       VALUES(@BotId,@BotType,@BotExchangeType,@UserId,@OrderId,@Symbol,@OrderListId,@Price,@OrigQty,@Type,@Side,@ExpiredTime,@Status,@TransactTime)",
-                order);
+                    order);
 
-            if (exec == 0)
-                Log.Error("Bot insert order fail {@data}", order);
+                if (exec == 0)
+                    Log.Error("Bot insert order fail {@data}", order);
 
-            return true;
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
         }
 
         private async Task UpdateBot(BotDto bot, bool isInActive = true)
