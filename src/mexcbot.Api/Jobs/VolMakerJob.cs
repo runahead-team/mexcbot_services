@@ -264,13 +264,13 @@ namespace mexcbot.Api.Jobs
                         {
                             Base = "FISHW",
                             Exchange = BotExchangeType.MEXC,
-                            Liq = 1000
+                            Liq = 1200
                         },
                         new
                         {
                             Base = "FISHW",
                             Exchange = BotExchangeType.GATE,
-                            Liq = 1000
+                            Liq = 1200
                         }
                     };
 
@@ -284,7 +284,8 @@ namespace mexcbot.Api.Jobs
                         var midPrice = Math.Round((smallestAskPrice0 + biggestBidPrice0) / 2,
                             bot.QuotePrecision ?? 8);
 
-                        if (midPrice < 0.00002m)
+                        const decimal keepPrice = 0.00002m;
+                        if (midPrice < keepPrice)
                         {
                             var sleepTime = (int)(usdLiqRequired /
                                                   (midPrice * (volumeOption.MinOrderQty + volumeOption.MaxOrderQty) /
@@ -354,6 +355,21 @@ namespace mexcbot.Api.Jobs
                                     await Task.Delay(TimeSpan.FromSeconds(1));
                                 }
                             }
+                        }
+                        else
+                        {
+                            var orderPrice = Math.Round(keepPrice, quotePrecision);
+
+                            var orderQty =
+                                Math.Round(
+                                    RandomNumber(volumeOption.MaxOrderQty, volumeOption.MaxOrderQty * 2,
+                                        basePrecision),
+                                    basePrecision);
+
+                            await CreateLimitOrder(client, bot,
+                                orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                OrderSide.SELL, 0);
                         }
                     }
 
