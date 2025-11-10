@@ -265,16 +265,14 @@ namespace mexcbot.Api.Jobs
                             Base = "FISHW",
                             Exchange = BotExchangeType.MEXC,
                             Liq = 1200,
-                            MinPrice = 0.0000192m,
-                            MaxPrice = 0.00002m,
+                            KeepPrice = 0.0000195m
                         },
                         new
                         {
                             Base = "FISHW",
                             Exchange = BotExchangeType.GATE,
                             Liq = 1200,
-                            MinPrice = 0.0000192m,
-                            MaxPrice = 0.00002m,
+                            KeepPrice = 0.0000195m
                         }
                     };
 
@@ -285,94 +283,73 @@ namespace mexcbot.Api.Jobs
                     {
                         var usdLiqRequired = liq.Liq;
 
-                        var midPrice = Math.Round((smallestAskPrice0 + biggestBidPrice0) / 2,
-                            bot.QuotePrecision ?? 8);
+                        var sleepTime = (int)(usdLiqRequired /
+                                              (liq.KeepPrice * (volumeOption.MinOrderQty + volumeOption.MaxOrderQty) /
+                                               2)) *
+                                        volumeOption.MinInterval;
 
-                        if (midPrice >= liq.MinPrice && midPrice <= liq.MaxPrice)
+                        var maxAsk = liq.KeepPrice * 1.02m;
+                        var totalAsk = orderbook0.Asks
+                            .Where(x => x[0] <= maxAsk)
+                            .Sum(x => x[0] * x[1]);
+
+                        if (totalAsk < usdLiqRequired)
                         {
-                            var sleepTime = (int)(usdLiqRequired /
-                                                  (midPrice * (volumeOption.MinOrderQty + volumeOption.MaxOrderQty) /
-                                                   2)) *
-                                            volumeOption.MinInterval;
-
-                            var maxAsk = midPrice * 1.02m;
-                            var totalAsk = orderbook0.Asks
-                                .Where(x => x[0] <= maxAsk)
-                                .Sum(x => x[0] * x[1]);
-
-                            if (totalAsk < usdLiqRequired)
+                            for (var i = 0; i < 10; i++)
                             {
-                                for (var i = 0; i < 10; i++)
-                                {
-                                    var orderPrice = Math.Round(RandomNumber(midPrice, maxAsk, quotePrecision),
-                                        quotePrecision);
+                                var orderPrice = Math.Round(RandomNumber(liq.KeepPrice, maxAsk, quotePrecision),
+                                    quotePrecision);
 
-                                    var orderQty =
-                                        Math.Round(
-                                            RandomNumber(volumeOption.MinOrderQty, volumeOption.MaxOrderQty,
-                                                basePrecision),
-                                            basePrecision);
+                                var orderQty =
+                                    Math.Round(
+                                        RandomNumber(volumeOption.MinOrderQty, volumeOption.MaxOrderQty,
+                                            basePrecision),
+                                        basePrecision);
 
-                                    await CreateLimitOrder(client, bot,
-                                        orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
-                                        orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                        OrderSide.SELL, sleepTime + i * volumeOption.MinInterval);
+                                await CreateLimitOrder(client, bot,
+                                    orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                    orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                    OrderSide.SELL, sleepTime + i * volumeOption.MinInterval);
 
-                                    totalAsk += orderQty * orderPrice;
+                                totalAsk += orderQty * orderPrice;
 
-                                    if (totalAsk > usdLiqRequired)
-                                        break;
+                                if (totalAsk > usdLiqRequired)
+                                    break;
 
-                                    await Task.Delay(TimeSpan.FromSeconds(1));
-                                }
-                            }
-
-                            var minBid = midPrice * 0.98m;
-                            var totalBid = orderbook0.Bids
-                                .Where(x => x[0] >= minBid)
-                                .Sum(x => x[0] * x[1]);
-
-                            if (totalBid < usdLiqRequired)
-                            {
-                                for (var i = 0; i < 10; i++)
-                                {
-                                    var orderPrice = Math.Round(RandomNumber(minBid, midPrice, quotePrecision),
-                                        quotePrecision);
-
-                                    var orderQty =
-                                        Math.Round(
-                                            RandomNumber(volumeOption.MinOrderQty, volumeOption.MaxOrderQty,
-                                                basePrecision),
-                                            basePrecision);
-
-                                    await CreateLimitOrder(client, bot,
-                                        orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
-                                        orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                        OrderSide.BUY, sleepTime + i * volumeOption.MinInterval);
-
-                                    totalBid += orderQty * orderPrice;
-
-                                    if (totalBid > usdLiqRequired)
-                                        break;
-
-                                    await Task.Delay(TimeSpan.FromSeconds(1));
-                                }
+                                await Task.Delay(TimeSpan.FromSeconds(1));
                             }
                         }
-                        else
+
+                        var minBid = liq.KeepPrice * 0.98m;
+                        var totalBid = orderbook0.Bids
+                            .Where(x => x[0] >= minBid)
+                            .Sum(x => x[0] * x[1]);
+
+                        if (totalBid < usdLiqRequired)
                         {
-                            var orderPrice = Math.Round(midPrice, quotePrecision);
+                            for (var i = 0; i < 10; i++)
+                            {
+                                var orderPrice = Math.Round(RandomNumber(minBid, liq.KeepPrice, quotePrecision),
+                                    quotePrecision);
 
-                            var orderQty =
-                                Math.Round(
-                                    RandomNumber(volumeOption.MaxOrderQty, volumeOption.MaxOrderQty * 2,
-                                        basePrecision),
-                                    basePrecision);
+                                var orderQty =
+                                    Math.Round(
+                                        RandomNumber(volumeOption.MinOrderQty, volumeOption.MaxOrderQty,
+                                            basePrecision),
+                                        basePrecision);
 
-                            await CreateLimitOrder(client, bot,
-                                orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
-                                orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
-                                OrderSide.SELL, 0);
+                                await CreateLimitOrder(client, bot,
+                                    orderQty.ToString($"F{basePrecision.ToString()}", new NumberFormatInfo()),
+                                    orderPrice.ToString($"F{quotePrecision.ToString()}", new NumberFormatInfo()),
+                                    OrderSide.BUY, sleepTime + i * volumeOption.MinInterval);
+
+                                totalBid += orderQty * orderPrice;
+
+                                if (totalBid > usdLiqRequired)
+                                    break;
+
+                                await Task.Delay(TimeSpan.FromSeconds(1));
+                            }
                         }
                     }
 
