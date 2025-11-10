@@ -264,13 +264,17 @@ namespace mexcbot.Api.Jobs
                         {
                             Base = "FISHW",
                             Exchange = BotExchangeType.MEXC,
-                            Liq = 1200
+                            Liq = 1200,
+                            MinPrice = 0.0000192m,
+                            MaxPrice = 0.00002m,
                         },
                         new
                         {
                             Base = "FISHW",
                             Exchange = BotExchangeType.GATE,
-                            Liq = 1200
+                            Liq = 1200,
+                            MinPrice = 0.0000192m,
+                            MaxPrice = 0.00002m,
                         }
                     };
 
@@ -284,8 +288,7 @@ namespace mexcbot.Api.Jobs
                         var midPrice = Math.Round((smallestAskPrice0 + biggestBidPrice0) / 2,
                             bot.QuotePrecision ?? 8);
 
-                        const decimal keepPrice = 0.00002m;
-                        if (midPrice < keepPrice)
+                        if (midPrice >= liq.MinPrice && midPrice <= liq.MaxPrice)
                         {
                             var sleepTime = (int)(usdLiqRequired /
                                                   (midPrice * (volumeOption.MinOrderQty + volumeOption.MaxOrderQty) /
@@ -358,7 +361,7 @@ namespace mexcbot.Api.Jobs
                         }
                         else
                         {
-                            var orderPrice = Math.Round(keepPrice, quotePrecision);
+                            var orderPrice = Math.Round(midPrice, quotePrecision);
 
                             var orderQty =
                                 Math.Round(
