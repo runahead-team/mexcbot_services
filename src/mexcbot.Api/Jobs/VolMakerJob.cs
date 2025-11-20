@@ -265,14 +265,14 @@ namespace mexcbot.Api.Jobs
                             Base = "FISHW",
                             Exchange = BotExchangeType.MEXC,
                             Liq = 1200,
-                            KeepPrice = 0.0000195m
+                            KeepPrice = 0.000018m
                         },
                         new
                         {
                             Base = "FISHW",
                             Exchange = BotExchangeType.GATE,
                             Liq = 1200,
-                            KeepPrice = 0.0000195m
+                            KeepPrice = 0.000018m
                         }
                     };
 
