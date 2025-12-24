@@ -141,8 +141,8 @@ namespace mexcbot.Api.Services
             await DbConnections.ExecAsync(async (dbConnection) =>
             {
                 var exec = await dbConnection.ExecuteAsync(
-                    @"INSERT INTO Bots(UserId,Base,Quote,BasePrecision,QuotePrecision,Type,ExchangeType,ApiKey,ApiSecret,Passphrase,Logs,Status,VolumeOption,MakerOption,ExchangeInfo,AccountInfo,CreatedTime)
-                    VALUES(@UserId,@Base,@Quote,@BasePrecision,@QuotePrecision,@Type,@ExchangeType,@ApiKey,@ApiSecret,@Passphrase,@Logs,@Status,@VolumeOption,@MakerOption,@ExchangeInfo,@AccountInfo,@CreatedTime)",
+                    @"INSERT INTO Bots(UserId,Base,Quote,BasePrecision,QuotePrecision,Type,ExchangeType,ApiKey,ApiSecret,Passphrase,Logs,Status,VolumeOption,MakerOption,LiqOption,ExchangeInfo,AccountInfo,CreatedTime)
+                    VALUES(@UserId,@Base,@Quote,@BasePrecision,@QuotePrecision,@Type,@ExchangeType,@ApiKey,@ApiSecret,@Passphrase,@Logs,@Status,@VolumeOption,@MakerOption,@LiqOption,@ExchangeInfo,@AccountInfo,@CreatedTime)",
                     bot);
 
                 if (exec != 1)
@@ -168,7 +168,7 @@ namespace mexcbot.Api.Services
                     throw new AppException("Bot is not exist");
 
                 var exec = await dbConnection.ExecuteAsync(
-                    @"UPDATE Bots SET `Base` = @Base, `Quote` = @Quote,`BasePrecision` = @BasePrecision, `QuotePrecision` = @QuotePrecision, VolumeOption = @VolumeOption, MakerOption = @MakerOption, NextRunMakerTime = 0
+                    @"UPDATE Bots SET `Base` = @Base, `Quote` = @Quote,`BasePrecision` = @BasePrecision, `QuotePrecision` = @QuotePrecision, VolumeOption = @VolumeOption, MakerOption = @MakerOption, LiqOption = @LiqOption, NextRunMakerTime = 0
                     WHERE UserId = @UserId AND Id = @Id AND Type = @Type",
                     bot);
 
