@@ -153,9 +153,9 @@ namespace mexcbot.Api.Models.Bot
 
         [JsonIgnore] public string LiqOption { get; set; }
 
-        public BotLidOption LidOptionObj => !string.IsNullOrEmpty(LiqOption)
-            ? JsonConvert.DeserializeObject<BotLidOption>(LiqOption)
-            : new BotLidOption();
+        public BotLiqOption LiqOptionObj => !string.IsNullOrEmpty(LiqOption)
+            ? JsonConvert.DeserializeObject<BotLiqOption>(LiqOption)
+            : new BotLiqOption();
 
         public string ApiKey { get; set; }
 

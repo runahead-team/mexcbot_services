@@ -261,7 +261,7 @@ namespace mexcbot.Api.Jobs
                     if (string.IsNullOrEmpty(bot.LiqOption)
                         && bot.Base == "FISHW")
                     {
-                        bot.LiqOption = JsonConvert.SerializeObject(new BotLidOption
+                        bot.LiqOption = JsonConvert.SerializeObject(new BotLiqOption
                         {
                             AskLiq = 1200,
                             BidLiq = 1200,
@@ -269,9 +269,9 @@ namespace mexcbot.Api.Jobs
                         });
                     }
 
-                    if (bot.LidOptionObj != null)
+                    if (bot.LiqOptionObj != null)
                     {
-                        var liq = bot.LidOptionObj;
+                        var liq = bot.LiqOptionObj;
 
                         if (liq is { HoldPrice: > 0 })
                         {

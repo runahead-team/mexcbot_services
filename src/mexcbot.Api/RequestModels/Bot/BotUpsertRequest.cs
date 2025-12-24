@@ -9,6 +9,6 @@ namespace mexcbot.Api.RequestModels.Bot
 
         public new BotMakerOption MakerOption { get; set; }
 
-        public new BotLidOption LiqOption { get; set; }
+        public new BotLiqOption LiqOption { get; set; }
     }
 }

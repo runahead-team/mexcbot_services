@@ -1,6 +1,6 @@
 namespace mexcbot.Api.Models.Bot
 {
-    public class BotLidOption
+    public class BotLiqOption
     {
         public decimal HoldPrice { get; set; }
         
