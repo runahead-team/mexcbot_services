@@ -34,6 +34,9 @@ namespace mexcbot.Api.Models.Bot
                 ? string.Empty
                 : JsonConvert.SerializeObject(request.VolumeOption);
             MakerOption = request.MakerOption == null ? string.Empty : JsonConvert.SerializeObject(request.MakerOption);
+            LiqOption = request.LiqOption == null
+                ? string.Empty
+                : JsonConvert.SerializeObject(request.LiqOption);
             ApiKey = request.ApiKey;
             ApiSecret = request.ApiSecret;
             Passphrase = request.Passphrase;
@@ -148,6 +151,12 @@ namespace mexcbot.Api.Models.Bot
             ? JsonConvert.DeserializeObject<ExchangeInfoView>(ExchangeInfo)
             : new ExchangeInfoView();
 
+        [JsonIgnore] public string LiqOption { get; set; }
+
+        public BotLidOption LidOptionObj => !string.IsNullOrEmpty(LiqOption)
+            ? JsonConvert.DeserializeObject<BotLidOption>(LiqOption)
+            : new BotLidOption();
+
         public string ApiKey { get; set; }
 
         public string ApiSecret { get; set; }
@@ -165,8 +174,7 @@ namespace mexcbot.Api.Models.Bot
         public long NextRunVolTime { get; set; }
 
         public long CreatedTime { get; set; }
-        
+
         public bool IsRunBlinking { get; set; }
-        
     }
 }
