@@ -273,9 +273,9 @@ namespace mexcbot.Api.Jobs
                     {
                         var liq = bot.LidOptionObj;
 
-                        if (liq != null)
+                        if (liq is { HoldPrice: > 0 })
                         {
-                            var sleepTime = (int)(((liq.AskLiq + liq.AskLiq) / 2) /
+                            var sleepTime = (int)(((liq.AskLiq + liq.BidLiq) / 2) /
                                                   (liq.HoldPrice *
                                                    (volumeOption.MinOrderQty + volumeOption.MaxOrderQty) /
                                                    2)) *
@@ -286,7 +286,7 @@ namespace mexcbot.Api.Jobs
                                 .Where(x => x[0] <= maxAsk)
                                 .Sum(x => x[0] * x[1]);
 
-                            if (totalAsk < liq.AskLiq)
+                            if (liq.AskLiq > 0 && totalAsk < liq.AskLiq)
                             {
                                 for (var i = 0; i < 10; i++)
                                 {
@@ -318,7 +318,7 @@ namespace mexcbot.Api.Jobs
                                 .Where(x => x[0] >= minBid)
                                 .Sum(x => x[0] * x[1]);
 
-                            if (totalBid < liq.BidLiq)
+                            if (liq.BidLiq > 0 && totalBid < liq.BidLiq)
                             {
                                 for (var i = 0; i < 10; i++)
                                 {
