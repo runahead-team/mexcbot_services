@@ -23,3 +23,8 @@ alter table
     Bots
 add
     IsRunBlinking bit default 0;
+
+alter table
+    Bots
+add
+    `LiqOption` text;
