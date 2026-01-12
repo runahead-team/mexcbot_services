@@ -187,11 +187,8 @@ namespace mexcbot.Api.Jobs
                         if (decimal.TryParse(quoteBalance.Free, new NumberFormatInfo(), out var quoteBalanceValue))
                             if (quoteBalanceValue <= 100)
                             {
-                                bot.Status = BotStatus.INACTIVE;
-                                stopLog +=
-                                    $"Stop when your {bot.Base} balance lower than {bot.VolumeOptionObj.StopLossQuote}; \n";
                                 Telegram.Send(
-                                    $"🟠 VOL BOT {bot.Base} is stopped by balance {bot.Quote}: {quoteBalanceValue:N} < {bot.VolumeOptionObj.StopLossQuote:N}");
+                                    $"🟠Bot Insufficient funds: {quoteBalanceValue:N} {bot.Quote}");
                             }
                     }
                 }
