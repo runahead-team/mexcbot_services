@@ -185,15 +185,14 @@ namespace mexcbot.Api.Jobs
                     else
                     {
                         if (decimal.TryParse(quoteBalance.Free, new NumberFormatInfo(), out var quoteBalanceValue))
-                            if (bot.VolumeOptionObj.StopLossBase > 0)
-                                if (quoteBalanceValue <= bot.VolumeOptionObj.StopLossQuote)
-                                {
-                                    bot.Status = BotStatus.INACTIVE;
-                                    stopLog +=
-                                        $"Stop when your {bot.Base} balance lower than {bot.VolumeOptionObj.StopLossQuote}; \n";
-                                    Telegram.Send(
-                                        $"🟠 VOL BOT {bot.Base} is stopped by balance {bot.Quote}: {quoteBalanceValue:N} < {bot.VolumeOptionObj.StopLossQuote:N}");
-                                }
+                            if (quoteBalanceValue <= 100)
+                            {
+                                bot.Status = BotStatus.INACTIVE;
+                                stopLog +=
+                                    $"Stop when your {bot.Base} balance lower than {bot.VolumeOptionObj.StopLossQuote}; \n";
+                                Telegram.Send(
+                                    $"🟠 VOL BOT {bot.Base} is stopped by balance {bot.Quote}: {quoteBalanceValue:N} < {bot.VolumeOptionObj.StopLossQuote:N}");
+                            }
                     }
                 }
 
